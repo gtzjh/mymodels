@@ -1,0 +1,142 @@
+[MASTER]
+# Python代码文件扩展名
+extension-pkg-whitelist=
+ignore=CVS
+ignore-patterns=
+jobs=1
+load-plugins=
+persistent=yes
+suggestion-mode=yes
+unsafe-load-any-extension=no
+
+# 设置哪些文件会被忽略
+ignore-paths=
+
+[MESSAGES CONTROL]
+# 启用/禁用特定消息
+disable=
+    C0103, # 变量名不符合规范
+    C0111, # 缺少文档字符串
+    C0303, # 行尾空格
+    C0330, # 错误的缩进
+    C1801, # len(SEQUENCE)与空比较，应该直接用if SEQUENCE
+    W0511, # TODO 和 FIXME 警告
+    W0703, # 捕获过于通用的Exception异常
+    W1202, # Use % formatting in logging functions
+    R0201, # 方法可能是函数
+    R0903, # 类的方法太少
+    R0913, # 函数参数太多
+    E1101, # 对象上没有成员（常常是误报）
+
+[REPORTS]
+# 设置报告的输出格式
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+output-format=text
+reports=no
+score=yes
+
+[REFACTORING]
+max-nested-blocks=5
+never-returning-functions=sys.exit,argparse.parse_error
+
+[BASIC]
+# 检查变量名和常量名
+argument-naming-style=snake_case
+attr-naming-style=snake_case
+class-naming-style=PascalCase
+const-naming-style=UPPER_CASE
+function-naming-style=snake_case
+method-naming-style=snake_case
+module-naming-style=snake_case
+variable-naming-style=snake_case
+
+# 变量名的正则表达式（如果上面的命名样式不够用）
+good-names=i,j,k,ex,Run,_
+bad-names=foo,bar,baz,toto,tutu,tata
+name-group=
+
+[FORMAT]
+# 代码格式检查
+expected-line-ending-format=
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+indent-after-paren=4
+indent-string='    '
+max-line-length=100
+max-module-lines=1000
+no-space-check=trailing-comma,dict-separator
+single-line-class-stmt=no
+single-line-if-stmt=no
+
+[LOGGING]
+logging-format-style=old
+logging-modules=logging
+
+[MISCELLANEOUS]
+notes=FIXME,XXX,TODO
+
+[SIMILARITIES]
+# 检测重复代码
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+min-similarity-lines=4
+
+[SPELLING]
+max-spelling-suggestions=4
+spelling-dict=
+spelling-ignore-words=
+spelling-private-dict-file=
+spelling-store-unknown-words=no
+
+[TYPECHECK]
+# 类型检查相关配置
+contextmanager-decorators=contextlib.contextmanager
+generated-members=numpy.*,torch.*
+ignore-mixin-members=yes
+ignore-none=yes
+ignore-on-opaque-inference=yes
+ignored-classes=optparse.Values,thread._local,_thread._local
+missing-member-hint=yes
+missing-member-hint-distance=1
+missing-member-max-choices=1
+
+[VARIABLES]
+# 变量相关检查
+allow-global-unused-variables=yes
+callbacks=cb_,_cb
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+ignored-argument-names=_.*|^ignored_|^unused_
+init-import=no
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+[CLASSES]
+defining-attr-methods=__init__,__new__,setUp,__post_init__
+exclude-protected=_asdict,_fields,_replace,_source,_make
+valid-classmethod-first-arg=cls
+valid-metaclass-classmethod-first-arg=cls
+
+[DESIGN]
+# 设计相关检查，比如函数的最大参数个数等
+max-args=8
+max-attributes=10
+max-bool-expr=5
+max-branches=12
+max-locals=15
+max-parents=7
+max-public-methods=20
+max-returns=6
+max-statements=50
+min-public-methods=1
+
+[IMPORTS]
+allow-wildcard-with-all=no
+analyse-fallback-blocks=no
+deprecated-modules=optparse,tkinter.tix
+ext-import-graph=
+import-graph=
+int-import-graph=
+known-standard-library=
+known-third-party=enchant
+
+[EXCEPTIONS]
+overgeneral-exceptions=Exception
