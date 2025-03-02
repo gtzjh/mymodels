@@ -109,6 +109,7 @@ class MyModels:
         
         myshap(self.optimal_model, self.model, shap_data, self.results_dir)
         
+        
     def run(self):
         """Execute the whole pipeline"""
         self.load()
@@ -184,7 +185,3 @@ if __name__ == "__main__":
                         log_file.write("-" * 80 + "\n")
                     print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
                     continue
-
-
-
-test test test test
