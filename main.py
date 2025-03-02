@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from dataLoader import dataLoader
+from data_loader import data_loader
 from myshap import myshap
 from pipeline import Pipeline
 import pathlib
@@ -63,9 +63,9 @@ class MyModels:
             "`random_state` must be an integer"
         
 
-    def load_data(self):
+    def load(self):
         """Prepare training and test data"""
-        self.x_train, self.x_test, self.y_train, self.y_test = dataLoader(
+        self.x_train, self.x_test, self.y_train, self.y_test = data_loader(
             file_path=self.file_path,
             y=self.y,
             x_list=self.x_list,
@@ -111,7 +111,7 @@ class MyModels:
         
     def run(self):
         """Execute the whole pipeline"""
-        self.load_data()
+        self.load()
         self.optimize()
         # self.explain()
         return None
@@ -144,7 +144,7 @@ if __name__ == "__main__":
             results_dir = "results/" + i + "_" + e,
             cat_features = ['x16', 'x17'],
             encoder_method = e,
-            trials = 10,
+            trials = 100,
             test_ratio = 0.3,
             shap_ratio = 0.3,
             cross_valid = 5,
@@ -178,12 +178,10 @@ if __name__ == "__main__":
                 try:
                     test_model(i, e)
                 except Exception as error:
-                    # 记录错误信息到error.log文件
                     with open("error.log", "a") as log_file:
                         error_message = f"Error with model={i}, encoder={e}: {str(error)}\n"
                         log_file.write(error_message)
                         log_file.write("-" * 80 + "\n")
                     print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
-                    # 继续下一个循环
                     continue
 

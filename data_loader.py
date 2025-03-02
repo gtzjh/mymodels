@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import pathlib
 
 
-def dataLoader(file_path, y, x_list, cat_features, test_ratio, random_state) \
+def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """
     Load and preprocess data from a CSV file.
