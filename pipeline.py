@@ -138,7 +138,7 @@ class Pipeline:
 
     def _objective(self, trial, _param_space, _static_params) -> float:
         """
-        This function is creating an objective function for the Optuna study.
+        Creating an objective function for the Optuna study.
         It performs the following steps:
             1. Get parameters for model training
             2. Parallel processing for validation. Initialize KFold cross validator

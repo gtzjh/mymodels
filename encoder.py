@@ -321,9 +321,8 @@ if __name__ == "__main__":
     # Test all encoding methods and save mapping relationships
     cat_cols = ['x16', 'x17']
     
-    # Define encoding methods to test
+    # Define encoding methods to test except target encoding
     methods = ['onehot', 'label', 'frequency', 'binary', 'ordinal']
-    
     for method in methods:
         encoder = Encoder(method=method)  # Initialize encoder
         encoder.fit(df, cat_cols=cat_cols)  # Fit data
@@ -338,7 +337,7 @@ if __name__ == "__main__":
     
     # Handle target encoding separately as it requires target column
     if 'target' in df.columns:  # Assuming target column name is 'target'
-        encoder = Encoder(method='target', target_col='target')
+        encoder = Encoder(method='target', target_col='y')
         encoder.fit(df, y=df['target'], cat_cols=cat_cols)
         mapping = encoder.get_mapping(df, cat_cols)
         mapping = encoder.convert_numpy_types(mapping)
