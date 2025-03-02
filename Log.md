@@ -1,12 +1,22 @@
 # Log
 
+## 20250302
+
+调整模块结构：把回归模型模块移动到单独的文件模块中，并针对这一模块添加测试代码：tests/test_regressors.py
+
+测试项目包括：
+
+- 模型初始化测试：验证所有支持模型能否正确初始化
+- 异常处理测试：检查无效输入时的错误处理
+- 类别特征处理测试：验证支持类别特征的模型是否正确处理
+- 参数空间验证：确保参数空间结构符合预期
+- 静态参数验证：检查关键静态参数设置
+- 边界条件测试：测试空类别特征列表等特殊情况
+- 模型特定功能测试：验证不同模型的特殊处理逻辑
+
 ## 20250223
 
-Completed support for categorical variables in all models except CatBoost.
-
-Next step is to implement compatibility with CatBoost.
-
-As well as the SHAP explanation with the encoded categorical features.
+Completed support for categorical variables in models training and testing process.
 
 ## 20250218
 

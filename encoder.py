@@ -7,7 +7,6 @@ Note:
 2. Similarly, during cross-validation, a separate encoder should be constructed for each fold.
 """
 
-
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import category_encoders as ce
@@ -342,8 +341,6 @@ if __name__ == "__main__":
         encoder = Encoder(method='target', target_col='target')
         encoder.fit(df, y=df['target'], cat_cols=cat_cols)
         mapping = encoder.get_mapping(df, cat_cols)
-        
-        # Convert numpy types to native Python types
         mapping = encoder.convert_numpy_types(mapping)
         
         json_path = 'encoding/target_mapping.json'

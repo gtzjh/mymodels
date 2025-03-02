@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from dataLoader import dataLoader
 from myshap import myshap
-from models import Regr
+from pipeline import Pipeline
 import pathlib
 
 
@@ -62,6 +62,7 @@ class MLPipeline:
         assert isinstance(self.random_state, int), \
             "`random_state` must be an integer"
         
+
     def load_data(self):
         """Prepare training and test data"""
         self.x_train, self.x_test, self.y_train, self.y_test = dataLoader(
@@ -73,38 +74,39 @@ class MLPipeline:
             random_state=self.random_state
         )
 
+
     def optimize(self):
         """Optimize and evaluate the model"""
-        try:
-            optimizer = Regr(
-                cv=self.cross_valid,
-                random_state=self.random_state,
-                trials=self.trials,
-                results_dir=self.results_dir,
-            )
-            self.optimal_model = optimizer.fit(self.x_train, self.y_train, 
-                                               self.model,
-                                               self.cat_features, self.encoder_method)
-            optimizer.evaluate(self.optimal_model,
-                               self.x_test, self.y_test)
-        except Exception as e:
-            with open("error.txt", "w") as f:
-                f.write(f"Model type: {self.model}\n")
-                f.write(f"Time: {pd.Timestamp.now()}\n")
-                f.write(f"Error: Model optimization failed: {str(e)}\n")
-            raise RuntimeError(f"Model optimization failed: {str(e)}")
-        
+        optimizer = Pipeline(
+            cv=self.cross_valid,
+            random_state=self.random_state,
+            trials=self.trials,
+            results_dir=self.results_dir,
+        )
+
+        optimizer.fit(
+            self.x_train, self.y_train,
+            self.model,
+            self.cat_features, self.encoder_method
+        )
+        self.optimal_model = optimizer.optimal_model
+
+        optimizer.evaluate(
+            self.optimal_model,
+            self.x_test,
+            self.y_test
+        )
+
+
     def explain(self):
         """Use SHAP for explanation"""
         np.random.seed(self.random_state)
         all_data = pd.concat([self.x_train, self.x_test])
-        shuffled_indices = np.random.permutation(all_data.index)
-        shap_data = all_data.loc[
-            np.random.choice(
-                shuffled_indices,
-                int(len(all_data) * self.shap_ratio),
-                replace=False
-            )]
+        
+        # 直接随机选择数据行，而不是通过索引
+        shap_sample_size = int(len(all_data) * self.shap_ratio)
+        shap_data = all_data.sample(n=shap_sample_size, random_state=self.random_state)
+        
         myshap(self.optimal_model, self.model, shap_data, self.results_dir)
         
     def run(self):
@@ -118,8 +120,8 @@ class MLPipeline:
 if __name__ == "__main__":
     for i in [
         # "svr", "knr", "mlp", "ada", "dt", "gbdt", "xgb", "lgb", 
-        "rf",
-        # "cat",
+        # "rf",
+        "cat",
     ]:
         the_model = MLPipeline(
             file_path = "data.csv",
@@ -129,7 +131,7 @@ if __name__ == "__main__":
             results_dir = "results/" + i,
             cat_features = ['x16', 'x17'],
             encoder_method = 'frequency',
-            trials = 10,
+            trials = 20,
             test_ratio = 0.3,
             shap_ratio = 0.3,
             cross_valid = 5,
