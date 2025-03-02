@@ -163,7 +163,7 @@ class Encoder():
             X[cat_cols] = self.encoder.transform(X[cat_cols])
             return X
 
-    def fit_transform(self, X, cat_cols: list[str], y=None):
+    def fit_transform(self, X, cat_cols, y=None):
         """
         Fit encoder and return transformed data
         Parameters:
@@ -255,9 +255,24 @@ class Encoder():
                                       label_encoder.transform(label_encoder.classes_)))
             
         elif self.method == 'target':
-            # Target encoding mapping is dynamic, return mean target value for each category
+            # 需要保持与fit时相同的列结构
             for col in cat_cols:
-                mapping[col] = df.groupby(col)[self.target_col].mean().to_dict()
+                # 创建包含所有分类列的临时数据帧
+                # 其他列用第一个类别值填充，当前列用实际值
+                temp_df = pd.DataFrame({
+                    c: [df[c].iloc[0]] * len(df[col].unique())
+                    for c in cat_cols
+                })
+                temp_df[col] = df[col].unique()
+                
+                # 获取编码结果（保持所有分类列存在）
+                encoded_values = self.encoder.transform(temp_df)[col].values
+                
+                # 构建映射关系
+                mapping[col] = {
+                    self.convert_numpy_types(orig): self.convert_numpy_types(enc)
+                    for orig, enc in zip(temp_df[col], encoded_values)
+                }
             
         elif self.method == 'frequency':
             mapping = self.encoder  # frequency encoder itself stores the mapping
@@ -336,14 +351,13 @@ if __name__ == "__main__":
             json.dump(mapping, f, ensure_ascii=False, indent=4)
     
     # Handle target encoding separately as it requires target column
-    if 'target' in df.columns:  # Assuming target column name is 'target'
-        encoder = Encoder(method='target', target_col='y')
-        encoder.fit(df, y=df['target'], cat_cols=cat_cols)
-        mapping = encoder.get_mapping(df, cat_cols)
-        mapping = encoder.convert_numpy_types(mapping)
-        
-        json_path = 'encoding/target_mapping.json'
-        with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(mapping, f, ensure_ascii=False, indent=4)
-        
-        print(f"Saved target encoding mapping to {json_path}")
+    encoder = Encoder(method='target', target_col='y')
+    encoder.fit(df, y=df['y'], cat_cols=cat_cols)
+    mapping = encoder.get_mapping(df, cat_cols)
+    mapping = encoder.convert_numpy_types(mapping)
+    
+    json_path = 'encoding/target_mapping.json'
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(mapping, f, ensure_ascii=False, indent=4)
+    
+    print(f"Saved target encoding mapping to {json_path}")

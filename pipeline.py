@@ -72,7 +72,7 @@ class Pipeline:
         self.y_train = y_train
         self.cat_features = cat_features
         self.encoder_method = encoder_method
-        self.model_name = model_name    # Store the model type for use in _single_fold
+        self.model_name = model_name  # Store the model type for use in _single_fold
         self.model_obj = None
         self.optimal_params = None
         self.optimal_model = None
@@ -190,7 +190,7 @@ class Pipeline:
             y_test: The testing target data
         """
         # 根据不同情况处理测试数据
-        if self.model_name == "cat":  
+        if self.model_name == "cat":
             # CatBoost 直接处理分类特征，不需要编码
             _final_x_test = x_test
         elif self.encoder is not None:
