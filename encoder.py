@@ -34,6 +34,7 @@ class Encoder():
         self.encoder = None
         self.feature_names = None
 
+
     def fit(self, X, cat_cols: list[str]|tuple[str], y=None):
         """
         Fit the encoder
@@ -95,6 +96,7 @@ class Encoder():
             self.encoder.fit(X[cat_cols])
             
         return self
+
 
     def transform(self, X):
         """
@@ -163,6 +165,7 @@ class Encoder():
             X[cat_cols] = self.encoder.transform(X[cat_cols])
             return X
 
+
     def fit_transform(self, X, cat_cols, y=None):
         """
         Fit encoder and return transformed data
@@ -174,6 +177,7 @@ class Encoder():
             Transformed DataFrame
         """
         return self.fit(X, cat_cols, y).transform(X)
+
 
     def save(self, path=None):
         """Save the encoder"""
@@ -197,6 +201,7 @@ class Encoder():
             }, path)
         except Exception as e:
             raise IOError(f"Failed to save encoder: {str(e)}")
+
 
     @classmethod
     def load(cls, path='encoding/encoder.pkl'):
@@ -224,13 +229,17 @@ class Encoder():
             if not encoded_df[encoded_cols].isin([0, 1]).all().all():
                 raise ValueError("OneHot encoding produced non-binary values")
 
+
     def get_mapping(self, df, cat_cols):
-        """
-        Get encoding mapping relationships
-        
-        :param df: Original dataframe
-        :param cat_cols: Category columns to get mapping for
-        :return: Dictionary containing mapping relationships
+        """Get encoding mapping relationships.
+        Parameters
+            df : pandas.DataFrame
+                Original dataframe containing categorical features
+            cat_cols : list
+                List of categorical column names to get mapping for
+        Returns
+            dict :
+                Dictionary containing mapping relationships between original and encoded values
         """
         if self.encoder is None:
             raise RuntimeError("Encoder not fitted. Call fit() first")
@@ -273,7 +282,7 @@ class Encoder():
                     self.convert_numpy_types(orig): self.convert_numpy_types(enc)
                     for orig, enc in zip(temp_df[col], encoded_values)
                 }
-            
+
         elif self.method == 'frequency':
             mapping = self.encoder  # frequency encoder itself stores the mapping
             
@@ -305,6 +314,7 @@ class Encoder():
                 mapping[col] = dict(zip(unique_values, encoded_values))
         
         return mapping
+
 
     def convert_numpy_types(self, obj):
         """Convert numpy types to native Python types for JSON serialization"""

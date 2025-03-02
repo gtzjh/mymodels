@@ -13,7 +13,7 @@ Supports various regression models with hyperparameter optimization and cross-va
 """
 class MyModels:
     def __init__(self, file_path, y, x_list, model, results_dir,
-                 cat_features=None, encoder_method=None, trials=50, test_ratio=0.3,
+                 cat_features: None | list[str] = None, encoder_method=None, trials=50, test_ratio=0.3,
                  shap_ratio=0.3, cross_valid=5, random_state=0):
         self.file_path = file_path
         self.y = y
@@ -111,7 +111,6 @@ class MyModels:
         
     def run(self):
         """Execute the whole pipeline"""
-        self._validate_inputs()
         self.load_data()
         self.optimize()
         # self.explain()
@@ -155,13 +154,13 @@ if __name__ == "__main__":
         return None
     
     for i in [
-        # "svr", "knr", "mlp", "ada", "dt", "gbdt", "xgb", "lgb", 
+        "svr", "knr", "mlp", "ada", "dt", "gbdt", "xgb", "lgb", 
         "rf",
-        # "cat"
+        "cat"
     ]:
         if i == "cat":  # 如果模型是CatBoost，则不进行编码
             try:
-                test_model(i, None)
+                test_model(i, "frequency")  # 实际上这个frequency是不会生效
             except Exception as error:
                 # 记录错误信息到error.log文件
                 with open("error.log", "a") as log_file:
@@ -173,12 +172,9 @@ if __name__ == "__main__":
                 continue
         else:
             for e in [
-                # "frequency", "onehot", "label", "binary", "ordinal", 
+                "frequency", "onehot", "label", "binary", "ordinal", 
                 "target"
             ]:
-                test_model(i, e)
-                
-                """
                 try:
                     test_model(i, e)
                 except Exception as error:
@@ -190,4 +186,4 @@ if __name__ == "__main__":
                     print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
                     # 继续下一个循环
                     continue
-                """ 
+

@@ -53,7 +53,7 @@ class Pipeline:
 
 
     def fit(self, x_train, y_train, model_name: str, \
-            cat_features = None | list[str], \
+            cat_features: None | list[str] = None, \
             encoder_method: str | None = None) -> None:
         """
         Train and optimize a regression model.
