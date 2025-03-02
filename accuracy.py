@@ -50,7 +50,7 @@ def _regr_accuracy_plot(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _result
 
 
 # 输出精度结果
-def RegrAccuracy(y_test, y_test_pred, y_train, y_train_pred, results_dir):
+def regr_accuracy(y_test, y_test_pred, y_train, y_train_pred, results_dir):
     ###########################################################################
     # Check variables' type
     assert isinstance(y_test, pd.DataFrame) or isinstance(y_test, pd.Series) or isinstance(y_test, np.ndarray)
@@ -102,7 +102,7 @@ def RegrAccuracy(y_test, y_test_pred, y_train, y_train_pred, results_dir):
 if __name__ == "__main__":
     scatter_test = pd.read_csv("results/rf/scatter_test.csv", encoding = "utf-8")
     scatter_train = pd.read_csv("results/rf/scatter_train.csv", encoding = "utf-8")
-    RegrAccuracy(
+    regr_accuracy(
         y_test = scatter_test["y_test"],
         y_test_pred = scatter_test["y_test_pred"],
         y_train = scatter_train["y_train"],

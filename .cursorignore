@@ -1,45 +1,10 @@
-# Self defined
-catboost_info/
-.DS_Store
-AutogluonModels/
+# Cursor IDE specific ignores
 
 # Ignore all CSV files
 *.csv
 
-# Directories to ignore
-results/
-encoding/
-__pypackages__/
-__pycache__/
-build/
-dist/
-*.egg-info/
-
-# Python cache files
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Environment directories
-.env
-.venv
-env/
-venv/
-ENV/
-
-# Cache and temp directories
-.cache
-.pytest_cache/
-.mypy_cache/
-.ipynb_checkpoints
-
-# R specific
-.Rhistory
-.RData
-.Ruserdata
-.Rproj.user/
-
 # Ignore LICENSE file
-LICENSE 
+LICENSE
+
+# Include reference to .gitignore to reuse its patterns
+# (The patterns from .gitignore are automatically applied) 

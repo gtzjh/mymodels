@@ -3,7 +3,7 @@ import pandas as pd
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 import yaml, pathlib
-from accuracy import RegrAccuracy
+from accuracy import regr_accuracy
 from encoder import Encoder
 from joblib import Parallel, delayed
 from regressors import Regrs
@@ -203,6 +203,6 @@ class Pipeline:
         # 评估并保存结果
         _y_test_pred = opt_model.predict(_final_x_test)    # 测试集上的准确度
         _y_train_pred = opt_model.predict(self.final_x_train)  # 训练集上的准确度
-        RegrAccuracy(y_test, _y_test_pred, self.y_train, _y_train_pred, self.results_dir)
+        regr_accuracy(y_test, _y_test_pred, self.y_train, _y_train_pred, self.results_dir)
         
         return None
