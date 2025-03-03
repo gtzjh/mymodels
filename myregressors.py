@@ -11,7 +11,7 @@ from catboost import CatBoostRegressor
 """每个模型的static_params都最好不要为空"""
 
 
-class Regrs:
+class MyRegressors:
     def __init__(self, model_name: str, random_state: int, cat_features: list[str] | None = None):
         """
         Initialize the Regrs class.
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     
     # Example 1: Basic usage
     model_name = "rf"  # Random Forest
-    regrs = Regrs(model_name, random_state=42)
+    regrs = MyRegressors(model_name, random_state=42)
     model_obj, param_space, static_params = regrs.get()
     
     print(f"Input: model_name='{model_name}', random_state=42")
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     # Example 2: With categorical features
     print("\nWith categorical features:")
     cat_features = ["category1", "category2"]
-    cat_regrs = Regrs("cat", random_state=42, cat_features=cat_features)
+    cat_regrs = MyRegressors("cat", random_state=42, cat_features=cat_features)
     _, _, cat_params = cat_regrs.get()
     
     print(f"Input: model_name='cat', cat_features={cat_features}")

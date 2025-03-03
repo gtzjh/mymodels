@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
+import pathlib
+
 from data_loader import data_loader
 from myshap import myshap
-from pipeline import Pipeline
-import pathlib
+from myoptimizer import MyOptimizer
 
 
 """
@@ -11,7 +12,7 @@ Machine Learning Pipeline for Model Training and Evaluation
 A class that handles data loading, model training, and evaluation with SHAP analysis.
 Supports various regression models with hyperparameter optimization and cross-validation.
 """
-class MyModels:
+class MyPipeline:
     def __init__(self, file_path, y, x_list, model, results_dir,
                  cat_features: None | list[str] = None, encoder_method=None, trials=50, test_ratio=0.3,
                  shap_ratio=0.3, cross_valid=5, random_state=0):
@@ -77,7 +78,7 @@ class MyModels:
 
     def optimize(self):
         """Optimize and evaluate the model"""
-        optimizer = Pipeline(
+        optimizer = MyOptimizer(
             cv=self.cross_valid,
             random_state=self.random_state,
             trials=self.trials,
@@ -137,7 +138,7 @@ if __name__ == "__main__":
 
     def test_model(i, e):
         print(f"Running model: {i}, encoder: {e}")
-        the_model = MyModels(
+        the_model = MyPipeline(
             file_path = "data.csv",
             y = "y",
             x_list = list(range(1, 18)),

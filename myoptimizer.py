@@ -6,10 +6,11 @@ import yaml, pathlib
 from accuracy import regr_accuracy
 from encoder import Encoder
 from joblib import Parallel, delayed
-from regressors import Regrs
 import optuna
 from functools import partial
 import json
+
+from myregressors import MyRegressors
 
 
 
@@ -25,11 +26,11 @@ def trans_category(X, y, _cat_features: list[str] | None, _encoder_method: str |
 
 
 
-class Pipeline:
+class MyOptimizer:
     """
     -> __init__()
     -> fit()
-        -> Regrs()  # Regrs() is a class that contains all the models
+        -> MyRegressors()  # MyRegressors() is a class that contains all the models
             -> _optimizer()
                 -> _objective()
                     -> _single_fold()
@@ -79,8 +80,12 @@ class Pipeline:
         self.encoder = None
         self.final_x_train = self.x_train  # The training set which is for final prediction after encoding
 
-        # Select model and load parameters
-        self.model_obj, param_space, static_params = Regrs(self.model_name, self.random_state, self.cat_features).get()
+        # Select model and load parameter space and static parameters
+        self.model_obj, param_space, static_params = MyRegressors(
+            model_name = self.model_name,
+            random_state = self.random_state,
+            cat_features = self.cat_features
+        ).get()
 
         # Execute the optimization
         optuna_study = self._optimizer(param_space, static_params)
