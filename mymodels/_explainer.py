@@ -9,7 +9,7 @@ matplotlib.use('Agg')
 plt.rc('font', family = 'Times New Roman')
 
 
-class MySHAP:
+class MyExplainer:
     """
     SHAP Visualization Functions Comparison:
     
@@ -48,7 +48,7 @@ class MySHAP:
         self.model_object = model_object
         self.model_name = model_name
         self.shap_data = shap_data
-        self.results_dir = results_dir
+        self.results_dir = pathlib.Path(results_dir)
 
         # Calculate the SHAP values at the initialization stage.
         self.explainer = self._set_explainer()

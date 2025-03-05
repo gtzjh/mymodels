@@ -3,13 +3,13 @@ import pandas as pd
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 import yaml, pathlib
-from encoder import Encoder
 from joblib import Parallel, delayed
 import optuna
 from functools import partial
 import json
 
 from mymodels._regressors import MyRegressors
+from mymodels._encoder import Encoder
 
 
 
@@ -26,16 +26,6 @@ def trans_category(X, y, _cat_features: list[str] | None, _encoder_method: str |
 
 
 class MyOptimizer:
-    """
-    -> __init__()
-    -> fit()
-        -> MyRegressors()  # MyRegressors() is a class that contains all the models
-            -> _optimizer()
-                -> _objective()
-                    -> _single_fold()
-    -> evaluate()
-    """
-
     def __init__(self, cv: int, random_state: int, trials: int, results_dir: str):
         """A class for training and optimizing various regression models.
         Initialize the Regr class.

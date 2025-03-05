@@ -2,7 +2,7 @@ from mymodels.pipeline import MyPipeline
 
 
 def main():
-    the_model = MyPipeline(
+    the_pipeline = MyPipeline(
         file_path = "data.csv",
         y = "y",
         x_list = list(range(1, 18)),
@@ -16,7 +16,7 @@ def main():
         cross_valid = 5,
         random_state = 0,
     )
-    the_model.run()
+    the_pipeline.run()
     return None
 
 

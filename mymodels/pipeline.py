@@ -1,8 +1,9 @@
 import pathlib
 
-from mymodels.data_loader import data_loader
+from mymodels._data_loader import data_loader
 from mymodels._optimizer import MyOptimizer
-from mymodels._shap import MySHAP
+from mymodels._evaluator import evaluate
+from mymodels._explainer import MyExplainer
 
 
 
@@ -30,7 +31,7 @@ class MyPipeline:
         self.y = y
         self.x_list = x_list
         self.model_name = model_name
-        self.results_dir = results_dir
+        self.results_dir = pathlib.Path(results_dir)
         self.cat_features = cat_features
         self.encoder_method = encoder_method
         self.trials = trials
@@ -67,11 +68,23 @@ class MyPipeline:
             self.cat_features, self.encoder_method
         )
         self.optimal_model = optimizer.optimal_model
+        self.encoder = optimizer.encoder
+    
 
-        optimizer.evaluate(
-            self.optimal_model,
-            self.x_test,
-            self.y_test
+    def evaluate(self):
+        """Evaluate the model
+        the results will be saved in the results_dir,
+        and output to the console
+        """
+        evaluate(
+            model_name=self.model_name,
+            model_obj=self.optimal_model,
+            x_test=self.x_test,
+            y_test=self.y_test,
+            x_train=self.x_train,
+            y_train=self.y_train,
+            results_dir=self.results_dir,
+            encoder_obj=self.encoder
         )
 
 
@@ -83,16 +96,17 @@ class MyPipeline:
             random_state = self.random_state
         )
         # Explain
-        myshap = MySHAP(self.optimal_model, self.model_name, shap_data, self.results_dir)
-        myshap.summary_plot()
-        myshap.dependence_plot()
-        myshap.partial_dependence_plot()
+        explainer = MyExplainer(self.optimal_model, self.model_name, shap_data, self.results_dir)
+        explainer.summary_plot()
+        explainer.dependence_plot()
+        explainer.partial_dependence_plot()
         
         
     def run(self):
         """Execute the whole pipeline"""
         self.load()
         self.optimize()
+        self.evaluate()
         self.explain()
         return None
 
