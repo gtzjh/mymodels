@@ -1,7 +1,7 @@
 import pytest
 from unittest import TestCase
 import numpy as np
-from myregressors import MyRegressors
+from _regressors import MyRegressors
 
 # 测试用数据
 X_sample = np.random.rand(100, 5)

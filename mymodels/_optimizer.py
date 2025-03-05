@@ -3,14 +3,13 @@ import pandas as pd
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 import yaml, pathlib
-from accuracy import regr_accuracy
 from encoder import Encoder
 from joblib import Parallel, delayed
 import optuna
 from functools import partial
 import json
 
-from myregressors import MyRegressors
+from mymodels._regressors import MyRegressors
 
 
 
@@ -185,29 +184,3 @@ class MyOptimizer:
         # Return mean R2 score across all folds
         return np.mean(cv_r2_scores)
 
-
-    def evaluate(self, opt_model, x_test, y_test) -> None:
-        """
-        Evaluate the optimized model and save the results.
-        Parameters:
-            opt_model: The optimized model
-            x_test: The testing features data
-            y_test: The testing target data
-        """
-        # 根据不同情况处理测试数据
-        if self.model_name == "cat":
-            # CatBoost 直接处理分类特征，不需要编码
-            _final_x_test = x_test
-        elif self.encoder is not None:
-            # 其他模型且有编码器时，应用编码
-            _final_x_test = self.encoder.transform(X=x_test)
-        else:
-            # 其他情况，直接使用测试数据
-            _final_x_test = x_test
-        
-        # 评估并保存结果
-        _y_test_pred = opt_model.predict(_final_x_test)    # 测试集上的准确度
-        _y_train_pred = opt_model.predict(self.final_x_train)  # 训练集上的准确度
-        regr_accuracy(y_test, _y_test_pred, self.y_train, _y_train_pred, self.results_dir)
-        
-        return None

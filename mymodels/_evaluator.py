@@ -99,6 +99,36 @@ def regr_accuracy(y_test, y_test_pred, y_train, y_train_pred, results_dir):
 
     return None
 
+
+def evaluate(
+    model_name: str,
+    opt_model,
+    x_test: pd.DataFrame,
+    y_test,
+    x_train: pd.DataFrame,
+    y_train,
+    results_dir: str | pathlib.Path,
+    encoder = None,
+) -> None:
+    
+    _final_x_test = x_test
+    _final_x_train = x_train
+
+    if model_name != "cat":
+        if encoder is not None:
+            _final_x_test = encoder.transform(X=x_test)
+            _final_x_train = encoder.transform(X=x_train)
+
+    
+    # 评估并保存结果
+    _y_test_pred = opt_model.predict(_final_x_test)    # 测试集上的准确度
+    _y_train_pred = opt_model.predict(_final_x_train)  # 训练集上的准确度
+    regr_accuracy(y_test, _y_test_pred, y_train, _y_train_pred, results_dir)
+    
+    return None
+
+
+"""
 if __name__ == "__main__":
     scatter_test = pd.read_csv("results/rf/scatter_test.csv", encoding = "utf-8")
     scatter_train = pd.read_csv("results/rf/scatter_train.csv", encoding = "utf-8")
@@ -109,3 +139,4 @@ if __name__ == "__main__":
         y_train_pred = scatter_train["y_train_pred"],
         results_dir = "",
     )
+"""
