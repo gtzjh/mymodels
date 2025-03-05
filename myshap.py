@@ -38,24 +38,21 @@ class MySHAP:
     Recommendation: Use dependence_plot for most cases, scatter_plot for custom combinations
     """
 
-    def __init__(self, model_object, model_name, shap_data, results_dir):
+    def __init__(
+            self,
+            model_object,
+            model_name: str,
+            shap_data: pd.DataFrame,
+            results_dir: str | pathlib.Path
+        ):
         self.model_object = model_object
         self.model_name = model_name
         self.shap_data = shap_data
         self.results_dir = results_dir
-        self._validate_inputs()
 
         # Calculate the SHAP values at the initialization stage.
         self.explainer = self._set_explainer()
         self.shap_values = self._calculate_shap_values()
-
-
-    def _validate_inputs(self):
-        assert isinstance(self.model_name, str)
-        assert isinstance(self.shap_data, pd.DataFrame)
-        assert isinstance(self.results_dir, pathlib.Path) or isinstance(self.results_dir, str)
-        self.results_dir = pathlib.Path(self.results_dir)
-        self.results_dir.mkdir(parents = True, exist_ok = True)
 
 
     def _set_explainer(self):

@@ -26,7 +26,7 @@ class MyPipeline:
             test_ratio: float = 0.3,
             shap_ratio: float = 0.3,
             cross_valid: int = 5,
-            random_state: int | None = 0
+            random_state: int = 0
         ):
         self.file_path = file_path
         self.y = y
@@ -79,13 +79,12 @@ class MyPipeline:
 
     def explain(self):
         """Use SHAP for explanation"""
-        np.random.seed(self.random_state)
-        all_data = pd.concat([self.x_train, self.x_test])
-        
-        # 直接随机选择数据行，而不是通过索引
-        shap_sample_size = int(len(all_data) * self.shap_ratio)
-        shap_data = all_data.sample(n=shap_sample_size, random_state=self.random_state)
-        
+        # Sampling
+        shap_data = self.x_test.sample(
+            n = int(len(self.x_test) * self.shap_ratio),
+            random_state = self.random_state
+        )
+        # Explain
         myshap = MySHAP(self.optimal_model, self.model_name, shap_data, self.results_dir)
         myshap.summary_plot()
         myshap.dependence_plot()
