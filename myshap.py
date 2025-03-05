@@ -1,15 +1,15 @@
 import pandas as pd
 import shap
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pathlib
 
 shap.initjs()
+matplotlib.use('Agg')
 plt.rc('font', family = 'Times New Roman')
 
 
-def myshap(model, model_type, shap_data, results_dir):
+class MySHAP:
     """
     SHAP Visualization Functions Comparison:
     
@@ -37,64 +37,86 @@ def myshap(model, model_type, shap_data, results_dir):
     
     Recommendation: Use dependence_plot for most cases, scatter_plot for custom combinations
     """
-    # Check input
-    assert isinstance(shap_data, pd.DataFrame)
-    assert isinstance(results_dir, pathlib.Path) or isinstance(results_dir, str)
-    results_dir = pathlib.Path(results_dir)
-    results_dir.mkdir(parents = True, exist_ok = True)
 
-    # Set different explainers for different models
-    if model_type in ["svr", "knr", "mlp", "ada"]:
-        # For KernelExplainer, need to pass prediction function and data
-        explainer = shap.KernelExplainer(model.predict, shap_data)
-        shap_values = explainer.shap_values(shap_data)
-    else:
-        # For TreeExplainer
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(shap_data)
+    def __init__(self, model_object, model_name, shap_data, results_dir):
+        self.model_object = model_object
+        self.model_name = model_name
+        self.shap_data = shap_data
+        self.results_dir = results_dir
+        self._validate_inputs()
 
-    # Summary plot
-    shap.summary_plot(shap_values, shap_data, show = False)
-    plt.tight_layout()
-    plt.savefig(results_dir.joinpath('shap_summary.jpg'), dpi = 500)
-    plt.close()
+        # Calculate the SHAP values at the initialization stage.
+        self.explainer = self._set_explainer()
+        self.shap_values = self._calculate_shap_values()
 
-    # Partial Dependency Plot
-    results_dir.joinpath("partial_dependence_plots") \
-               .mkdir(parents = True, exist_ok = True)
-    for _feature_name in shap_data.columns:
-        shap.partial_dependence_plot(
-            _feature_name,
-            model.predict,
-            shap_data,
-            model_expected_value = True,
-            feature_expected_value = True,
-            ice = False,
-            show = False
-        )
-        plt.tight_layout()
-        plt.savefig(results_dir.joinpath("partial_dependence_plots")\
-                    .joinpath(_feature_name + '.jpg'), dpi = 500)
-        plt.close()
+
+    def _validate_inputs(self):
+        assert isinstance(self.model_name, str)
+        assert isinstance(self.shap_data, pd.DataFrame)
+        assert isinstance(self.results_dir, pathlib.Path) or isinstance(self.results_dir, str)
+        self.results_dir = pathlib.Path(self.results_dir)
+        self.results_dir.mkdir(parents = True, exist_ok = True)
+
+
+    def _set_explainer(self):
+        if self.model_name in ["svr", "knr", "mlp", "ada"]:
+            explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)
+        elif self.model_name in ["cat", "rf", "dt", "lgb", "gbdt", "xgb"]:
+            explainer = shap.TreeExplainer(self.model_object)
+        else:
+            raise ValueError(f"Unsupported model: {self.model_name}")
+        return explainer
     
-    # Dependence Plot
-    results_dir.joinpath("dependence_plots") \
-               .mkdir(parents = True, exist_ok = True)
-    for _feature_name in shap_data.columns:
-        shap.dependence_plot(
-            _feature_name,
-            shap_values,
-            shap_data,
-            show = False
-        )
+
+    def _calculate_shap_values(self):
+        _shap_values = self.explainer.shap_values(self.shap_data)
+        return _shap_values
+
+
+    def summary_plot(self):
+        """Summary Plot"""
+        shap.summary_plot(self.shap_values, self.shap_data, show = False)
         plt.tight_layout()
-        plt.savefig(results_dir.joinpath("dependence_plots")\
-                    .joinpath(_feature_name + '.jpg'), dpi = 500)
+        plt.savefig(self.results_dir.joinpath('shap_summary.jpg'), dpi = 500)
         plt.close()
+        return None
 
-    # Clean up all matplotlib figures and cache
-    plt.close('all')
-    plt.clf()
 
-    # There is no scatter plot here.
-    return None
+    def dependence_plot(self):
+        """Dependence Plot"""
+        _results_dir = self.results_dir.joinpath("dependence_plots")
+        _results_dir.mkdir(parents = True, exist_ok = True)
+        for _feature_name in self.shap_data.columns:
+            shap.dependence_plot(
+                _feature_name,
+                self.shap_values,
+                self.shap_data,
+                show = False
+            )
+            plt.tight_layout()
+            plt.savefig(_results_dir.joinpath(_feature_name + '.jpg'), dpi = 500)
+            plt.close()
+        return None
+    
+
+    def partial_dependence_plot(self):
+        """Partial Dependence Plot
+        Partial Dependence Plot is not supported for categorical features.
+        """
+        _results_dir = self.results_dir.joinpath("partial_dependence_plots")
+        _results_dir.mkdir(parents = True, exist_ok = True)
+        for _feature_name in self.shap_data.columns:
+            if pd.api.types.is_numeric_dtype(self.shap_data[_feature_name]):
+                shap.partial_dependence_plot(
+                    _feature_name,
+                    self.model_object.predict,
+                    self.shap_data,
+                    model_expected_value = True,
+                    feature_expected_value = False,
+                    ice = False,
+                    show = False
+                )
+                plt.tight_layout()
+                plt.savefig(_results_dir.joinpath(_feature_name + '.jpg'), dpi = 500)
+                plt.close()
+        return None 

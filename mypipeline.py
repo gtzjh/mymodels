@@ -3,23 +3,35 @@ import pandas as pd
 import pathlib
 
 from data_loader import data_loader
-from myshap import myshap
 from myoptimizer import MyOptimizer
+from myshap import MySHAP
 
 
-"""
-Machine Learning Pipeline for Model Training and Evaluation
-A class that handles data loading, model training, and evaluation with SHAP analysis.
-Supports various regression models with hyperparameter optimization and cross-validation.
-"""
+
 class MyPipeline:
-    def __init__(self, file_path, y, x_list, model, results_dir,
-                 cat_features: None | list[str] = None, encoder_method=None, trials=50, test_ratio=0.3,
-                 shap_ratio=0.3, cross_valid=5, random_state=0):
+    """Machine Learning Pipeline for Model Training and Evaluation
+    A class that handles data loading, model training, and evaluation with SHAP analysis.
+    Supports various regression models with hyperparameter optimization and cross-validation.
+    """
+    def __init__(
+            self, 
+            file_path: str | pathlib.Path, 
+            y: str | int, 
+            x_list: list[str | int], 
+            model_name: str, 
+            results_dir: str | pathlib.Path,
+            cat_features: None | list[str] = None, 
+            encoder_method: str | None = None,
+            trials: int = 50,
+            test_ratio: float = 0.3,
+            shap_ratio: float = 0.3,
+            cross_valid: int = 5,
+            random_state: int | None = 0
+        ):
         self.file_path = file_path
         self.y = y
         self.x_list = x_list
-        self.model = model
+        self.model_name = model_name
         self.results_dir = results_dir
         self.cat_features = cat_features
         self.encoder_method = encoder_method
@@ -28,40 +40,6 @@ class MyPipeline:
         self.shap_ratio = shap_ratio
         self.cross_valid = cross_valid
         self.random_state = random_state
-        self._validate_inputs()
-    
-    def _validate_inputs(self):
-        """Validate input parameters"""
-        assert isinstance(self.file_path, (str, pathlib.Path)), \
-            "`file_path` must be string or Path object"
-        assert isinstance(self.y, (str, int)), \
-            "`y` must be either a string or index within the whole dataset"
-        assert (isinstance(self.x_list, list) and len(self.x_list) > 0) \
-            and all(isinstance(x, (str, int)) for x in self.x_list), \
-            "`x_list` must be non-empty list of strings or integers"
-        assert isinstance(self.model, str) and self.model in ["cat", "rf", "dt", "lgb", "gbdt", "xgb", "ada", "svr", "knr", "mlp"], \
-            "`model` must be a string and must be one of ['cat', 'rf', 'dt', 'lgb', 'gbdt', 'xgb', 'ada', 'svr', 'knr', 'mlp']"
-        assert isinstance(self.results_dir, (str, pathlib.Path)), \
-            "`results_dir` must be string or Path object"
-        assert isinstance(self.cat_features, list) or self.cat_features is None, \
-            "`cat_features` must be a list or None"
-        
-        # Add validation for encoder_method
-        VALID_ENCODERS = ['onehot', 'label', 'target', 'frequency', 'binary', 'ordinal']
-        if self.cat_features is not None:
-            assert isinstance(self.encoder_method, str) and self.encoder_method in VALID_ENCODERS, \
-                f"`encoder_method` must be one of {VALID_ENCODERS} when cat_features is not None"
-        
-        assert isinstance(self.trials, int) and self.trials > 0, \
-            "`trials` must be a positive integer"
-        assert isinstance(self.test_ratio, float) and 0.0 < self.test_ratio < 1.0, \
-            "`test_ratio` must be a float between 0 and 1"
-        assert isinstance(self.shap_ratio, float) and 0.0 < self.shap_ratio < 1.0, \
-            "`shap_ratio` must be a float between 0 and 1"
-        assert isinstance(self.cross_valid, int) and self.cross_valid > 0, \
-            "`cv` must be a positive integer"
-        assert isinstance(self.random_state, int), \
-            "`random_state` must be an integer"
         
 
     def load(self):
@@ -87,7 +65,7 @@ class MyPipeline:
 
         optimizer.fit(
             self.x_train, self.y_train,
-            self.model,
+            self.model_name,
             self.cat_features, self.encoder_method
         )
         self.optimal_model = optimizer.optimal_model
@@ -108,18 +86,43 @@ class MyPipeline:
         shap_sample_size = int(len(all_data) * self.shap_ratio)
         shap_data = all_data.sample(n=shap_sample_size, random_state=self.random_state)
         
-        myshap(self.optimal_model, self.model, shap_data, self.results_dir)
+        myshap = MySHAP(self.optimal_model, self.model_name, shap_data, self.results_dir)
+        myshap.summary_plot()
+        myshap.dependence_plot()
+        myshap.partial_dependence_plot()
         
         
     def run(self):
         """Execute the whole pipeline"""
         self.load()
         self.optimize()
-        # self.explain()
+        self.explain()
         return None
 
 
 if __name__ == "__main__":
+
+    def test_model(i, e):
+        print(f"Running model: {i}, encoder: {e}")
+        the_model = MyPipeline(
+            file_path = "data.csv",
+            y = "y",
+            x_list = list(range(1, 18)),
+            model_name = i,
+            results_dir = "results/" + i + "_" + e,
+            cat_features = ['x16', 'x17'],
+            encoder_method = e,
+            trials = 20,
+            test_ratio = 0.3,
+            shap_ratio = 0.3,
+            cross_valid = 5,
+            random_state = 0,
+        )
+        the_model.run()
+        return None
+    test_model("cat", "frequency")
+
+
     """
     This code performs a comprehensive machine learning model evaluation test:
     1. Tests 10 different machine learning models: Support Vector Regression (svr), K-Nearest Neighbors Regression (knr), 
@@ -136,13 +139,14 @@ if __name__ == "__main__":
        individual models or encoding methods fail
     """
 
+    """
     def test_model(i, e):
         print(f"Running model: {i}, encoder: {e}")
         the_model = MyPipeline(
             file_path = "data.csv",
             y = "y",
             x_list = list(range(1, 18)),
-            model = i,
+            model_name = i,
             results_dir = "results/" + i + "_" + e,
             cat_features = ['x16', 'x17'],
             encoder_method = e,
@@ -186,3 +190,5 @@ if __name__ == "__main__":
                         log_file.write("-" * 80 + "\n")
                     print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
                     continue
+    """
+    
