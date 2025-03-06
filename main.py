@@ -1,16 +1,16 @@
 from mymodels.pipeline import MyPipeline
 
 
-def single_test():
+def single_test(model_name, encoder_method):
     the_pipeline = MyPipeline(
         file_path = "data.csv",
-        y = "y",
+        y = "y",    
         x_list = list(range(1, 18)),
-        model_name = "cat",
-        results_dir = "results/cat",
+        model_name = model_name,
+        results_dir = "results/" + model_name + "_" + encoder_method,
         cat_features = ['x16', 'x17'],
-        encoder_method = None,
-        trials = 100,
+        encoder_method = encoder_method,
+        trials = 20,
         test_ratio = 0.3,
         shap_ratio = 1,
         cross_valid = 5,
@@ -37,8 +37,8 @@ def loop_test():
        individual models or encoding methods fail
     """
     for i in [
-        "svr", "knr", "mlp", "ada", "dt", "gbdt", "xgb", "lgb", 
-        "rf",
+        "svr", "knr", "mlp", "ada",
+        "dt", "gbdt", "xgb", "lgb", "rf",
         "cat"
     ]:
         if i == "cat":  # 如果模型是CatBoost，则不进行编码
@@ -103,8 +103,8 @@ def loop_test():
 
 if __name__ == "__main__":
     # Test on a single model.
-    # single_test()
+    single_test("rf", "onehot")
 
     # Test on all models and encoders.
-    loop_test()
+    # loop_test()
     

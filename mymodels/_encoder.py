@@ -41,6 +41,7 @@ class Encoder():
             X: DataFrame to fit
             y: Target values (used for target encoding)
             cat_cols: Category columns to encode
+
         Returns:
             self
         """
@@ -97,8 +98,7 @@ class Encoder():
 
 
     def transform(self, X):
-        """
-        Apply encoding
+        """Apply encoding
         Parameters:
             X: DataFrame to transform
         Returns:

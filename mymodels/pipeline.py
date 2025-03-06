@@ -19,7 +19,7 @@ class MyPipeline:
             results_dir: str | pathlib.Path,
             cat_features: None | list[str] = None, 
             encoder_method: str | None = None,
-            trials: int = 50,
+            trials: int = 100,
             test_ratio: float = 0.3,
             shap_ratio: float = 0.3,
             cross_valid: int = 5,
@@ -87,13 +87,19 @@ class MyPipeline:
 
     def explain(self):
         """Use SHAP for explanation"""
-        # Sampling
+        # Sampling for reduce the time cost
         shap_data = self.x_test.sample(
             n = int(len(self.x_test) * self.shap_ratio),
             random_state = self.random_state
         )
-        # Explain
-        explainer = MyExplainer(self.optimal_model, self.model_name, shap_data, self.results_dir)
+        # Explain the model
+        explainer = MyExplainer(
+            self.optimal_model,
+            self.model_name,
+            shap_data,
+            self.results_dir,
+            self.encoder
+        )
         explainer.summary_plot()
         explainer.dependence_plot()
         explainer.partial_dependence_plot()

@@ -42,18 +42,27 @@ class MyExplainer:
             model_object,
             model_name: str,
             shap_data: pd.DataFrame,
-            results_dir: str | pathlib.Path
+            results_dir: str | pathlib.Path,
+            encoder: object = None,
         ):
         self.model_object = model_object
         self.model_name = model_name
         self.shap_data = shap_data
         self.results_dir = pathlib.Path(results_dir)
+        self.encoder = encoder
 
         # Calculate the SHAP values at the initialization stage.
         self.explainer = self._set_explainer()
         self.shap_values = self._calculate_shap_values()
 
+        """Transform categorical data to numerical data
+        因为计算SHAP值时输入的数据要与训练数据保持一致
+        所以需要将测试数据中的分类变量转换为数值变量。
+        """
+        if self.model_name != "cat" and self.encoder is not None:
+            self.shap_data = self.encoder.transform(self.shap_data)
 
+    
     def _set_explainer(self):
         if self.model_name in ["svr", "knr", "mlp", "ada"]:
             explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)

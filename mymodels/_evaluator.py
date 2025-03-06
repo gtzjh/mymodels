@@ -118,10 +118,9 @@ def evaluate(
     _final_x_test = x_test
     _final_x_train = x_train
 
-    if model_name != "cat":
-        if encoder_obj is not None:
-            _final_x_test = encoder_obj.transform(X=x_test)
-            _final_x_train = encoder_obj.transform(X=x_train)
+    if model_name != "cat" and encoder_obj is not None:
+        _final_x_test = encoder_obj.transform(X=x_test)
+        _final_x_train = encoder_obj.transform(X=x_train)
 
     # 评估并保存结果
     _y_test_pred = model_obj.predict(_final_x_test)    # 测试集上的准确度
