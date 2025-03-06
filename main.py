@@ -10,9 +10,9 @@ def main():
         results_dir = "results/cat",
         cat_features = ['x16', 'x17'],
         encoder_method = None,
-        trials = 20,
+        trials = 100,
         test_ratio = 0.3,
-        shap_ratio = 0.3,
+        shap_ratio = 1,
         cross_valid = 5,
         random_state = 0,
     )
