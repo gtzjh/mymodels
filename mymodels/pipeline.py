@@ -1,10 +1,6 @@
 import pathlib
 
-from mymodels._data_loader import data_loader
-from mymodels._optimizer import MyOptimizer
-from mymodels._evaluator import evaluate
-from mymodels._explainer import MyExplainer
-
+from mymodels import data_loader, MyOptimizer, evaluate, MyExplainer
 
 
 class MyPipeline:
@@ -54,14 +50,13 @@ class MyPipeline:
 
 
     def optimize(self):
-        """Optimize and evaluate the model"""
+        """Optimize, output the optimal model and encoder objects as well"""
         optimizer = MyOptimizer(
             cv=self.cross_valid,
             random_state=self.random_state,
             trials=self.trials,
             results_dir=self.results_dir,
         )
-
         optimizer.fit(
             self.x_train, self.y_train,
             self.model_name,

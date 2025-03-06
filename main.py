@@ -1,7 +1,7 @@
 from mymodels.pipeline import MyPipeline
 
 
-def main():
+def single_test():
     the_pipeline = MyPipeline(
         file_path = "data.csv",
         y = "y",
@@ -20,10 +20,7 @@ def main():
     return None
 
 
-if __name__ == "__main__":
-    main()
-
-
+def loop_test():
     """
     The following code performs a comprehensive machine learning model evaluation test:
     1. Tests 10 different machine learning models: Support Vector Regression (svr), K-Nearest Neighbors Regression (knr), 
@@ -39,27 +36,6 @@ if __name__ == "__main__":
     7. All errors are logged to the error.log file to ensure the testing process continues even if 
        individual models or encoding methods fail
     """
-
-    """
-    def test_model(i, e):
-        print(f"Running model: {i}, encoder: {e}")
-        the_model = MyPipeline(
-            file_path = "data.csv",
-            y = "y",
-            x_list = list(range(1, 18)),
-            model_name = i,
-            results_dir = "results/" + i + "_" + e,
-            cat_features = ['x16', 'x17'],
-            encoder_method = e,
-            trials = 100,
-            test_ratio = 0.3,
-            shap_ratio = 0.3,
-            cross_valid = 5,
-            random_state = 0,
-        )
-        the_model.run()
-        return None
-    
     for i in [
         "svr", "knr", "mlp", "ada", "dt", "gbdt", "xgb", "lgb", 
         "rf",
@@ -67,7 +43,22 @@ if __name__ == "__main__":
     ]:
         if i == "cat":  # 如果模型是CatBoost，则不进行编码
             try:
-                test_model(i, "frequency")  # 实际上这个frequency是不会生效
+                print(f"Running model: {i}")
+                the_model = MyPipeline(
+                    file_path = "data.csv",
+                    y = "y",
+                    x_list = list(range(1, 18)),
+                    model_name = i,
+                    results_dir = "results/" + i,
+                    cat_features = ['x16', 'x17'],
+                    encoder_method = None,
+                    trials = 100,
+                    test_ratio = 0.3,
+                    shap_ratio = 1,
+                    cross_valid = 5,
+                    random_state = 0,
+                )
+                the_model.run()
             except Exception as error:
                 # 记录错误信息到error.log文件
                 with open("error.log", "a") as log_file:
@@ -83,7 +74,22 @@ if __name__ == "__main__":
                 "target"
             ]:
                 try:
-                    test_model(i, e)
+                    print(f"Running model: {i}, encoder: {e}")
+                    the_model = MyPipeline(
+                        file_path = "data.csv",
+                        y = "y",
+                        x_list = list(range(1, 18)),
+                        model_name = i,
+                        results_dir = "results/" + i + "_" + e,
+                        cat_features = ['x16', 'x17'],
+                        encoder_method = e,
+                        trials = 100,
+                        test_ratio = 0.3,
+                        shap_ratio = 1,
+                        cross_valid = 5,
+                        random_state = 0,
+                    )
+                    the_model.run()
                 except Exception as error:
                     with open("error.log", "a") as log_file:
                         error_message = f"Error with model={i}, encoder={e}: {str(error)}\n"
@@ -91,6 +97,14 @@ if __name__ == "__main__":
                         log_file.write("-" * 80 + "\n")
                     print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
                     continue
-    """
-    
+    return None
 
+
+
+if __name__ == "__main__":
+    # Test on a single model.
+    # single_test()
+
+    # Test on all models and encoders.
+    loop_test()
+    

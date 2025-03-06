@@ -10,23 +10,22 @@ plt.rc('font', family = 'Times New Roman')
 
 
 class MyExplainer:
-    """
-    SHAP Visualization Functions Comparison:
+    """SHAP Visualization Functions Comparison:
     
     1. shap.partial_dependence_plot:
-    - Shows average marginal effect of a feature on model output
-    - Similar to traditional Partial Dependence Plot (PDP)
-    - X-axis: Feature values, Y-axis: Predicted values
+      - Shows average marginal effect of a feature on model output
+      - Similar to traditional Partial Dependence Plot (PDP)
+      - X-axis: Feature values, Y-axis: Predicted values
     
     2. shap.dependence_plot:
-    - Shows relationship between feature values and SHAP values
-    - Automatically detects interactions (color-codes 2nd influential feature)
-    - X-axis: Feature values, Y-axis: SHAP values
+      - Shows relationship between feature values and SHAP values
+      - Automatically detects interactions (color-codes 2nd influential feature)
+      - X-axis: Feature values, Y-axis: SHAP values
     
     3. shap.scatter_plot:
-    - Basic SHAP value visualization
-    - Requires manual specification of x/y axes
-    - No automatic interaction detection
+      - Basic SHAP value visualization
+      - Requires manual specification of x/y axes
+      - No automatic interaction detection
     
     Key Differences:
     | Function                | Data Source     | SHAP Values | Auto-Interaction | Output Scale |
