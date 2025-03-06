@@ -1,7 +1,9 @@
 import pathlib
 
-from mymodels import data_loader, MyOptimizer, evaluate, MyExplainer
-
+from ._data_loader import data_loader
+from ._optimizer import MyOptimizer
+from ._evaluator import evaluate
+from ._explainer import MyExplainer
 
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation

@@ -83,7 +83,7 @@ def loop_test():
                         results_dir = "results/" + i + "_" + e,
                         cat_features = ['x16', 'x17'],
                         encoder_method = e,
-                        trials = 100,
+                        trials = 40,
                         test_ratio = 0.3,
                         shap_ratio = 1,
                         cross_valid = 5,

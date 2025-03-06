@@ -1,12 +1,3 @@
-"""
-Category variable encoding module
-Supported methods: OneHot, Label, Target, Frequency, Binary, Ordinal
-
-Note:
-1. In machine learning, the encoder from the training set should also be used during the testing phase to avoid data leakage.
-2. Similarly, during cross-validation, a separate encoder should be constructed for each fold.
-"""
-
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import category_encoders as ce
@@ -17,6 +8,13 @@ import numpy as np
 
 
 class Encoder():
+    """Category variable encoding module
+    Supported methods: OneHot, Label, Target, Frequency, Binary, Ordinal
+
+    Note:
+    1. In machine learning, the encoder from the training set should also be used during the testing phase to avoid data leakage.
+    2. Similarly, during cross-validation, a separate encoder should be constructed for each fold.
+    """
     def __init__(self, method='onehot', target_col=None):
         """
         param method: Encoding method ['onehot','label','target','frequency','binary','ordinal']

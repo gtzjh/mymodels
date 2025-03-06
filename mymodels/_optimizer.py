@@ -8,8 +8,8 @@ import optuna
 from functools import partial
 import json
 
-from mymodels._regressors import MyRegressors
-from mymodels._encoder import Encoder
+from ._regressors import MyRegressors
+from ._encoder import Encoder
 
 
 
