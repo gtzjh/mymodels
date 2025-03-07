@@ -83,7 +83,7 @@ def loop_test():
                         results_dir = "results/" + i + "_" + e,
                         cat_features = ['x16', 'x17'],
                         encoder_method = e,
-                        trials = 40,
+                        trials = 50,
                         test_ratio = 0.3,
                         shap_ratio = 1,
                         cross_valid = 5,
@@ -103,8 +103,8 @@ def loop_test():
 
 if __name__ == "__main__":
     # Test on a single model.
-    single_test("rf", "onehot")
+    # single_test("rf", "onehot")
 
     # Test on all models and encoders.
-    # loop_test()
+    loop_test()
     
