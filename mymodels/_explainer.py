@@ -51,31 +51,32 @@ class MyExplainer:
         self.results_dir = pathlib.Path(results_dir)
         self.encoder = encoder
 
-        # Calculate the SHAP values at the initialization stage.
-        self.explainer = self._set_explainer()
-        self.shap_values = self._calculate_shap_values()
+        # Statement the shap values
+        self.shap_values = None
 
+        return None
+        
+    
+    def explain(self):
         """Transform categorical data to numerical data
-        因为计算SHAP值时输入的数据要与训练数据保持一致
-        所以需要将测试数据中的分类变量转换为数值变量。
+        Because the input data for calculating SHAP values must be consistent with the training data,
+        so we need to convert the categorical variables in the test data to numerical variables.
         """
         if self.model_name != "cat" and self.encoder is not None:
             self.shap_data = self.encoder.transform(self.shap_data)
 
-    
-    def _set_explainer(self):
+        # Set the explainer
         if self.model_name in ["svr", "knr", "mlp", "ada"]:
-            explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)
+            _explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)
         elif self.model_name in ["cat", "rf", "dt", "lgb", "gbdt", "xgb"]:
-            explainer = shap.TreeExplainer(self.model_object)
+            _explainer = shap.TreeExplainer(self.model_object)
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")
-        return explainer
-    
+        
+        # Get shap value
+        self.shap_values = _explainer(self.shap_data).values
 
-    def _calculate_shap_values(self):
-        _shap_values = self.explainer.shap_values(self.shap_data)
-        return _shap_values
+        return None
 
 
     def summary_plot(self):

@@ -10,7 +10,7 @@ def single_test(model_name, encoder_method):
         results_dir = "results/" + model_name + "_" + encoder_method,
         cat_features = ['x16', 'x17'],
         encoder_method = encoder_method,
-        trials = 20,
+        trials = 15,
         test_ratio = 0.3,
         shap_ratio = 1,
         cross_valid = 5,
@@ -52,7 +52,7 @@ def loop_test():
                     results_dir = "results/" + i,
                     cat_features = ['x16', 'x17'],
                     encoder_method = None,
-                    trials = 100,
+                    trials = 50,
                     test_ratio = 0.3,
                     shap_ratio = 1,
                     cross_valid = 5,
@@ -60,13 +60,10 @@ def loop_test():
                 )
                 the_model.run()
             except Exception as error:
-                # 记录错误信息到error.log文件
                 with open("error.log", "a") as log_file:
                     error_message = f"Error with model={i}: {str(error)}\n"
                     log_file.write(error_message)
-                    log_file.write("-" * 80 + "\n")
-                print(f"Error occurred with model={i}. Details logged to error.log")
-                # 继续下一个循环
+                print(error_message)
                 continue
         else:
             for e in [
@@ -94,8 +91,7 @@ def loop_test():
                     with open("error.log", "a") as log_file:
                         error_message = f"Error with model={i}, encoder={e}: {str(error)}\n"
                         log_file.write(error_message)
-                        log_file.write("-" * 80 + "\n")
-                    print(f"Error occurred with model={i}, encoder={e}. Details logged to error.log")
+                    print(error_message)
                     continue
     return None
 
@@ -103,8 +99,8 @@ def loop_test():
 
 if __name__ == "__main__":
     # Test on a single model.
-    # single_test("rf", "onehot")
+    single_test("rf", "onehot")
 
     # Test on all models and encoders.
-    loop_test()
+    # loop_test()
     

@@ -100,6 +100,7 @@ class MyPipeline:
             self.results_dir,
             self.encoder
         )
+        explainer.explain()
         explainer.summary_plot()
         explainer.dependence_plot()
         explainer.partial_dependence_plot()
