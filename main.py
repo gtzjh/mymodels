@@ -12,7 +12,7 @@ def single_test(model_name, encoder_method):
         encoder_method = encoder_method,
         trials = 15,
         test_ratio = 0.3,
-        shap_ratio = 1,
+        shap_ratio = 0.5,
         cross_valid = 5,
         random_state = 0,
     )
@@ -22,19 +22,13 @@ def single_test(model_name, encoder_method):
 
 def loop_test():
     """
-    The following code performs a comprehensive machine learning model evaluation test:
-    1. Tests 10 different machine learning models: Support Vector Regression (svr), K-Nearest Neighbors Regression (knr), 
-       Multi-layer Perceptron (mlp), AdaBoost (ada), Decision Tree (dt), Gradient Boosting Decision Tree (gbdt), 
-       XGBoost (xgb), LightGBM (lgb), Random Forest (rf), and CatBoost (cat)
-    2. For each model, tests 6 different categorical feature encoding methods: frequency encoding (frequency), 
-       one-hot encoding (onehot), label encoding (label), target encoding (target), binary encoding (binary), 
-       and ordinal encoding (ordinal)
-    3. Uses the data.csv dataset, with the 'y' column as the target variable and columns 1-17 as features
-    4. Treats 'x16' and 'x17' columns as categorical features for encoding
-    5. Performs 50 hyperparameter optimization attempts for each model configuration
-    6. Uses 30% of the data as the test set with 5-fold cross-validation
-    7. All errors are logged to the error.log file to ensure the testing process continues even if 
-       individual models or encoding methods fail
+    测试多种机器学习模型和特征编码方法的组合效果:
+    - 包含10种模型：svr, knr, mlp, ada, dt, gbdt, xgb, lgb, rf, cat
+    - 使用6种编码方法处理分类特征：frequency, onehot, label, target, binary, ordinal
+    - 对每种组合进行超参数优化和交叉验证
+    - 错误会记录到error.
+    - 如果模型是CatBoost，则不进行编码
+    - 如果模型是svr, knr, mlp, ada，则shap_ratio=0.1，表示用测试集的10%来计算shap值，其他模型shap_ratio=1
     """
     for i in [
         "svr", "knr", "mlp", "ada",
@@ -70,6 +64,10 @@ def loop_test():
                 "frequency", "onehot", "label", "binary", "ordinal", 
                 "target"
             ]:
+                if i in ["svr", "knr", "mlp", "ada"]:
+                    _shap_ratio = 0.1
+                else:
+                    _shap_ratio = 1
                 try:
                     print(f"Running model: {i}, encoder: {e}")
                     the_model = MyPipeline(
@@ -82,7 +80,7 @@ def loop_test():
                         encoder_method = e,
                         trials = 50,
                         test_ratio = 0.3,
-                        shap_ratio = 1,
+                        shap_ratio = _shap_ratio,
                         cross_valid = 5,
                         random_state = 0,
                     )
@@ -99,8 +97,8 @@ def loop_test():
 
 if __name__ == "__main__":
     # Test on a single model.
-    single_test("rf", "onehot")
+    # single_test("rf", "onehot")
 
     # Test on all models and encoders.
-    # loop_test()
+    loop_test()
     
