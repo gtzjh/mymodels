@@ -56,9 +56,9 @@ class MyRegressors:
     def _SVR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html"""
         param_space = {
-            "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
-            "C": lambda t: t.suggest_float("C", 0.01, 100, log=True),
-            "epsilon": lambda t: t.suggest_float("epsilon", 0.01, 1.0, step=0.01),
+            # "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
+            "C": lambda t: t.suggest_float("C", 1, 200, step=1),
+            "epsilon": lambda t: t.suggest_float("epsilon", 0.1, 10, step=0.1),
         }
         static_params = {
             "verbose": 0,
@@ -123,6 +123,7 @@ class MyRegressors:
         static_params = {
             "random_state": self.random_state,
             "verbose": 0,
+            "n_jobs": -1,
         }
         return param_space, static_params
 
@@ -176,6 +177,7 @@ class MyRegressors:
             "enable_categorical": True if self.cat_features is not None else False,
             "seed": self.random_state,
             "verbosity": 0,
+            "n_jobs": -1,
         }
         return param_space, static_params
 
@@ -218,6 +220,9 @@ class MyRegressors:
             "cat_features": self.cat_features,
             "random_seed": self.random_state,
             "verbose": 0,
+            "allow_writing_files": False,
+            "train_dir": None,
+            "thread_count": -1,
         }
         return param_space, static_params
     

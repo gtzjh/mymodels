@@ -26,7 +26,7 @@ def trans_category(X, y, _cat_features: list[str] | None, _encoder_method: str |
 
 
 class MyOptimizer:
-    def __init__(self, cv: int, random_state: int, trials: int, results_dir: str):
+    def __init__(self, cv: int, random_state: int, trials: int, results_dir: str, n_jobs: int = -1):
         """A class for training and optimizing various regression models.
         Initialize the Regr class.
         Parameters:
@@ -34,12 +34,14 @@ class MyOptimizer:
             random_state (int): Random seed for reproducibility
             trials (int): Number of trials to execute in optuna optimization
             results_dir (str or pathlib.Path): Directory path to store the optimization results
+            n_jobs (int): Number of jobs to run in parallel k-fold cross validation
         """
         self.cv = cv
         self.random_state = random_state
         self.trials = trials
         self.results_dir = pathlib.Path(results_dir)
         self.results_dir.mkdir(parents = True, exist_ok = True)
+        self.n_jobs = n_jobs
 
 
     def fit(self, x_train, y_train, model_name: str, \
@@ -114,6 +116,9 @@ class MyOptimizer:
             _param_space: The parameter space to optimize
             _static_params: Static parameters for the model
         """
+        # 设置日志级别为WARNING，避免输出过多日志
+        optuna.logging.set_verbosity(optuna.logging.WARNING)
+
         # Create an Optuna study
         _study = optuna.create_study(
             direction = "maximize",
@@ -124,7 +129,8 @@ class MyOptimizer:
         _study.optimize(
             partial(self._objective, _param_space=_param_space, _static_params=_static_params),
             n_trials=self.trials,
-            n_jobs=1  # It is not recommended to use n_jobs > 1 in Optuna
+            n_jobs=1,  # It is not recommended to use n_jobs > 1 in Optuna
+            show_progress_bar=True
         )
         
         return _study
@@ -166,7 +172,7 @@ class MyOptimizer:
 
         # Parallel processing for validation. Initialize KFold cross validator
         kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
-        cv_r2_scores = Parallel(n_jobs=-1)(
+        cv_r2_scores = Parallel(n_jobs=self.n_jobs)(
             delayed(_single_fold)(train_idx, val_idx, param)
             for train_idx, val_idx in kf.split(self.x_train)
         )

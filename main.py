@@ -14,7 +14,8 @@ def single_test(model_name, encoder_method):
         test_ratio = 0.3,
         shap_ratio = 0.5,
         cross_valid = 5,
-        random_state = 0,
+        random_state = 6,
+        n_jobs = 5,  # Number of jobs to run in parallel k-fold cross validation
     )
     the_pipeline.run()
     return None
@@ -50,7 +51,8 @@ def loop_test():
                     test_ratio = 0.3,
                     shap_ratio = 1,
                     cross_valid = 5,
-                    random_state = 0,
+                    random_state = 6,
+                    n_jobs = 5,
                 )
                 the_model.run()
             except Exception as error:
@@ -65,9 +67,9 @@ def loop_test():
                 "target"
             ]:
                 if i in ["svr", "knr", "mlp", "ada"]:
-                    _shap_ratio = 0.1
+                    _shap_ratio = 0.1  # For kernel explainer
                 else:
-                    _shap_ratio = 1
+                    _shap_ratio = 0.5  # For tree explainer
                 try:
                     print(f"Running model: {i}, encoder: {e}")
                     the_model = MyPipeline(
@@ -82,7 +84,8 @@ def loop_test():
                         test_ratio = 0.3,
                         shap_ratio = _shap_ratio,
                         cross_valid = 5,
-                        random_state = 0,
+                        random_state = 6,
+                        n_jobs = 5,
                     )
                     the_model.run()
                 except Exception as error:

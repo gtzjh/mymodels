@@ -23,7 +23,8 @@ class MyPipeline:
             test_ratio: float = 0.3,
             shap_ratio: float = 0.3,
             cross_valid: int = 5,
-            random_state: int = 0
+            random_state: int = 0,
+            n_jobs: int = -1
         ):
         self.file_path = file_path
         self.y = y
@@ -37,7 +38,7 @@ class MyPipeline:
         self.shap_ratio = shap_ratio
         self.cross_valid = cross_valid
         self.random_state = random_state
-        
+        self.n_jobs = n_jobs
 
     def load(self):
         """Prepare training and test data"""
@@ -58,6 +59,7 @@ class MyPipeline:
             random_state=self.random_state,
             trials=self.trials,
             results_dir=self.results_dir,
+            n_jobs=self.n_jobs
         )
         optimizer.fit(
             self.x_train, self.y_train,
