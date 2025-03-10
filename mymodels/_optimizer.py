@@ -9,8 +9,7 @@ from functools import partial
 import json
 
 from ._encoder import Encoder
-from ._regressors import MyRegressors
-from ._classifier import MyClassifier
+from ._models import MyRegressors, MyClassifiers
 
 
 def trans_category(X, y, _cat_features: list[str] | None, _encoder_method: str | None) \
@@ -54,14 +53,14 @@ class MyOptimizer:
             y_train (pd.Series): Training target data
             model_name (str): 
                 Model selection,
-                must be one of ["cat", "rf", "dt", "lgb", "gbdt", "xgb", "ada", "svr", "knr", "mlp"]
+                must be one of ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adac", "svrc", "knrc", "mlpr"]
             cat_features (list[str] or None): 
                 List of categorical feature names, if any
             encoder_method (str or None): 
                 Method for encoding categorical variables
         """
-        self.x_train = x_train
-        self.y_train = y_train
+        self.x_train = x_train.copy()
+        self.y_train = y_train.copy()
         self.cat_features = cat_features
         self.encoder_method = encoder_method
         self.model_name = model_name  # Store the model type for use in _single_fold
@@ -87,15 +86,16 @@ class MyOptimizer:
 
         #######################################################################
         # 如果存在分类特征且模型不是CatBoost，则进行分类特征编码
-        if self.cat_features is not None and self.model_name != "cat":
-            self.final_x_train, self.encoder = trans_category(
-                self.x_train, self.y_train, self.cat_features, self.encoder_method
-            )
-            # 保存编码类型
-            mapping = self.encoder.get_mapping(self.x_train, self.cat_features)
-            mapping = self.encoder.convert_numpy_types(mapping)
-            with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
-                json.dump(mapping, f, ensure_ascii=False, indent=4)
+        if self.cat_features is not None:
+            if self.model_name != "catr" and self.model_name != "catc":
+                self.final_x_train, self.encoder = trans_category(
+                    self.x_train, self.y_train, self.cat_features, self.encoder_method
+                )
+                # 保存编码类型
+                mapping = self.encoder.get_mapping(self.x_train, self.cat_features)
+                mapping = self.encoder.convert_numpy_types(mapping)
+                with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
+                    json.dump(mapping, f, ensure_ascii=False, indent=4)
         #######################################################################
 
         # Train model with optimal parameters on the whole training + validation dataset
@@ -156,11 +156,12 @@ class MyOptimizer:
 
             #######################################################################
             # 如果类别特征存在且模型不是CatBoost，则进行对输入自变量分类特征编码
-            if self.cat_features is not None and self.model_name != "cat":
-                X_fold_train, _encoder = trans_category(
-                    X_fold_train, y_fold_train, self.cat_features, self.encoder_method
-                )
-                X_fold_val = _encoder.transform(X=X_fold_val)
+            if self.cat_features is not None:
+                if self.model_name != "catr" and self.model_name != "catc":
+                    X_fold_train, _encoder = trans_category(
+                        X_fold_train, y_fold_train, self.cat_features, self.encoder_method
+                    )
+                    X_fold_val = _encoder.transform(X=X_fold_val)
             #######################################################################
             
             # Create and train the model

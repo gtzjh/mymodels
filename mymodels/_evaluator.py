@@ -8,6 +8,11 @@ import yaml, pathlib, json
 plt.rc('font', family = 'Times New Roman')
 
 
+def _plot_classifier(y_test, y_test_pred, y_train, y_train_pred, results_dir):
+    pass
+    return None
+
+
 def _plot_regr(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _results_dir):
     """Creates a scatter plot of actual vs predicted values for regression model evaluation.
 
@@ -73,20 +78,9 @@ class Evaluator:
     This class handles the evaluation of machine learning models, computing various 
     accuracy metrics (R², RMSE, MAE), visualizing actual vs predicted values, 
     and saving/printing results.
-    
-    Attributes:
-        model_name (str): Name of the model being evaluated.
-        model_obj: The trained model object with a predict method.
-        encoder_obj: Optional encoder used for feature transformation.
-        results_dir (pathlib.Path): Directory to save evaluation results.
-        plot (bool): Whether to generate accuracy plots.
-        print_results (bool): Whether to print results to console.
-        save_results (bool): Whether to save results to files.
-        save_raw_data (bool): Whether to save raw prediction data.
     """
     def __init__(
             self,
-            model_name: str,
             model_obj,
             results_dir: str | pathlib.Path,
             encoder_obj = None,
@@ -98,7 +92,6 @@ class Evaluator:
         """Initialize the Evaluator with model and configuration settings.
         
         Args:
-            model_name (str): Name of the model being evaluated.
             model_obj: Trained model object with a predict method.
             results_dir (str | pathlib.Path): Directory to save evaluation results.
             encoder_obj: Optional encoder used for feature transformation. Defaults to None.
@@ -107,7 +100,6 @@ class Evaluator:
             save_results (bool, optional): Whether to save results to files. Defaults to True.
             save_raw_data (bool, optional): Whether to save raw prediction data. Defaults to False.
         """
-        self.model_name = model_name
         self.model_obj = model_obj
         self.encoder_obj = encoder_obj
         self.results_dir = pathlib.Path(results_dir)
@@ -119,12 +111,46 @@ class Evaluator:
         self.save_raw_data = save_raw_data
 
         # Will change in runtime
-        self.y_test = None
-        self.y_test_pred = None
-        self.y_train = None
-        self.y_train_pred = None
         self.accuracy_dict = None
 
+    
+    def evaluate(self, x_test, y_test, x_train, y_train):
+        """Evaluate the model on test and training data.
+        
+        Performs model evaluation by:
+        1. Applying encoder transformation if needed
+        2. Generating predictions on test and training data
+        3. Computing accuracy metrics
+        4. Processing output options (saving, printing, plotting)
+        
+        Args:
+            x_test (pd.DataFrame): Test features.
+            y_test: Test target values.
+            x_train (pd.DataFrame): Training features.
+            y_train: Training target values.
+        """
+        self.x_test = x_test.copy()
+        self.y_test = y_test.copy()
+        self.x_train = x_train.copy()
+        self.y_train = y_train.copy()
+
+        if self.encoder_obj is not None:
+            self.x_test = self.encoder_obj.transform(X=x_test)
+            self.x_train = self.encoder_obj.transform(X=x_train)
+
+        # 评估
+        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上的准确度
+        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上的准确度
+
+        self._regr_acc(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
+        self._options()
+
+        return None
+
+
+    def _classifier_acc(self, y_test, y_test_pred, y_train, y_train_pred):
+        pass
+        return None
 
 
     def _regr_acc(self, y_test, y_test_pred, y_train, y_train_pred):
@@ -177,45 +203,13 @@ class Evaluator:
                 self.results_dir
             )
 
+        # Output train and test results
         if self.save_raw_data:
-            # Output train and test results
             test_results = pd.DataFrame(data = {"y_test": self.y_test,
                                                 "y_test_pred": self.y_test_pred})
             train_results = pd.DataFrame(data = {"y_train": self.y_train,
                                                  "y_train_pred": self.y_train_pred})
             test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = False)
             train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = False)    
-
-        return None
-
-
-    def eva(self, x_test: pd.DataFrame, y_test, x_train: pd.DataFrame, y_train):
-        """Evaluate the model on test and training data.
-        
-        Performs model evaluation by:
-        1. Applying encoder transformation if needed
-        2. Generating predictions on test and training data
-        3. Computing accuracy metrics
-        4. Processing output options (saving, printing, plotting)
-        
-        Args:
-            x_test (pd.DataFrame): Test features.
-            y_test: Test target values.
-            x_train (pd.DataFrame): Training features.
-            y_train: Training target values.
-        """
-        self.x_test = x_test
-        self.x_train = x_train
-
-        if self.model_name != "catr" or "catc" and self.encoder_obj is not None:
-            self.x_test = self.encoder_obj.transform(X=x_test)
-            self.x_train = self.encoder_obj.transform(X=x_train)
-
-        # 评估
-        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上的准确度
-        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上的准确度
-
-        self._regr_acc(y_test, self.y_test_pred, y_train, self.y_train_pred)
-        self._options()
 
         return None

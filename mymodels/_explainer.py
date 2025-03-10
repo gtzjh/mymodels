@@ -62,13 +62,14 @@ class MyExplainer:
         Because the input data for calculating SHAP values must be consistent with the training data,
         so we need to convert the categorical variables in the test data to numerical variables.
         """
-        if self.model_name != "cat" and self.encoder is not None:
-            self.shap_data = self.encoder.transform(self.shap_data)
+        if self.model_name != "catr" and self.model_name != "catc":
+            if self.encoder is not None:
+                self.shap_data = self.encoder.transform(self.shap_data)
 
         # Set the explainer
-        if self.model_name in ["svr", "knr", "mlp", "ada"]:
+        if self.model_name in ["svr", "knr", "mlpr", "adar"]:
             _explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)
-        elif self.model_name in ["cat", "rf", "dt", "lgb", "gbdt", "xgb"]:
+        elif self.model_name in ["catr", "catc", "rfr", "dtr", "gbdtr", "xgbr", "lgbr"]:
             _explainer = shap.TreeExplainer(self.model_object)
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")

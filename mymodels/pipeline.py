@@ -5,6 +5,7 @@ from ._optimizer import MyOptimizer
 from ._evaluator import Evaluator
 from ._explainer import MyExplainer
 
+
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
     A class that handles data loading, model training, and evaluation with SHAP analysis.
@@ -76,7 +77,6 @@ class MyPipeline:
         and output to the console
         """
         evaluator = Evaluator(
-            model_name=self.model_name,
             model_obj=self.optimal_model,
             results_dir=self.results_dir,
             encoder_obj=self.encoder,
@@ -85,7 +85,7 @@ class MyPipeline:
             save_results=True,
             save_raw_data=True
         )
-        evaluator.eva(
+        evaluator.evaluate(
             x_test=self.x_test,
             y_test=self.y_test,
             x_train=self.x_train,

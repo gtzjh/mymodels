@@ -34,8 +34,7 @@ class Encoder():
 
 
     def fit(self, X, cat_cols: list[str]|tuple[str], y=None):
-        """
-        Fit the encoder
+        """Fit the encoder
         
         Parameters:
             X: DataFrame to fit
@@ -46,10 +45,6 @@ class Encoder():
             self
         """
         # Validate input types
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("X must be a pandas DataFrame")
-        if not isinstance(cat_cols, (list, tuple)):
-            raise TypeError("cat_cols must be a list or tuple")
         if X[cat_cols].isnull().any().any():
             raise ValueError("Input contains null values. Please handle missing values before encoding.")
         if not cat_cols:
@@ -99,8 +94,10 @@ class Encoder():
 
     def transform(self, X):
         """Apply encoding
+
         Parameters:
             X: DataFrame to transform
+        
         Returns:
             Transformed DataFrame
         """
@@ -165,12 +162,13 @@ class Encoder():
 
 
     def fit_transform(self, X, cat_cols, y=None):
-        """
-        Fit encoder and return transformed data
+        """Fit encoder and return transformed data
+        
         Parameters:
             X: DataFrame to fit and transform
             y: Target values (used for target encoding)
             cat_cols: Category columns to encode
+        
         Returns:
             Transformed DataFrame
         """
@@ -230,6 +228,7 @@ class Encoder():
 
     def get_mapping(self, df, cat_cols):
         """Get encoding mapping relationships.
+        
         Parameters
             df : pandas.DataFrame
                 Original dataframe containing categorical features
