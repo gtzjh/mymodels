@@ -23,7 +23,9 @@ def loop_test():
       - For svr, knr, mlpr, adar models, shap_ratio=0.1 (using 10% of test set for SHAP values), shap_ratio=1 for others
     """
     for i in [
-        "svr", "knr", "mlpr", "adar",
+        # "svr",
+        "knr", 
+        # "mlpr", "adar",
         # "dtr", "gbdtr", "xgbr", "lgbr", "rfr",
         # "catr"
     ]:
@@ -82,7 +84,7 @@ if __name__ == "__main__":
         "y": "y",
         "x_list": list(range(1, 18)),
         "cat_features": ['x16', 'x17'],
-        "trials": 50,
+        "trials": 100,
         "test_ratio": 0.4,
         "random_state": 42,
         "cross_valid": 5,

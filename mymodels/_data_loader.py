@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 
 def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """
-    Load and preprocess data from a CSV file.
+    """Load and preprocess data from a CSV file.
+    
     Args:
         file_path (str): The path to the CSV file.
         y (str or int): The column name or index of the dependent variable.
@@ -15,6 +15,7 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
             A list of column names (str) for representing the categorical features.
         test_ratio (float): The ratio of the test set.
         random_state (int): The random state for the train_test_split.
+    
     Returns:
         tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: A tuple containing:
             - x_train: Training features DataFrame

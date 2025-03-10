@@ -1,21 +1,12 @@
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC, SVR
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
-
-
-from sklearn.svm import SVR
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, AdaBoostRegressor
-from xgboost import XGBRegressor
-from lightgbm import LGBMRegressor
-from catboost import CatBoostRegressor
+from xgboost import XGBClassifier, XGBRegressor
+from lightgbm import LGBMClassifier, LGBMRegressor
+from catboost import CatBoostClassifier, CatBoostRegressor
 
 
 
@@ -329,9 +320,11 @@ class MyRegressors:
     def _KNR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html"""
         param_space = {
-            "n_neighbors": lambda t: t.suggest_int("n_neighbors", 1, 100, step=1),
+            "n_neighbors": lambda t: t.suggest_int("n_neighbors", 1, 10, step=1),
             "weights": lambda t: t.suggest_categorical("weights", ["uniform", "distance"]),
-            "leaf_size": lambda t: t.suggest_int("leaf_size", 1, 100, step=1)
+            "algorithm": lambda t: t.suggest_categorical("algorithm", ["auto", "ball_tree", "kd_tree", "brute"]),
+            "leaf_size": lambda t: t.suggest_int("leaf_size", 1, 100, step=1),
+            "p": lambda t: t.suggest_int("p", 1, 5, step=1),
         }
         static_params = {
             "n_jobs": -1,
