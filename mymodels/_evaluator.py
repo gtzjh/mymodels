@@ -8,7 +8,24 @@ import yaml, pathlib, json
 plt.rc('font', family = 'Times New Roman')
 
 
-def _regr_accuracy_plot(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _results_dir):
+def _plot_regr(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _results_dir):
+    """Creates a scatter plot of actual vs predicted values for regression model evaluation.
+
+    This function generates a visualization comparing actual values to predicted values
+    from a regression model. It includes a scatter plot of the data points, a linear fit line,
+    a y=x reference line, and displays performance metrics (R2, RMSE, MAE) in the legend.
+
+    Args:
+        _r2_value (float): R-squared value of the regression model.
+        _rmse_value (float): Root Mean Squared Error value of the regression model.
+        _mae_value (float): Mean Absolute Error value of the regression model.
+        _y (pandas.Series): Actual target values.
+        _y_pred (pandas.Series or numpy.ndarray): Predicted target values.
+        _results_dir (str or pathlib.Path): Directory where the plot image will be saved.
+
+    Returns:
+        None: The function saves the plot to disk and does not return a value.
+    """
     plt.figure(figsize = (8, 8), dpi = 500)
     plt.scatter(_y, _y_pred, color = '#4682B4', alpha = 0.4, s = 150)
     
@@ -49,94 +66,156 @@ def _regr_accuracy_plot(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _result
     return None
 
 
-def regr_accuracy(y_test, y_test_pred, y_train, y_train_pred, results_dir):
-    """
-    Evaluate the optimized model and save the results.
-    Parameters:
-        y_test: The testing target data
-        y_test_pred: The predicted target data on the testing set
-        y_train: The training target data
-        y_train_pred: The predicted target data on the training set
-    """
-    results_dir = pathlib.Path(results_dir)
 
-    # Output train and test results
-    test_results = pd.DataFrame(data = {"y_test": y_test,
-                                        "y_test_pred": y_test_pred})
-    train_results = pd.DataFrame(data = {"y_train": y_train,
-                                         "y_train_pred": y_train_pred})
-
-    # Accuracy
-    accuracy_dict = dict({
-        "test_r2": float(r2_score(y_test, y_test_pred)),
-        "test_rmse": float(root_mean_squared_error(y_test, y_test_pred)),
-        "test_mae": float(mean_absolute_error(y_test, y_test_pred)),
-        "train_r2": float(r2_score(y_train, y_train_pred)),
-        "train_rmse": float(root_mean_squared_error(y_train, y_train_pred)),
-        "train_mae": float(mean_absolute_error(y_train, y_train_pred))
-    })
-    with open(results_dir.joinpath("accuracy.yml"), 'w', encoding = "utf-8") as file:
-        yaml.dump(accuracy_dict, file)
-    print("Accuracy:")
-    print(json.dumps(accuracy_dict, indent=4))
-
-    # Plot
-    _regr_accuracy_plot(
-        accuracy_dict["test_r2"],
-        accuracy_dict["test_rmse"],
-        accuracy_dict["test_mae"],
-        y_test,
-        y_test_pred,
-        results_dir
-    )
-
-    return None
-
-
-def evaluate(
-    model_name: str,
-    model_obj,
-    x_test: pd.DataFrame,
-    y_test,
-    x_train: pd.DataFrame,
-    y_train,
-    results_dir: str | pathlib.Path,
-    encoder_obj = None,
-) -> None:
-    """
-    Evaluate the optimized model and save the results.
-    Parameters:
-        model_name: The name of the model
-        model_obj: The optimized model object
-        x_test: The testing features data
-        y_test: The testing target data
-        x_train: The training features data
-        y_train: The training target data
-        results_dir: The directory to save the results
-        encoder_obj: The encoder object
-    """
-    _final_x_test = x_test
-    _final_x_train = x_train
-
-    if model_name != "cat" and encoder_obj is not None:
-        _final_x_test = encoder_obj.transform(X=x_test)
-        _final_x_train = encoder_obj.transform(X=x_train)
-
-    # 评估并保存结果
-    _y_test_pred = model_obj.predict(_final_x_test)    # 测试集上的准确度
-    _y_train_pred = model_obj.predict(_final_x_train)  # 训练集上的准确度
-    regr_accuracy(y_test, _y_test_pred, y_train, _y_train_pred, results_dir)
+class Evaluator:
+    """A class for evaluating machine learning regression models.
     
-    return None
+    This class handles the evaluation of machine learning models, computing various 
+    accuracy metrics (R², RMSE, MAE), visualizing actual vs predicted values, 
+    and saving/printing results.
+    
+    Attributes:
+        model_name (str): Name of the model being evaluated.
+        model_obj: The trained model object with a predict method.
+        encoder_obj: Optional encoder used for feature transformation.
+        results_dir (pathlib.Path): Directory to save evaluation results.
+        plot (bool): Whether to generate accuracy plots.
+        print_results (bool): Whether to print results to console.
+        save_results (bool): Whether to save results to files.
+        save_raw_data (bool): Whether to save raw prediction data.
+    """
+    def __init__(
+            self,
+            model_name: str,
+            model_obj,
+            results_dir: str | pathlib.Path,
+            encoder_obj = None,
+            plot = True,   # Plot scatter plot
+            print_results = True,  # Print results to console
+            save_results = True,    # Save results to files
+            save_raw_data = False    # Save raw data to files
+        ):
+        """Initialize the Evaluator with model and configuration settings.
+        
+        Args:
+            model_name (str): Name of the model being evaluated.
+            model_obj: Trained model object with a predict method.
+            results_dir (str | pathlib.Path): Directory to save evaluation results.
+            encoder_obj: Optional encoder used for feature transformation. Defaults to None.
+            plot (bool, optional): Whether to generate accuracy plots. Defaults to True.
+            print_results (bool, optional): Whether to print results to console. Defaults to True.
+            save_results (bool, optional): Whether to save results to files. Defaults to True.
+            save_raw_data (bool, optional): Whether to save raw prediction data. Defaults to False.
+        """
+        self.model_name = model_name
+        self.model_obj = model_obj
+        self.encoder_obj = encoder_obj
+        self.results_dir = pathlib.Path(results_dir)
+
+        # Options
+        self.plot = plot
+        self.print_results = print_results
+        self.save_results = save_results
+        self.save_raw_data = save_raw_data
+
+        # Will change in runtime
+        self.y_test = None
+        self.y_test_pred = None
+        self.y_train = None
+        self.y_train_pred = None
+        self.accuracy_dict = None
 
 
-if __name__ == "__main__":
-    scatter_test = pd.read_csv("results/rf/scatter_test.csv", encoding = "utf-8")
-    scatter_train = pd.read_csv("results/rf/scatter_train.csv", encoding = "utf-8")
-    regr_accuracy(
-        y_test = scatter_test["y_test"],
-        y_test_pred = scatter_test["y_test_pred"],
-        y_train = scatter_train["y_train"],
-        y_train_pred = scatter_train["y_train_pred"],
-        results_dir = "",
-    )
+
+    def _regr_acc(self, y_test, y_test_pred, y_train, y_train_pred):
+        """Calculate regression accuracy metrics for both test and training data.
+        
+        Computes R², RMSE, and MAE metrics for both test and training predictions
+        and stores them in the accuracy_dict attribute.
+        
+        Args:
+            y_test: Actual test target values.
+            y_test_pred: Predicted test target values.
+            y_train: Actual training target values.
+            y_train_pred: Predicted training target values.
+        """
+        self.accuracy_dict = dict({
+            "test_r2": float(r2_score(y_test, y_test_pred)),
+            "test_rmse": float(root_mean_squared_error(y_test, y_test_pred)),
+            "test_mae": float(mean_absolute_error(y_test, y_test_pred)),
+            "train_r2": float(r2_score(y_train, y_train_pred)),
+            "train_rmse": float(root_mean_squared_error(y_train, y_train_pred)),
+            "train_mae": float(mean_absolute_error(y_train, y_train_pred))
+        })
+        return None
+
+
+    def _options(self):
+        """Process output options based on configuration.
+        
+        Handles saving results to files, printing to console, generating plots,
+        and saving raw prediction data based on the configuration settings.
+        """
+        # Save results to files
+        if self.save_results:
+            with open(self.results_dir.joinpath("accuracy.yml"), 'w', encoding = "utf-8") as file:
+                yaml.dump(self.accuracy_dict, file)
+        
+        # Print results to the console
+        if self.print_results:
+            print("Accuracy:")
+            print(json.dumps(self.accuracy_dict, indent=4))
+
+        # Plot
+        if self.plot:
+            _plot_regr(
+                self.accuracy_dict["test_r2"],
+                self.accuracy_dict["test_rmse"],
+                self.accuracy_dict["test_mae"],
+                self.y_test,
+                self.y_test_pred,
+                self.results_dir
+            )
+
+        if self.save_raw_data:
+            # Output train and test results
+            test_results = pd.DataFrame(data = {"y_test": self.y_test,
+                                                "y_test_pred": self.y_test_pred})
+            train_results = pd.DataFrame(data = {"y_train": self.y_train,
+                                                 "y_train_pred": self.y_train_pred})
+            test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = False)
+            train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = False)    
+
+        return None
+
+
+    def eva(self, x_test: pd.DataFrame, y_test, x_train: pd.DataFrame, y_train):
+        """Evaluate the model on test and training data.
+        
+        Performs model evaluation by:
+        1. Applying encoder transformation if needed
+        2. Generating predictions on test and training data
+        3. Computing accuracy metrics
+        4. Processing output options (saving, printing, plotting)
+        
+        Args:
+            x_test (pd.DataFrame): Test features.
+            y_test: Test target values.
+            x_train (pd.DataFrame): Training features.
+            y_train: Training target values.
+        """
+        self.x_test = x_test
+        self.x_train = x_train
+
+        if self.model_name != "catr" or "catc" and self.encoder_obj is not None:
+            self.x_test = self.encoder_obj.transform(X=x_test)
+            self.x_train = self.encoder_obj.transform(X=x_train)
+
+        # 评估
+        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上的准确度
+        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上的准确度
+
+        self._regr_acc(y_test, self.y_test_pred, y_train, self.y_train_pred)
+        self._options()
+
+        return None

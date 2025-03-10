@@ -23,14 +23,14 @@ class MyRegressors:
         self.MODEL_MAP = {
             "svr": (self._SVR, SVR),
             "knr": (self._KNR, KNeighborsRegressor),
-            "mlp": (self._MLP, MLPRegressor),
-            "dt": (self._DT, DecisionTreeRegressor),
-            "rf": (self._RF, RandomForestRegressor),
-            "gbdt": (self._GBDT, GradientBoostingRegressor),
-            "ada": (self._ADA, AdaBoostRegressor),
-            "xgb": (self._XGB, XGBRegressor),
-            "lgb": (self._LGB, LGBMRegressor),
-            "cat": (self._CAT, CatBoostRegressor)
+            "mlpr": (self._MLPR, MLPRegressor),
+            "dtr": (self._DTR, DecisionTreeRegressor),
+            "rfr": (self._RFR, RandomForestRegressor),
+            "gbdtr": (self._GBDTR, GradientBoostingRegressor),
+            "adar": (self._ADAR, AdaBoostRegressor),
+            "xgbr": (self._XGBR, XGBRegressor),
+            "lgbr": (self._LGBR, LGBMRegressor),
+            "catr": (self._CATR, CatBoostRegressor)
         }
         self.model_name = model_name
         self.random_state = random_state
@@ -56,7 +56,7 @@ class MyRegressors:
     def _SVR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html"""
         param_space = {
-            # "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
+            "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
             "C": lambda t: t.suggest_float("C", 1, 200, step=1),
             "epsilon": lambda t: t.suggest_float("epsilon", 0.1, 10, step=0.1),
         }
@@ -79,7 +79,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _MLP(self):
+    def _MLPR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html"""
         param_space = {
             "alpha": lambda t: t.suggest_float("alpha", 0.0001, 0.1, log=True),
@@ -97,7 +97,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _DT(self):
+    def _DTR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html"""
         param_space = {
             "max_depth": lambda t: t.suggest_int("max_depth", 2, 20),
@@ -111,7 +111,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _RF(self):
+    def _RFR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html"""
         param_space = {
             "n_estimators": lambda t: t.suggest_int("n_estimators", 100, 3000, step=100),
@@ -128,7 +128,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _GBDT(self):
+    def _GBDTR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html"""
         param_space = {
             "learning_rate": lambda t: t.suggest_float("learning_rate", 1e-8, 1.0, log=True),
@@ -146,7 +146,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _ADA(self):
+    def _ADAR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html"""
         param_space = {
             "n_estimators": lambda t: t.suggest_int("n_estimators", 100, 3000, step=100),
@@ -159,7 +159,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _XGB(self):
+    def _XGBR(self):
         """https://xgboost.readthedocs.io/en/latest/python/python_api.html"""
         param_space = {
             "max_depth": lambda t: t.suggest_int("max_depth", 1, 15),
@@ -182,7 +182,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _LGB(self):
+    def _LGBR(self):
         """https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html"""
         param_space = {
             "max_depth": lambda t: t.suggest_int("max_depth", 1, 15),
@@ -203,7 +203,7 @@ class MyRegressors:
         return param_space, static_params
 
 
-    def _CAT(self):
+    def _CATR(self):
         """https://catboost.ai/en/docs/concepts/python-reference_catboostregressor"""
         param_space = {
             "iterations": lambda t: t.suggest_int("iterations", 100, 3000, step=100),
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     print("-" * 30)
     
     # Example 1: Basic usage
-    model_name = "rf"  # Random Forest
+    model_name = "rfr"  # Random Forest
     regrs = MyRegressors(model_name, random_state=42)
     model_obj, param_space, static_params = regrs.get()
     
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     # Example 2: With categorical features
     print("\nWith categorical features:")
     cat_features = ["category1", "category2"]
-    cat_regrs = MyRegressors("cat", random_state=42, cat_features=cat_features)
+    cat_regrs = MyRegressors("catr", random_state=42, cat_features=cat_features)
     _, _, cat_params = cat_regrs.get()
     
     print(f"Input: model_name='cat', cat_features={cat_features}")

@@ -2,7 +2,7 @@ import pathlib
 
 from ._data_loader import data_loader
 from ._optimizer import MyOptimizer
-from ._evaluator import evaluate
+from ._evaluator import Evaluator
 from ._explainer import MyExplainer
 
 class MyPipeline:
@@ -75,17 +75,22 @@ class MyPipeline:
         the results will be saved in the results_dir,
         and output to the console
         """
-        evaluate(
+        evaluator = Evaluator(
             model_name=self.model_name,
             model_obj=self.optimal_model,
+            results_dir=self.results_dir,
+            encoder_obj=self.encoder,
+            plot=True,
+            print_results=True,
+            save_results=True,
+            save_raw_data=True
+        )
+        evaluator.eva(
             x_test=self.x_test,
             y_test=self.y_test,
             x_train=self.x_train,
             y_train=self.y_train,
-            results_dir=self.results_dir,
-            encoder_obj=self.encoder
         )
-
 
     def explain(self):
         """Use SHAP for explanation"""

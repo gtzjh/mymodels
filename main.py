@@ -24,19 +24,19 @@ def single_test(model_name, encoder_method):
 def loop_test():
     """
     测试多种机器学习模型和特征编码方法的组合效果:
-    - 包含10种模型：svr, knr, mlp, ada, dt, gbdt, xgb, lgb, rf, cat
+    - 包含10种模型：svr, knr, mlpr, adar, dtr, gbdtr, xgbr, lgbr, rfr, catr
     - 使用6种编码方法处理分类特征：frequency, onehot, label, target, binary, ordinal
     - 对每种组合进行超参数优化和交叉验证
     - 错误会记录到error.
     - 如果模型是CatBoost，则不进行编码
-    - 如果模型是svr, knr, mlp, ada，则shap_ratio=0.1，表示用测试集的10%来计算shap值，其他模型shap_ratio=1
+    - 如果模型是svr, knr, mlpr, adar，则shap_ratio=0.1，表示用测试集的10%来计算shap值，其他模型shap_ratio=1
     """
     for i in [
-        "svr", "knr", "mlp", "ada",
-        "dt", "gbdt", "xgb", "lgb", "rf",
-        "cat"
+        "svr", "knr", "mlpr", "adar",
+        "dtr", "gbdtr", "xgbr", "lgbr", "rfr",
+        "catr"
     ]:
-        if i == "cat":  # 如果模型是CatBoost，则不进行编码
+        if i == "catr":  # 如果模型是CatBoost，则不进行编码
             try:
                 print(f"Running model: {i}")
                 the_model = MyPipeline(
@@ -63,10 +63,11 @@ def loop_test():
                 continue
         else:
             for e in [
-                "frequency", "onehot", "label", "binary", "ordinal", 
+                "onehot", 
+                "frequency", "label", "binary", "ordinal", 
                 "target"
             ]:
-                if i in ["svr", "knr", "mlp", "ada"]:
+                if i in ["svr", "knr", "mlpr", "adar"]:
                     _shap_ratio = 0.1  # For kernel explainer
                 else:
                     _shap_ratio = 0.5  # For tree explainer
@@ -100,7 +101,7 @@ def loop_test():
 
 if __name__ == "__main__":
     # Test on a single model.
-    # single_test("rf", "onehot")
+    # single_test("rfr", "onehot")
 
     # Test on all models and encoders.
     loop_test()

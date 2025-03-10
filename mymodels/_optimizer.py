@@ -8,9 +8,9 @@ import optuna
 from functools import partial
 import json
 
-from ._regressors import MyRegressors
 from ._encoder import Encoder
-
+from ._regressors import MyRegressors
+from ._classifier import MyClassifier
 
 
 def trans_category(X, y, _cat_features: list[str] | None, _encoder_method: str | None) \
