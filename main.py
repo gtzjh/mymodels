@@ -1,16 +1,16 @@
 from mymodels.pipeline import MyPipeline
 
-
-def single_test(model_name, encoder_method):
-    the_pipeline = MyPipeline(
-        model_name = model_name,
-        results_dir = "results/" + model_name + "_single_test",
-        shap_ratio = 0.5,
-        encoder_method = encoder_method,
-        **config
-    )
-    the_pipeline.run()
-    return None
+config = {
+    "file_path": "data/titanic/train.csv",
+    "y": "Survived",
+    "x_list": list(range(1, 18)),
+    "cat_features": ['Pclass', 'Sex', 'Embarked'],
+    "trials": 30,
+    "test_ratio": 0.4,
+    "random_state": 0,
+    "cross_valid": 5,
+    "n_jobs": 5,  # Number of jobs to run in parallel k-fold cross validation
+}
 
 
 def loop_test():
@@ -77,24 +77,30 @@ def loop_test():
     return None
 
 
+def single_test():
+    the_pipeline = MyPipeline(
+        file_path = "data/titanic/train.csv",
+        y = "Survived",
+        x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+        model_name = "rfc",
+        results_dir = "results/rfc_single_test",
+        cat_features = ['Pclass', 'Sex', 'Embarked'],
+        encoder_method = "onehot",
+        trials = 30,
+        test_ratio = 0.4,
+        interpret = False,
+        shap_ratio = 0.3,
+        cross_valid = 5,
+        random_state = 0,
+        n_jobs = 5,
+    )
+    the_pipeline.run()
+    return None
+
 
 if __name__ == "__main__":
-    config = {
-        "file_path": "data/data.csv",
-        "y": "y",
-        "x_list": list(range(1, 18)),
-        "cat_features": ['x16', 'x17'],
-        "trials": 30,
-        "test_ratio": 0.4,
-        "random_state": 0,
-        "cross_valid": 5,
-        "n_jobs": 5,  # Number of jobs to run in parallel k-fold cross validation
-    }
-
-
     # Test on a single model.
-    single_test("rfr", ["onehot", "binary"])
-
+    single_test()
 
     # Test on all models and encoders.
     # loop_test()

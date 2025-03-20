@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-from utils._encoder import transform_multi_features, fit_transform_multi_features
+from ._encoder import transform_multi_features, fit_transform_multi_features
 
 
 def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \

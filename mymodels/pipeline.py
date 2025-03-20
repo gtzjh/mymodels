@@ -22,26 +22,34 @@ class MyPipeline:
             encoder_method: None | str | list[str] | tuple[str] = None,
             trials: int = 100,
             test_ratio: float = 0.3,
+            interpret: bool = True,
             shap_ratio: float = 0.3,
             cross_valid: int = 5,
             random_state: int = 0,
-            n_jobs: int = -1
+            n_jobs: int = -1,
         ):
         self.file_path = file_path
         self.y = y
         self.x_list = x_list
         self.model_name = model_name
         self.results_dir = pathlib.Path(results_dir)
+        self.results_dir.mkdir(parents = True, exist_ok = True)
         self.cat_features = cat_features
         self.encoder_method = encoder_method
         self.trials = trials
         self.test_ratio = test_ratio
+        self.interpret = interpret
         self.shap_ratio = shap_ratio
         self.cross_valid = cross_valid
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    def load(self):
+    
+    def _check_input(self):
+        pass
+
+
+    def load(self, _check_data: bool = True):
         """Prepare training and test data"""
         self.x_train, self.x_test, self.y_train, self.y_test = data_loader(
             file_path=self.file_path,
@@ -51,6 +59,12 @@ class MyPipeline:
             test_ratio=self.test_ratio,
             random_state=self.random_state
         )
+        
+        if _check_data:
+            print(self.x_train.head())
+            print(self.x_test.head())
+            print(self.y_train.head())
+            print(self.y_test.head())
 
 
     def optimize(self):
@@ -79,11 +93,12 @@ class MyPipeline:
         and output to the console
         """
         evaluator = Evaluator(
+            model_name=self.model_name,
             model_obj=self.optimal_model,
             results_dir=self.results_dir,
             encoder_dict=self.encoder_dict,
             cat_features=self.cat_features,
-            plot=True,
+            plot=False,
             print_results=True,
             save_results=True,
             save_raw_data=True
@@ -95,7 +110,8 @@ class MyPipeline:
             y_train=self.y_train
         )
 
-    def explain(self):
+
+    def explain(self, _plot: bool = True):
         """Use SHAP for explanation"""
         # Sampling for reduce the time cost
         shap_data = self.x_test.sample(
@@ -112,15 +128,22 @@ class MyPipeline:
             cat_features = self.cat_features
         )
         explainer.explain()
-        explainer.summary_plot()
-        explainer.dependence_plot()
-        explainer.partial_dependence_plot()
+        if _plot:
+            explainer.summary_plot()
+            explainer.dependence_plot()
+            explainer.partial_dependence_plot()
         
         
     def run(self):
         """Execute the whole pipeline"""
+        self._check_input()
         self.load()
+        # 可能这里可以考虑，调用已经训练好的模型，这个以后再弄
         self.optimize()
+        
         self.evaluate()
-        self.explain()
+        if self.interpret:
+            self.explain()
+
         return None
+    

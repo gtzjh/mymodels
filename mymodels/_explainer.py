@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pathlib
 
 
-from .utils._encoder import transform_multi_features
+from ._encoder import transform_multi_features
 
 shap.initjs()
 matplotlib.use('Agg')

@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import yaml, pathlib, json
 
 
-from .utils._encoder import transform_multi_features
+from ._encoder import transform_multi_features
 
 
 plt.rc('font', family = 'Times New Roman')
@@ -84,10 +85,11 @@ class Evaluator:
     """
     def __init__(
             self,
+            model_name,
             model_obj,
             results_dir: str | pathlib.Path,
-            encoder_dict: dict | None = None,
             cat_features: list[str] | tuple[str] | None = None,
+            encoder_dict: dict | None = None,
             plot = True,   # Plot scatter plot
             print_results = True,  # Print results to console
             save_results = True,    # Save results to files
@@ -98,6 +100,7 @@ class Evaluator:
         Args:
             model_obj: Trained model object with a predict method.
             results_dir (str | pathlib.Path): Directory to save evaluation results.
+            cat_features: Optional list of categorical features. Defaults to None.
             encoder_dict: Optional encoder used for feature transformation. Defaults to None.
             plot (bool, optional): Whether to generate accuracy plots. Defaults to True.
             print_results (bool, optional): Whether to print results to console. Defaults to True.
@@ -105,6 +108,7 @@ class Evaluator:
             save_raw_data (bool, optional): Whether to save raw prediction data. Defaults to False.
         """
         self.model_obj = model_obj
+        self.model_name = model_name
         self.results_dir = pathlib.Path(results_dir)
         self.encoder_dict = encoder_dict
         self.cat_features = cat_features
@@ -148,6 +152,7 @@ class Evaluator:
         )
         self.x_test = self.x_test.drop(columns = self.cat_features)
         self.x_test = pd.concat([self.x_test, _transformed_x_test], axis = 1)
+        
         # 对训练集
         _transformed_x_train = transform_multi_features(
             self.x_train.loc[:, self.cat_features],
@@ -158,21 +163,21 @@ class Evaluator:
 
 
         # 评估
-        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上的准确度
-        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上的准确度
+        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上预测
+        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上预测
 
-        self._regr_acc(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
-        self._options()
+        if self.model_name in ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr"]:
+            self._get_accuracy_4_regression_task(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
+        else:
+            self._get_accuracy_4_classification_task(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
+
+        # Save results
+        self._output()
 
         return None
 
 
-    def _classifier_acc(self, y_test, y_test_pred, y_train, y_train_pred):
-        pass
-        return None
-
-
-    def _regr_acc(self, y_test, y_test_pred, y_train, y_train_pred):
+    def _get_accuracy_4_regression_task(self, y_test, y_test_pred, y_train, y_train_pred):
         """Calculate regression accuracy metrics for both test and training data.
         
         Computes R², RMSE, and MAE metrics for both test and training predictions
@@ -193,9 +198,34 @@ class Evaluator:
             "train_mae": float(mean_absolute_error(y_train, y_train_pred))
         })
         return None
+    
+
+    def _get_accuracy_4_classification_task(self, y_test, y_test_pred, y_train, y_train_pred):
+        """Calculate classification accuracy metrics for both test and training data.
+        
+        Computes accuracy, precision, recall, and F1 metrics for both test and training predictions
+        and stores them in the accuracy_dict attribute.
+        
+        Args:
+            y_test: Actual test target values.
+            y_test_pred: Predicted test target values.
+            y_train: Actual training target values.
+            y_train_pred: Predicted training target values.
+        """
+        self.accuracy_dict = dict({
+            "test_accuracy": float(accuracy_score(y_test, y_test_pred)),
+            "test_precision": float(precision_score(y_test, y_test_pred)),
+            "test_recall": float(recall_score(y_test, y_test_pred)),
+            "test_f1": float(f1_score(y_test, y_test_pred)),
+            "train_accuracy": float(accuracy_score(y_train, y_train_pred)),
+            "train_precision": float(precision_score(y_train, y_train_pred)),
+            "train_recall": float(recall_score(y_train, y_train_pred)),
+            "train_f1": float(f1_score(y_train, y_train_pred))
+        })
+        return None
 
 
-    def _options(self):
+    def _output(self):
         """Process output options based on configuration.
         
         Handles saving results to files, printing to console, generating plots,
