@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score
 import yaml, pathlib, json
 
 
@@ -217,10 +217,12 @@ class Evaluator:
             "test_precision": float(precision_score(y_test, y_test_pred)),
             "test_recall": float(recall_score(y_test, y_test_pred)),
             "test_f1": float(f1_score(y_test, y_test_pred)),
+            "test_kappa": float(cohen_kappa_score(y_test, y_test_pred)),
             "train_accuracy": float(accuracy_score(y_train, y_train_pred)),
             "train_precision": float(precision_score(y_train, y_train_pred)),
             "train_recall": float(recall_score(y_train, y_train_pred)),
-            "train_f1": float(f1_score(y_train, y_train_pred))
+            "train_f1": float(f1_score(y_train, y_train_pred)),
+            "train_kappa": float(cohen_kappa_score(y_train, y_train_pred))
         })
         return None
 
@@ -238,8 +240,8 @@ class Evaluator:
         
         # Print results to the console
         if self.print_results:
-            print("Accuracy:")
-            print(json.dumps(self.accuracy_dict, indent=4))
+            print("Accuracy: \n", \
+                  json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
         if self.plot:

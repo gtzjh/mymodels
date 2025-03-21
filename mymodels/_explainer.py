@@ -77,9 +77,11 @@ class MyExplainer:
                 self.shap_data = pd.concat([self.shap_data, _transformed_shap_data], axis = 1)
 
         # Set the explainer
-        if self.model_name in ["svr", "knr", "mlpr", "adar"]:
+        if self.model_name in ["svr", "knr", "mlpr", "adar",
+                               "svc", "knc", "mlpc", "adac"]:
             _explainer = shap.KernelExplainer(self.model_object.predict, self.shap_data)
-        elif self.model_name in ["catr", "catc", "rfr", "dtr", "gbdtr", "xgbr", "lgbr"]:
+        elif self.model_name in ["dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr",
+                                 "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
             _explainer = shap.TreeExplainer(self.model_object)
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")

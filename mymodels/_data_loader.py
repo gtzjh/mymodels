@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pathlib
 from sklearn.model_selection import train_test_split
 
 
@@ -26,8 +27,13 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
             - y_train: Training target Series
             - y_test: Testing target Series
     """
-
+    assert isinstance(file_path, str) or isinstance(file_path, pathlib.Path), \
+        "file_path must be a string or pathlib.Path"
     _df = pd.read_csv(file_path, encoding = "utf-8", na_values = np.nan)
+
+
+    assert (test_ratio > 0 and test_ratio <= 1) and isinstance(test_ratio, float), \
+        "test_ratio must be between (0, 1]"
 
 
     """Convert categorical features to category dtype"""
@@ -37,7 +43,6 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
             and all([i in _df.columns for i in cat_features]), \
             "The `cat_features` must be a list of strings " \
             "and all elements must be in the column names of the inputted dataset."
-        
         try:
             for cat_col in cat_features:
                 _df[cat_col] = _df[cat_col].astype('category')
@@ -66,7 +71,7 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     elif all([isinstance(i, int) for i in x_list]):
         x_data = _df.iloc[:, x_list]
     else:
-        raise ValueError("`x_list` must be either a list of strings " \
+        raise ValueError("`x_list` must be either a list or tuple of strings " \
                          "or indices within the whole dataset")
     # Verify that all columns except for the specified categorical features are numeric
     if cat_features is not None:
@@ -88,7 +93,6 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     _data = _data.reset_index(drop = True)
     x_data = _data.iloc[:, :-1]
     y_data = _data.iloc[:, -1]
-
 
     # x_train, x_test, y_train, y_test
     return train_test_split(

@@ -36,7 +36,7 @@ class MyOptimizer:
             y_train,
             model_name: str,
             cat_features:   None | list[str] | tuple[str] = None,
-            encoder_method: None | str | list[str] | tuple[str] = None
+            encode_method: None | str | list[str] | tuple[str] = None
         ) -> None:
         """Train and optimize a regression model.
         
@@ -48,16 +48,18 @@ class MyOptimizer:
                 must be one of ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adac", "svrc", "knrc", "mlpr"]
             cat_features (list[str] or tuple[str] or None): 
                 List of categorical feature names, if any
-            encoder_method (str or list[str] or tuple[str] or None): 
+            encode_method (str or list[str] or tuple[str] or None): 
                 Method for encoding categorical variables
         """
         self.x_train = x_train.copy()
         self.y_train = y_train.copy()
         self.cat_features = cat_features
-        self.encoder_method = encoder_method
+        self.encode_method = encode_method
         self.model_name = model_name  # Store the model type for use in _single_fold
-        self.model_obj = None  # An instance of the model
+        
+        self._model_obj = None  # An instance of the model
         self._task_type = None
+        
         self.optimal_params = None
         self.optimal_model = None
         self.encoder_dict = None
@@ -73,13 +75,13 @@ class MyOptimizer:
 
         # Select model and load parameter space and static parameters
         if self._task_type == "regression":
-            self.model_obj, param_space, static_params = MyRegressors(
+            self._model_obj, param_space, static_params = MyRegressors(
                 model_name = self.model_name,
                 random_state = self.random_state,
                 cat_features = self.cat_features
             ).get()
         else:
-            self.model_obj, param_space, static_params = MyClassifiers(
+            self._model_obj, param_space, static_params = MyClassifiers(
                 model_name = self.model_name,
                 random_state = self.random_state,
                 cat_features = self.cat_features
@@ -90,14 +92,14 @@ class MyOptimizer:
         
         # Save optimal parameters
         self.optimal_params = {**static_params, **optuna_study.best_trial.params}
-        self.optimal_model = self.model_obj(**self.optimal_params)
+        self.optimal_model = self._model_obj(**self.optimal_params)
 
         # 如果存在分类特征且模型不是CatBoost，则进行分类特征编码
         if self.cat_features is not None:
             if self.model_name != "catr" and self.model_name != "catc":
                 transformed_X_df, self.encoder_dict, mapping_dict = fit_transform_multi_features(
                     self.x_train.loc[:, self.cat_features],
-                    self.encoder_method,
+                    self.encode_method,
                     self.y_train,
                 )
                 self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
@@ -166,7 +168,7 @@ class MyOptimizer:
                 if self.model_name != "catr" and self.model_name != "catc":
                     transformed_fold_train, encoder_dict, _ = fit_transform_multi_features(
                         X_fold_train.loc[:, self.cat_features],
-                        self.encoder_method,
+                        self.encode_method,
                         y_fold_train, 
                     )
                     X_fold_train = X_fold_train.drop(columns = self.cat_features)
@@ -182,7 +184,7 @@ class MyOptimizer:
             #######################################################################
             
             # Create and train the model
-            validator = self.model_obj(**param)
+            validator = self._model_obj(**param)
             validator.fit(X_fold_train, y_fold_train)
 
 
