@@ -1,23 +1,22 @@
 from mymodels.pipeline import MyPipeline
 
 
-def test():
+def main():
     the_pipeline = MyPipeline(
         model_name = "rfc",
         results_dir = "results/rfc_single_test",
         cat_features = ['Pclass', 'Sex', 'Embarked'],
         encode_method = "onehot",
         random_state = 0,
-        n_jobs = 5,
     )
     
     the_pipeline.load(
         file_path = "data/titanic/train.csv",
         y = "Survived",
         x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-        test_ratio = 0.4
+        test_ratio = 0.4,
+        inspect = True
     )
-    # the_pipeline.inspect()
     the_pipeline.optimize(cv = 5, trials = 30, n_jobs = 5)
     the_pipeline.evaluate()
     the_pipeline.explain(shap_ratio = 0.3, _plot = True)
@@ -42,9 +41,4 @@ def test():
 
 
 if __name__ == "__main__":
-    # Test on a single model.
-    test()
-
-    # Test on all models and encoders.
-    # loop_test()
-    
+    main()

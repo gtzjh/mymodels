@@ -1,4 +1,5 @@
 import pathlib
+import pandas as pd
 
 from ._data_loader import data_loader
 from ._optimizer import MyOptimizer
@@ -24,11 +25,19 @@ class MyPipeline:
         self.cat_features = cat_features
         self.encode_method = encode_method
         self.random_state = random_state
+
+        # 先声明全局变量
+        self._x_train = None
+        self._x_test = None
+        self._y_train = None
+        self._y_test = None
+        self._optimal_model = None
+        self._encoder_dict = None
         
         self._check_input()
         self.results_dir.mkdir(parents = True, exist_ok = True)
 
-    
+
     def _check_input(self):
         """Check input"""
         assert self.model_name in \
@@ -40,7 +49,8 @@ class MyPipeline:
             or isinstance(self.results_dir, pathlib.Path), \
             "results_dir must be a string or pathlib.Path"
         
-        if isinstance(self.cat_features, list) or isinstance(self.cat_features, tuple):
+        if (isinstance(self.cat_features, list) or isinstance(self.cat_features, tuple)) \
+            and self.model_name not in ["catr", "catc"]:
             valid_encoder_methods = ["onehot", "binary", "ordinal", "label", "target", "frequency"]
             if isinstance(self.encode_method, list) or isinstance(self.encode_method, tuple):
                 assert len(self.encode_method) == len(self.cat_features), \
@@ -66,10 +76,11 @@ class MyPipeline:
              file_path: str | pathlib.Path,
              y: str | int, 
              x_list: list[str | int],
-             test_ratio: float = 0.3
+             test_ratio: float = 0.3,
+             inspect: bool = True
         ):
         """Prepare training and test data"""
-        self.x_train, self.x_test, self.y_train, self.y_test = data_loader(
+        self._x_train, self._x_test, self._y_train, self._y_test = data_loader(
             file_path=file_path,
             y=y,
             x_list=x_list,
@@ -77,57 +88,23 @@ class MyPipeline:
             cat_features=self.cat_features,
             random_state=self.random_state
         )
-        return None
-
-
-    def inspect(self):
-        """Inspect the data after loading
-        
-        Raises:
-            AttributeError: If data has not been loaded via load() method
-            ValueError: If loaded data attributes are not in expected format
-        """
-        # Check if data has been loaded
-        required_attrs = ['x_train', 'x_test', 'y_train', 'y_test']
-        if not all(hasattr(self, attr) for attr in required_attrs):
-            raise AttributeError(
-                "Data has not been loaded. Please call load() method first."
-            )
-
-        # Validate data format and content
-        if not (len(self.x_train) > 0 and len(self.x_test) > 0 \
-                and len(self.y_train) > 0 and len(self.y_test) > 0):
-            raise ValueError("Loaded data appears to be empty")
-
-        if not (self.x_train.shape[0] == self.y_train.shape[0] \
-                and self.x_test.shape[0] == self.y_test.shape[0]):
-            raise ValueError("Mismatch between X and y data dimensions")
-
-        """
-        print(f"\nDATA INFO:")
-        print(f"Total samples:             {len(self.x_train) + len(self.x_test)}")
-        print(f"Train & Validate samples:  {len(self.x_train)} ({(1-self.test_ratio)*100:.1f}%)")
-        print(f"Test samples:              {len(self.x_test)} ({self.test_ratio*100:.1f}%)")
-        print(f"\nCROSS VALIDATION INFO:")
-        print(f"Totally {self.cross_valid} folds")
-        fold_train = len(self.x_train) * (self.cross_valid-1)/self.cross_valid
-        fold_val = len(self.x_train) / self.cross_valid
-        print(f"Per fold\n  Train:     {fold_train:.0f}\n  Validate:  {fold_val:.0f}")
-        print(f"\nFEATURE INFO:")
-        print(f"Total features:        {self.x_train.shape[1]}")
-        if self.cat_features:
-            print(f"Categorical features:  {len(self.cat_features)}")
-            print(f"Numerical features:    {self.x_train.shape[1] - len(self.cat_features)}")
-
-        print(f"\nTRAIN X DATA INFO:")
-        print(self.x_train.info())
-        print(f"\nTRAIN X DATA HEAD:")
-        print(self.x_train.head(10))
-        print(f"\nTRAIN Y DATA INFO:")
-        print(self.y_train.info())
-        print(f"\nTRAIN Y DATA HEAD:")
-        print(self.y_train.head(10), "\n")
-        """
+        if inspect:
+            print(f"\nTotal samples: {len(self._x_train) + len(self._x_test)}")
+            print(f"\nTrain X data info:")
+            print(self._x_train.info())
+            print(f"\nTrain X data head:")
+            print(self._x_train.head(10))
+            print(f"\nTrain y data info:")
+            print(self._y_train.info())
+            print(f"\nTrain y data head:")
+            print(self._y_train.head(10))
+            print(f"\nTotally features: {self._x_train.shape[1]}")
+            print("\nCategorical features:")
+            cat_cols = [col for col in self._x_train.columns if pd.api.types.is_categorical_dtype(self._x_train[col])]
+            print(cat_cols)
+            print("\nNumerical features:")
+            num_cols = [col for col in self._x_train.columns if pd.api.types.is_numeric_dtype(self._x_train[col])]
+            print(num_cols, "\n")
 
         return None
     
@@ -142,14 +119,16 @@ class MyPipeline:
             n_jobs=n_jobs
         )
         optimizer.fit(
-            x_train=self.x_train,
-            y_train=self.y_train,
+            x_train=self._x_train,
+            y_train=self._y_train,
             model_name=self.model_name,
             cat_features=self.cat_features,
             encode_method=self.encode_method
         )
-        self.optimal_model = optimizer.optimal_model
-        self.encoder_dict = optimizer.encoder_dict
+        self._optimal_model = optimizer.optimal_model
+        self._encoder_dict = optimizer.encoder_dict
+
+        return None
     
 
     def evaluate(self):
@@ -159,9 +138,9 @@ class MyPipeline:
         """
         evaluator = Evaluator(
             model_name=self.model_name,
-            model_obj=self.optimal_model,
+            model_obj=self._optimal_model,
             results_dir=self.results_dir,
-            encoder_dict=self.encoder_dict,
+            encoder_dict=self._encoder_dict,
             cat_features=self.cat_features,
             plot=False,
             print_results=True,
@@ -169,27 +148,29 @@ class MyPipeline:
             save_raw_data=True
         )
         evaluator.evaluate(
-            x_test=self.x_test,
-            y_test=self.y_test,
-            x_train=self.x_train,
-            y_train=self.y_train
+            x_test=self._x_test,
+            y_test=self._y_test,
+            x_train=self._x_train,
+            y_train=self._y_train
         )
+
+        return None
 
 
     def explain(self, shap_ratio: float = 0.3, _plot: bool = True):
         """Use SHAP for explanation"""
         # Sampling for reduce the time cost
-        shap_data = self.x_test.sample(
-            n = int(len(self.x_test) * shap_ratio),
+        shap_data = self._x_test.sample(
+            n = int(len(self._x_test) * shap_ratio),
             random_state = self.random_state
         )
         # Explain the model
         explainer = MyExplainer(
-            model_object = self.optimal_model,
+            model_object = self._optimal_model,
             model_name = self.model_name,
             shap_data = shap_data,
             results_dir = self.results_dir,
-            encoder_dict = self.encoder_dict,
+            encoder_dict = self._encoder_dict,
             cat_features = self.cat_features
         )
         explainer.explain()
@@ -198,37 +179,36 @@ class MyPipeline:
             explainer.dependence_plot()
             explainer.partial_dependence_plot()
         
+        return None
+        
         
     # 一步到位
-    def run(self,
-            file_path: str | pathlib.Path,
-            y: str | int, 
-            x_list: list[str | int],
-            test_ratio: float = 0.3,
-            cv: int = 5,
-            trials: int = 100,
-            n_jobs: int = 5,
-            shap_ratio: float = 0.3,
-            inspect: bool = True,
-            interpret: bool = True
-        ):
+    def run(
+        self,
+        file_path: str | pathlib.Path,
+        y: str | int, 
+        x_list: list[str | int],
+        test_ratio: float = 0.3,
+        inspect: bool = True,
+        cv: int = 5,
+        trials: int = 100,
+        n_jobs: int = 5,
+        interpret: bool = True,
+        shap_ratio: float = 0.3,
+    ):
         """Execute the whole pipeline"""
         self.load(
-            file_path = file_path,
-            y = y,
-            x_list = x_list,
-            test_ratio = test_ratio
+            file_path=file_path,
+            y=y,
+            x_list=x_list,
+            test_ratio=test_ratio,
+            inspect=inspect
         )
-        
-        if inspect:
-            self.inspect()
-
         self.optimize(cv = cv, trials = trials, n_jobs = n_jobs)  # 可能这里可以考虑，调用已经训练好的模型，这个以后再弄
-        
         self.evaluate()
-        
         if interpret:
             self.explain(shap_ratio = shap_ratio, _plot = True)
 
         return None
+    
     
