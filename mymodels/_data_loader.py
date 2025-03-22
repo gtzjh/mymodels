@@ -59,6 +59,10 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
         raise ValueError("`y` must be either a string or " \
                          "index within the whole dataset")
 
+    # Trans the y to True of False
+    # y_data = y_data.apply(lambda x: True if x == 1 else False)
+    # print(y_data)
+
 
     """
     Verify that x_list is a list and all elements are either strings or integers.
@@ -93,6 +97,18 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     _data = _data.reset_index(drop = True)
     x_data = _data.iloc[:, :-1]
     y_data = _data.iloc[:, -1]
+
+
+    """Transform y to label or boolean"""
+    if pd.api.types.is_numeric_dtype(y_data.dtype):
+        pass
+    else:
+        transformed_y_data, _encoder_dict, _mapping_dict = fit_transform_multi_features(
+            y_data.to_frame(),
+            encoder_methods = "label",
+        )
+        y_data = transformed_y_data.iloc[:, 0]  # Extract to pd.Series
+        print(_mapping_dict)
 
     # x_train, x_test, y_train, y_test
     return train_test_split(

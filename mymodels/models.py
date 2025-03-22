@@ -25,7 +25,7 @@ class MyClassifiers:
             "mlpc": (self._MLPC, MLPClassifier),
             "dtc": (self._DTC, DecisionTreeClassifier),
             "rfc": (self._RFC, RandomForestClassifier),
-            "gbdtc": (self._GBDT, GradientBoostingClassifier),
+            "gbdtc": (self._GBDTC, GradientBoostingClassifier),
             "adac": (self._ADAC, AdaBoostClassifier),
             "xgbc": (self._XGBC, XGBClassifier),
             "lgbc": (self._LGBC, LGBMClassifier),
@@ -56,9 +56,9 @@ class MyClassifiers:
         param_space = {
             "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
             "C": lambda t: t.suggest_float("C", 0.1, 200, log=True),
-            "gamma": lambda t: t.suggest_categorical("gamma", ["scale", "auto"]),
+            # "gamma": lambda t: t.suggest_categorical("gamma", ["scale", "auto"]),
             "degree": lambda t: t.suggest_int("degree", 2, 5),  # For poly kernel
-            "class_weight": lambda t: t.suggest_categorical("class_weight", ["balanced", None]),
+            # "class_weight": lambda t: t.suggest_categorical("class_weight", ["balanced", None]),
         }
         static_params = {
             "probability": True,  # Required for some methods like predict_proba
@@ -71,7 +71,7 @@ class MyClassifiers:
     def _KNC(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html"""
         param_space = {
-            "n_neighbors": lambda t: t.suggest_int("n_neighbors", 1, 100, step=1),
+            "n_neighbors": lambda t: t.suggest_int("n_neighbors", 1, 50, step=1),
             "weights": lambda t: t.suggest_categorical("weights", ["uniform", "distance"]),
             "algorithm": lambda t: t.suggest_categorical("algorithm", ["auto", "ball_tree", "kd_tree", "brute"]),
             "leaf_size": lambda t: t.suggest_int("leaf_size", 10, 100, step=10),
@@ -86,11 +86,6 @@ class MyClassifiers:
     def _MLPC(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html"""
         param_space = {
-            "hidden_layer_sizes": lambda t: t.suggest_categorical("hidden_layer_sizes", [
-                (100,), (100, 100), (100, 100, 100),
-                (200,), (200, 200), (200, 200, 200),
-                (300,), (300, 300), (300, 300, 300)
-            ]),
             "activation": lambda t: t.suggest_categorical("activation", ["relu", "tanh", "logistic"]),
             "alpha": lambda t: t.suggest_float("alpha", 0.0001, 0.1, log=True),
             "learning_rate": lambda t: t.suggest_categorical("learning_rate", ["constant", "adaptive"]),
@@ -98,6 +93,7 @@ class MyClassifiers:
             "max_iter": lambda t: t.suggest_int("max_iter", 100, 3000, step=100),
         }
         static_params = {
+            "hidden_layer_sizes": (300, 300, 300),
             "solver": "adam",
             "batch_size": "auto",
             "early_stopping": True,
@@ -144,10 +140,9 @@ class MyClassifiers:
         return param_space, static_params
 
 
-    def _GBDT(self):
+    def _GBDTC(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html"""
         param_space = {
-            "loss": lambda t: t.suggest_categorical("loss", ["log_loss", "exponential"]),
             "learning_rate": lambda t: t.suggest_float("learning_rate", 1e-3, 0.3, log=True),
             "n_estimators": lambda t: t.suggest_int("n_estimators", 100, 3000, step=50),
             "subsample": lambda t: t.suggest_float("subsample", 0.5, 1.0, step=0.1),
@@ -172,9 +167,9 @@ class MyClassifiers:
         param_space = {
             "n_estimators": lambda t: t.suggest_int("n_estimators", 50, 3000, step=50),
             "learning_rate": lambda t: t.suggest_float("learning_rate", 0.01, 1.0, log=True),
-            "algorithm": lambda t: t.suggest_categorical("algorithm", ["SAMME", "SAMME.R"]),
         }
         static_params = {
+            "algorithm": "SAMME",
             "random_state": self.random_state,
         }
         return param_space, static_params
@@ -191,16 +186,15 @@ class MyClassifiers:
             "colsample_bylevel": lambda t: t.suggest_float("colsample_bylevel", 0.5, 1.0, step=0.1),
             "min_child_weight": lambda t: t.suggest_int("min_child_weight", 1, 10),
             "gamma": lambda t: t.suggest_float("gamma", 0, 1, step=0.1),
-            "reg_alpha": lambda t: t.suggest_float("reg_alpha", 0, 1, log=True),
-            "reg_lambda": lambda t: t.suggest_float("reg_lambda", 1, 5),
+            "reg_alpha": lambda t: t.suggest_float("reg_alpha", 0.001, 10.0, log=True),
+            "reg_lambda": lambda t: t.suggest_float("reg_lambda", 0.001, 10.0, log=True),
             "tree_method": lambda t: t.suggest_categorical("tree_method", ["auto", "exact", "approx", "hist"]),
-            "booster": lambda t: t.suggest_categorical("booster", ["gbtree", "gblinear", "dart"]),
         }
         static_params = {
-            "objective": "binary:logistic",  # Change based on problem type
-            "eval_metric": "logloss",  # Change based on problem type
-            "enable_categorical": True if self.cat_features is not None else False,
-            "use_label_encoder": False,  # Deprecated but sometimes needed
+            # "objective": "binary:logistic",  # Change based on problem type
+            # "eval_metric": "logloss",  # Change based on problem type
+            "booster": "gbtree",
+            "enable_categorical": False,
             "seed": self.random_state,
             "verbosity": 0,
             "n_jobs": -1,
@@ -219,13 +213,13 @@ class MyClassifiers:
             "subsample": lambda t: t.suggest_float("subsample", 0.5, 1.0, step=0.1),
             "subsample_freq": lambda t: t.suggest_int("subsample_freq", 0, 10),  # 0 means no frequency
             "colsample_bytree": lambda t: t.suggest_float("colsample_bytree", 0.5, 1.0),
-            "reg_alpha": lambda t: t.suggest_float("reg_alpha", 0, 10.0, log=True),
-            "reg_lambda": lambda t: t.suggest_float("reg_lambda", 0, 10.0, log=True),
+            "reg_alpha": lambda t: t.suggest_float("reg_alpha", 0.001, 10.0, log=True),
+            "reg_lambda": lambda t: t.suggest_float("reg_lambda", 0.001, 10.0, log=True),
             "min_split_gain": lambda t: t.suggest_float("min_split_gain", 0, 0.5),
         }
         static_params = {
-            "objective": "binary",  # Change based on problem type
-            "metric": "binary_logloss",  # Change based on problem type
+            # "objective": "binary",  # Change based on problem type
+            # "metric": "binary_logloss",  # Change based on problem type
             "boosting_type": "gbdt",
             "random_state": self.random_state,
             "verbose": -1,
@@ -246,11 +240,11 @@ class MyClassifiers:
             "border_count": lambda t: t.suggest_int("border_count", 32, 255),
             "grow_policy": lambda t: t.suggest_categorical("grow_policy", ["SymmetricTree", "Depthwise", "Lossguide"]),
             "min_data_in_leaf": lambda t: t.suggest_int("min_data_in_leaf", 1, 50),
-            "subsample": lambda t: t.suggest_float("subsample", 0.5, 1.0),
+            # "subsample": lambda t: t.suggest_float("subsample", 0.5, 1.0),
         }
         static_params = {
-            "loss_function": "Logloss",  # Change based on problem type
-            "eval_metric": "Logloss",  # Change based on problem type
+            # "loss_function": "Logloss",  # Change based on problem type
+            # "eval_metric": "Logloss",  # Change based on problem type
             "cat_features": self.cat_features,
             "random_seed": self.random_state,
             "verbose": 0,
@@ -427,7 +421,7 @@ class MyRegressors:
             "tree_method": lambda t: t.suggest_categorical("tree_method", ["hist", "approx"]),
         }
         static_params = {
-            "enable_categorical": True if self.cat_features is not None else False,
+            "enable_categorical": False,
             "seed": self.random_state,
             "verbosity": 0,
             "n_jobs": -1,

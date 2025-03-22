@@ -6,9 +6,6 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import yaml, pathlib, json
 
 
-from ._encoder import transform_multi_features
-
-
 plt.rc('font', family = 'Times New Roman')
 
 
@@ -86,10 +83,7 @@ class Evaluator:
     def __init__(
             self,
             model_name,
-            model_obj,
             results_dir: str | pathlib.Path,
-            cat_features: list[str] | tuple[str] | None = None,
-            encoder_dict: dict | None = None,
             plot = True,   # Plot scatter plot
             print_results = True,  # Print results to console
             save_results = True,    # Save results to files
@@ -98,20 +92,14 @@ class Evaluator:
         """Initialize the Evaluator with model and configuration settings.
         
         Args:
-            model_obj: Trained model object with a predict method.
             results_dir (str | pathlib.Path): Directory to save evaluation results.
-            cat_features: Optional list of categorical features. Defaults to None.
-            encoder_dict: Optional encoder used for feature transformation. Defaults to None.
             plot (bool, optional): Whether to generate accuracy plots. Defaults to True.
             print_results (bool, optional): Whether to print results to console. Defaults to True.
             save_results (bool, optional): Whether to save results to files. Defaults to True.
             save_raw_data (bool, optional): Whether to save raw prediction data. Defaults to False.
         """
-        self.model_obj = model_obj
         self.model_name = model_name
         self.results_dir = pathlib.Path(results_dir)
-        self.encoder_dict = encoder_dict
-        self.cat_features = cat_features
 
         # Options
         self.plot = plot
@@ -123,53 +111,33 @@ class Evaluator:
         self.accuracy_dict = None
 
     
-    def evaluate(self, x_test, y_test, x_train, y_train):
+    def evaluate(self, y_test, y_test_pred, y_train, y_train_pred):
+        self.y_test = y_test
+        self.y_test_pred = y_test_pred
+        self.y_train = y_train
+        self.y_train_pred = y_train_pred
         """Evaluate the model on test and training data.
         
         Performs model evaluation by:
-        1. Applying encoder transformation if needed
-        2. Generating predictions on test and training data
-        3. Computing accuracy metrics
-        4. Processing output options (saving, printing, plotting)
+        1. Computing accuracy metrics (R2, RMSE, MAE for regression; accuracy, precision, recall, F1 for classification)
+        2. Processing output options (saving results to files, printing to console, plotting visualizations)
         
         Args:
-            x_test (pd.DataFrame): Test features.
-            y_test: Test target values.
-            x_train (pd.DataFrame): Training features.
-            y_train: Training target values.
+            y_test: Actual test target values
+            y_test_pred: Predicted test target values
+            y_train: Actual training target values
+            y_train_pred: Predicted training target values
         """
-        self.x_test = x_test.copy()
-        self.y_test = y_test.copy()
-        self.x_train = x_train.copy()
-        self.y_train = y_train.copy()
 
-
-        # 如果存在分类特征，则进行编码
-        # 对测试集
-        _transformed_x_test = transform_multi_features(
-            self.x_test.loc[:, self.cat_features],
-            self.encoder_dict
-        )
-        self.x_test = self.x_test.drop(columns = self.cat_features)
-        self.x_test = pd.concat([self.x_test, _transformed_x_test], axis = 1)
-        
-        # 对训练集
-        _transformed_x_train = transform_multi_features(
-            self.x_train.loc[:, self.cat_features],
-            self.encoder_dict
-        )
-        self.x_train = self.x_train.drop(columns = self.cat_features)
-        self.x_train = pd.concat([self.x_train, _transformed_x_train], axis = 1)
-
-
-        # 评估
-        self.y_test_pred = self.model_obj.predict(self.x_test)    # 测试集上预测
-        self.y_train_pred = self.model_obj.predict(self.x_train)  # 训练集上预测
-
-        if self.model_name in ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr"]:
-            self._get_accuracy_4_regression_task(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
+        if self.model_name in ["svr", "knr", "mlpr", "adar", \
+                               "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
+            self._get_accuracy_4_regression_task(
+                self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
+            )
         else:
-            self._get_accuracy_4_classification_task(self.y_test, self.y_test_pred, self.y_train, self.y_train_pred)
+            self._get_accuracy_4_classification_task(
+                self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
+            )
 
         # Save results
         self._output()
@@ -214,14 +182,14 @@ class Evaluator:
         """
         self.accuracy_dict = dict({
             "test_accuracy": float(accuracy_score(y_test, y_test_pred)),
-            "test_precision": float(precision_score(y_test, y_test_pred)),
-            "test_recall": float(recall_score(y_test, y_test_pred)),
-            "test_f1": float(f1_score(y_test, y_test_pred)),
+            "test_precision": float(precision_score(y_test, y_test_pred, average = "weighted")),
+            "test_recall": float(recall_score(y_test, y_test_pred, average = "weighted")),
+            "test_f1": float(f1_score(y_test, y_test_pred, average = "weighted")),
             "test_kappa": float(cohen_kappa_score(y_test, y_test_pred)),
             "train_accuracy": float(accuracy_score(y_train, y_train_pred)),
-            "train_precision": float(precision_score(y_train, y_train_pred)),
-            "train_recall": float(recall_score(y_train, y_train_pred)),
-            "train_f1": float(f1_score(y_train, y_train_pred)),
+            "train_precision": float(precision_score(y_train, y_train_pred, average = "weighted")),
+            "train_recall": float(recall_score(y_train, y_train_pred, average = "weighted")),
+            "train_f1": float(f1_score(y_train, y_train_pred, average = "weighted")),
             "train_kappa": float(cohen_kappa_score(y_train, y_train_pred))
         })
         return None
@@ -240,7 +208,7 @@ class Evaluator:
         
         # Print results to the console
         if self.print_results:
-            print("Accuracy: \n", \
+            print(f"Accuracy of {self.model_name}: \n", \
                   json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
@@ -254,12 +222,23 @@ class Evaluator:
                 self.results_dir
             )
 
+
         # Output train and test results
         if self.save_raw_data:
-            test_results = pd.DataFrame(data = {"y_test": self.y_test,
-                                                "y_test_pred": self.y_test_pred})
-            train_results = pd.DataFrame(data = {"y_train": self.y_train,
-                                                 "y_train_pred": self.y_train_pred})
+            # 检查并确保是一维数据
+            y_test_pred_1d = self.y_test_pred
+            y_train_pred_1d = self.y_train_pred
+            
+            # Flatten predictions if they are 2D with second dimension of 1
+            if len(y_test_pred_1d.shape) > 1 and y_test_pred_1d.shape[1] == 1:
+                y_test_pred_1d = y_test_pred_1d.flatten()
+            if len(y_train_pred_1d.shape) > 1 and y_train_pred_1d.shape[1] == 1:
+                y_train_pred_1d = y_train_pred_1d.flatten()
+            
+            test_results = pd.DataFrame(data={"y_test": self.y_test,
+                                              "y_test_pred": y_test_pred_1d})
+            train_results = pd.DataFrame(data={"y_train": self.y_train,
+                                               "y_train_pred": y_train_pred_1d})
             test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = False)
             train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = False)    
 

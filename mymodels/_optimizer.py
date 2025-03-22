@@ -9,7 +9,7 @@ from functools import partial
 import json
 
 from ._encoder import fit_transform_multi_features, transform_multi_features
-from ._models import MyRegressors, MyClassifiers
+from .models import MyRegressors, MyClassifiers
 
 
 
@@ -30,19 +30,28 @@ class MyOptimizer:
         self.results_dir = results_dir
         self.n_jobs = n_jobs
 
+        # Statements
+        self._model_obj = None  # An instance of the model
+        self._task_type = None
+        self.optimal_params = None
+        self.optimal_model = None
 
-    def fit(self,
-            x_train,
-            y_train,
-            model_name: str,
-            cat_features:   None | list[str] | tuple[str] = None,
-            encode_method: None | str | list[str] | tuple[str] = None
-        ) -> None:
+
+    def fit(
+        self,
+        x_train,
+        y_train,
+        x_test,
+        model_name,
+        cat_features,
+        encode_method
+    ):
         """Train and optimize a regression model.
         
         Parameters:
             x_train (pd.DataFrame): Training features data
             y_train (pd.Series): Training target data
+            x_test (pd.DataFrame): Test features data
             model_name (str): 
                 Model selection,
                 must be one of ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adac", "svrc", "knrc", "mlpr"]
@@ -53,22 +62,19 @@ class MyOptimizer:
         """
         self.x_train = x_train.copy()
         self.y_train = y_train.copy()
+        self.x_test = x_test.copy()
+        self.model_name = model_name
         self.cat_features = cat_features
         self.encode_method = encode_method
-        self.model_name = model_name  # Store the model type for use in _single_fold
-        
-        self._model_obj = None  # An instance of the model
-        self._task_type = None
-        
-        self.optimal_params = None
-        self.optimal_model = None
-        self.encoder_dict = None
+
         self.final_x_train = self.x_train  # The training set which is for final prediction after encoding
+        self.final_x_test = self.x_test    # The test set which is for final prediction after encoding
+
 
         # 判断是回归还是分类任务
-        if self.model_name in ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adac", "svrc", "knrc", "mlpr"]:
+        if self.model_name in ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
             self._task_type = "regression"
-        elif self.model_name in ["catc", "rfc", "dtrc", "lgbrc", "gbdtrc", "xgbrc", "adacc", "svrc", "knrc", "mlprc"]:
+        elif self.model_name in ["catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"]:
             self._task_type = "classification"
         else:
             raise ValueError(f"Invalid model name: {self.model_name}")
@@ -94,29 +100,41 @@ class MyOptimizer:
         self.optimal_params = {**static_params, **optuna_study.best_trial.params}
         self.optimal_model = self._model_obj(**self.optimal_params)
 
-        # 如果存在分类特征且模型不是CatBoost，则进行分类特征编码
-        if self.cat_features is not None:
-            if self.model_name != "catr" and self.model_name != "catc":
-                transformed_X_df, self.encoder_dict, mapping_dict = fit_transform_multi_features(
-                    self.x_train.loc[:, self.cat_features],
-                    self.encode_method,
-                    self.y_train,
-                )
-                self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
-                self.final_x_train = pd.concat([self.final_x_train, transformed_X_df], axis = 1)
-                
-                # 保存编码类型
-                with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
-                    json.dump(mapping_dict, f, ensure_ascii=False, indent=4)
+        # 如果存在分类特征且模型不是CatBoost，则要对训练和测试集进行编码
+        if (self.cat_features is not None) and (self.model_name not in ["catr", "catc"]):
+            # Transform train set
+            _transformed_X_train, _encoder_dict, _mapping_dict = fit_transform_multi_features(
+                self.x_train.loc[:, self.cat_features],
+                self.encode_method,
+                self.y_train,
+            )
+            self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
+            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train], axis = 1)
 
-        # Train model with optimal parameters on the whole training + validation dataset
+            # Transform test set
+            _transformed_X_test = transform_multi_features(
+                self.x_test.loc[:, self.cat_features],
+                _encoder_dict
+            )
+            self.final_x_test = self.final_x_test.drop(columns = self.cat_features)
+            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test], axis = 1)
+
+            # Save mapping dictionary
+            with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
+                json.dump(_mapping_dict, f, ensure_ascii=False, indent=4)
+
+        # Fit on the whole training and validation set
         self.optimal_model.fit(self.final_x_train, self.y_train)
+
+        # Infer
+        self.y_train_pred = self.optimal_model.predict(self.final_x_train)
+        self.y_test_pred = self.optimal_model.predict(self.final_x_test)
 
         # Save optimal parameters
         self.save_optimal_params()
 
         return None
-    
+
 
     def _optimizer(self, _param_space: dict, _static_params: dict) -> optuna.Study:
         """
@@ -166,23 +184,23 @@ class MyOptimizer:
             # 如果类别特征存在且模型不是CatBoost，则进行对输入自变量分类特征编码
             if self.cat_features is not None:
                 if self.model_name != "catr" and self.model_name != "catc":
-                    transformed_fold_train, encoder_dict, _ = fit_transform_multi_features(
+                    _transformed_fold_train, _encoder_dict, _ = fit_transform_multi_features(
                         X_fold_train.loc[:, self.cat_features],
                         self.encode_method,
-                        y_fold_train, 
+                        y_fold_train,
                     )
                     X_fold_train = X_fold_train.drop(columns = self.cat_features)
-                    X_fold_train = pd.concat([X_fold_train, transformed_fold_train], axis = 1)
+                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train], axis = 1)
                     
                     # 对验证集进行编码
                     transformed_fold_val = transform_multi_features(
                         X_fold_val.loc[:, self.cat_features],
-                        encoder_dict
-                    )
+                        _encoder_dict
+                    )                    
                     X_fold_val = X_fold_val.drop(columns = self.cat_features)
                     X_fold_val = pd.concat([X_fold_val, transformed_fold_val], axis = 1)
             #######################################################################
-            
+
             # Create and train the model
             validator = self._model_obj(**param)
             validator.fit(X_fold_train, y_fold_train)
@@ -190,7 +208,7 @@ class MyOptimizer:
 
             # 所有模型都继承自sklearn.base.RegressorMixin或sklearn.base.ClassifierMixin
             # 因此都有score方法
-            # 回归任务返回R2, 分类任务返回准确率
+            # 回归任务返回R2, 分类任务返回总体精度
             # 未来如果有修改，需要注意
             if self._task_type == "regression":
                 return validator.score(X_fold_val, y_fold_val)
@@ -205,7 +223,6 @@ class MyOptimizer:
         )
 
         # DeepSeek推荐在参数优化过程对交叉验证的结果减去0.5倍的标准差，可以使得结果更加稳定
-        # 返回平均得分减去标准差的一半
         return np.mean(cv_scores) - 0.5 * np.std(cv_scores)
     
 
