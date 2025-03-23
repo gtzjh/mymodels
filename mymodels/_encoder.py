@@ -6,6 +6,10 @@ import json
 from sklearn.model_selection import train_test_split
 
 
+# 为了忽略category_encoders带来的FutureWarning
+# 直接使用未来版本的pandas的处理方式
+pd.set_option('future.no_silent_downcasting', True)
+
 
 # Convert all NumPy types in the mapping dictionary before serialization
 def convert_numpy_types(obj):
@@ -76,7 +80,7 @@ class Encoder():
             
         elif self.method == 'frequency':
             self.encoder = self.X[self._cat_cols].value_counts(normalize=True).to_dict()
-            
+
         elif self.method == 'binary':
             self.encoder = ce.BinaryEncoder(cols=self._cat_cols)
             self.encoder.fit(self.X)
@@ -131,8 +135,9 @@ class Encoder():
                 current_col = X[col]
             
             # 直接使用self.encoder，它已经是频率映射字典
+            # 如果当前列有缺失值，则使用1e-6作为填充值
             mapped_frequencies = current_col.map(self.encoder)
-            mapped_frequencies_filled = mapped_frequencies.fillna(0)
+            mapped_frequencies_filled = mapped_frequencies.fillna(1e-6)
             
             new_col_name = col + '_freq'
             result_df = pd.DataFrame({new_col_name: mapped_frequencies_filled}, index=X.index)

@@ -119,23 +119,18 @@ class MyExplainer:
     
     def _check_input(self):
         # Validate input paths and directories
-        if not isinstance(self.results_dir, pathlib.Path):
-            raise TypeError("results_dir must be a string or Path object")
+        assert isinstance(self.results_dir, pathlib.Path), "results_dir must be a Path object"
         if not self.results_dir.exists():
             self.results_dir.mkdir(parents=True)
 
         # Validate dataframes
-        if not isinstance(self.used_X_train, pd.DataFrame):
-            raise TypeError("used_X_train must be a pandas DataFrame")
-        if not isinstance(self.used_X_test, pd.DataFrame):
-            raise TypeError("used_X_test must be a pandas DataFrame")
+        assert isinstance(self.used_X_train, pd.DataFrame), "used_X_train must be a pandas DataFrame"
+        assert isinstance(self.used_X_test, pd.DataFrame), "used_X_test must be a pandas DataFrame"
             
         # Validate sample sizes
         if self.sample_train_k is not None:
             if not isinstance(self.sample_train_k, (int, float)) or self.sample_train_k < 0:
                 raise ValueError("sample_train_k must be a positive integer or float")
-            if self.sample_train_k > len(self.used_X_train):
-                raise ValueError("sample_train_k cannot be larger than training set size")
                 
         if self.sample_test_k is not None:
             if not isinstance(self.sample_test_k, (int, float)) or self.sample_test_k < 0:
@@ -147,8 +142,6 @@ class MyExplainer:
         if self.cat_features is not None:
             if not isinstance(self.cat_features, (list, tuple)):
                 raise TypeError("cat_features must be a list or tuple")
-            if not all(col in self.used_X_train.columns for col in self.cat_features):
-                raise ValueError("All categorical features must exist in the training data")
 
         # For classification tasks, the model's classes_ attribute contains names of all classes,
         # SHAP will output shap_values in corresponding order
@@ -230,9 +223,11 @@ class MyExplainer:
 
             # Summary plot for demonstrating feature importance
             self.summary_plot(self.shap_values, self.results_dir.joinpath("shap_summary.jpg"))
+            logging.info("SHAP summary plot saved to: %s", self.results_dir.joinpath("shap_summary.jpg"))
 
             # Dependence plot for demonstrating relationship between feature values and SHAP values
             self.dependence_plot(self.shap_values, self.results_dir.joinpath("dependence_plots/"))
+            logging.info("SHAP dependence plot saved to: %s", self.results_dir.joinpath("dependence_plots/"))
 
         elif self.shap_values.ndim == 3:
             # 二分类任务中使用sklearn的决策树、随机森林模型,
@@ -252,6 +247,7 @@ class MyExplainer:
                     summary_plot_dir.joinpath(f"class_{self.classes_[i]}.jpg"),
                     title = f"SHAP Summary Plot for Class: {self.classes_[i]}"
                 )
+                logging.info("SHAP summary plots saved to: %s", summary_plot_dir.joinpath(f"class_{self.classes_[i]}.jpg"))
 
                 # Dependence plot for demonstrating relationship between feature values and SHAP values
                 dependence_plot_dir = self.results_dir.joinpath(f"dependence_plots/class_{self.classes_[i]}/")
@@ -260,6 +256,7 @@ class MyExplainer:
                     self.shap_values[:, :, i],
                     dependence_plot_dir
                 )
+                logging.info("SHAP dependence plots saved to: %s", dependence_plot_dir)
         else:
             raise ValueError(f"Invalid SHAP values dimension: {self.shap_values.ndim}")
         

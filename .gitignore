@@ -3,6 +3,8 @@ catboost_info/
 .DS_Store
 AutogluonModels/
 
+abandoned/
+
 results/
 encoding/
 # Byte-compiled / optimized / DLL files

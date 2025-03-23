@@ -80,9 +80,7 @@ def data_loader(
         y_data = encoder.transform(y_data.to_frame())
         y_data = y_data.iloc[:, 0]  # Extract to pd.Series
         mapping_dict = encoder.get_mapping()
-
-    else:
-        pass
+        print(mapping_dict)
 
     # Split data into training and testing sets
     return train_test_split(
