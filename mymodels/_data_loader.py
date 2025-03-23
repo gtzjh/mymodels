@@ -4,19 +4,22 @@ import pathlib
 from sklearn.model_selection import train_test_split
 
 
-from ._encoder import transform_multi_features, fit_transform_multi_features
+from ._encoder import Encoder
 
 
-def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
-    -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+def data_loader(
+        file_path,
+        y,
+        x_list,
+        test_ratio,
+        random_state
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Load and preprocess data from a CSV file.
     
     Args:
         file_path (str): The path to the CSV file.
         y (str or int): The column name or index of the dependent variable.
-        x_list (list): A list of column names or indices of the independent variables.
-        cat_features (a list of strings or None): 
-            A list of column names (str) for representing the categorical features.
+        x_list (list or tuple): A list of column names or indices of the independent variables.
         test_ratio (float): The ratio of the test set.
         random_state (int): The random state for the train_test_split.
     
@@ -36,21 +39,7 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
         "test_ratio must be between (0, 1]"
 
 
-    """Convert categorical features to category dtype"""
-    if cat_features is not None:
-        assert isinstance(cat_features, list) \
-            and all([isinstance(i, str) for i in cat_features]) \
-            and all([i in _df.columns for i in cat_features]), \
-            "The `cat_features` must be a list of strings " \
-            "and all elements must be in the column names of the inputted dataset."
-        try:
-            for cat_col in cat_features:
-                _df[cat_col] = _df[cat_col].astype('category')
-        except Exception as e:
-            raise ValueError(f"Error converting categorical features to category dtype: \n{e}")
-
-
-    """Select column using column name (if y is a string) or integer index (if y is an integer)"""
+    # Select column using column name (if y is a string) or integer index (if y is an integer)
     if isinstance(y, str):
         y_data = _df.loc[:, y]
     elif isinstance(y, int):
@@ -59,17 +48,10 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
         raise ValueError("`y` must be either a string or " \
                          "index within the whole dataset")
 
-    # Trans the y to True of False
-    # y_data = y_data.apply(lambda x: True if x == 1 else False)
-    # print(y_data)
 
-
-    """
-    Verify that x_list is a list and all elements are either strings or integers.
-    If x_list contains strings, select columns using column names.
-    If x_list contains integers, select columns using integer indices.
-    Then verify that all non-categorical columns are numeric.
-    """
+    # Verify x_list contains valid column identifiers and select data
+    # All elements must be either strings (column names) or integers (column indices)
+    x_list = list(x_list)
     if all([isinstance(i, str) for i in x_list]):
         x_data = _df.loc[:, x_list]
     elif all([isinstance(i, int) for i in x_list]):
@@ -77,21 +59,8 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     else:
         raise ValueError("`x_list` must be either a list or tuple of strings " \
                          "or indices within the whole dataset")
-    # Verify that all columns except for the specified categorical features are numeric
-    if cat_features is not None:
-        x_data_numeric = x_data.loc[:, ~x_data.columns.isin(cat_features)]
-    else:
-        x_data_numeric = x_data
-    if not all(pd.api.types.is_numeric_dtype(dtype) for dtype in x_data_numeric.dtypes):
-        raise ValueError("There are non-numeric columns in `x_data`, " \
-                         "Please check the `x_list` seriously. " \
-                         "You may need to specify the `cat_features` " \
-                         "if there are any categorical features.")
-    
 
-    """Clean data
-    Drop rows with missing values
-    """
+    # Clean data by dropping rows with missing values
     _data = pd.concat([x_data, y_data], axis = 1)
     _data = _data.dropna()
     _data = _data.reset_index(drop = True)
@@ -99,45 +68,26 @@ def data_loader(file_path, y, x_list, cat_features, test_ratio, random_state) \
     y_data = _data.iloc[:, -1]
 
 
-    """Transform y to label or boolean"""
-    if pd.api.types.is_numeric_dtype(y_data.dtype):
-        pass
-    else:
-        transformed_y_data, _encoder_dict, _mapping_dict = fit_transform_multi_features(
-            y_data.to_frame(),
-            encoder_methods = "label",
+    # Transform non-numeric target to label encoding
+    if pd.api.types.is_numeric_dtype(y_data.dtype) != True:
+        encoder = Encoder(
+            method = "label"
         )
-        y_data = transformed_y_data.iloc[:, 0]  # Extract to pd.Series
-        print(_mapping_dict)
+        encoder.fit(
+            X = y_data.to_frame(),
+            cat_cols = str(y_data.name),
+        )
+        y_data = encoder.transform(y_data.to_frame())
+        y_data = y_data.iloc[:, 0]  # Extract to pd.Series
+        mapping_dict = encoder.get_mapping()
 
-    # x_train, x_test, y_train, y_test
+    else:
+        pass
+
+    # Split data into training and testing sets
     return train_test_split(
         x_data, y_data, 
         test_size = test_ratio,
         random_state = random_state,
         shuffle = True
     )
-
-
-if __name__ == "__main__":
-    x_train, x_test, y_train, y_test = data_loader(
-        file_path = "data/titanic/train.csv",
-        y = "Survived",
-        x_list = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
-        cat_features = ["Sex", "Embarked"],
-        test_ratio = 0.3,
-        random_state = 0
-    )
-    # print(y_train)
-    # print(x_train)
-
-    transformed_x_train, encoder_dict, mapping_dict = fit_transform_multi_features(
-        x_train.loc[:, ["Sex", "Embarked"]],
-        encoder_methods = ["onehot", "binary"],
-        y = y_train
-    )
-    x_train = x_train.drop(columns = ["Sex", "Embarked"])
-    x_train = pd.concat([x_train, transformed_x_train], axis = 1)
-    print(x_train.info())
-    print(encoder_dict)
-    print(mapping_dict)

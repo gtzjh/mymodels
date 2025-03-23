@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, A
 from xgboost import XGBClassifier, XGBRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
 from catboost import CatBoostClassifier, CatBoostRegressor
+from types import MappingProxyType
 
 
 
@@ -19,7 +20,8 @@ class MyClassifiers:
             random_state (int): The random state to use for the model.
             cat_features (list[str] | None): The categorical features to use for the model.
         """
-        self.MODEL_MAP = {
+
+        _model_map = {
             "svc": (self._SVC, SVC),
             "knc": (self._KNC, KNeighborsClassifier),
             "mlpc": (self._MLPC, MLPClassifier),
@@ -31,6 +33,7 @@ class MyClassifiers:
             "lgbc": (self._LGBC, LGBMClassifier),
             "catc": (self._CATC, CatBoostClassifier)
         }
+        self.MODEL_MAP = MappingProxyType(_model_map)  # 创建不可变视图
         self.model_name = model_name
         self.random_state = random_state
         self.cat_features = cat_features
@@ -48,7 +51,7 @@ class MyClassifiers:
         _model_object = self.MODEL_MAP[self.model_name][1]
         _get_method = self.MODEL_MAP[self.model_name][0]
         _param_space, _static_params = _get_method()
-        return _model_object, _param_space, _static_params
+        return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
 
 
     def _SVC(self):
@@ -240,11 +243,8 @@ class MyClassifiers:
             "border_count": lambda t: t.suggest_int("border_count", 32, 255),
             "grow_policy": lambda t: t.suggest_categorical("grow_policy", ["SymmetricTree", "Depthwise", "Lossguide"]),
             "min_data_in_leaf": lambda t: t.suggest_int("min_data_in_leaf", 1, 50),
-            # "subsample": lambda t: t.suggest_float("subsample", 0.5, 1.0),
         }
         static_params = {
-            # "loss_function": "Logloss",  # Change based on problem type
-            # "eval_metric": "Logloss",  # Change based on problem type
             "cat_features": self.cat_features,
             "random_seed": self.random_state,
             "verbose": 0,
@@ -265,7 +265,8 @@ class MyRegressors:
             random_state (int): The random state to use for the model.
             cat_features (list[str] | None): The categorical features to use for the model.
         """
-        self.MODEL_MAP = {
+
+        _model_map = {
             "svr": (self._SVR, SVR),
             "knr": (self._KNR, KNeighborsRegressor),
             "mlpr": (self._MLPR, MLPRegressor),
@@ -277,6 +278,7 @@ class MyRegressors:
             "lgbr": (self._LGBR, LGBMRegressor),
             "catr": (self._CATR, CatBoostRegressor)
         }
+        self.MODEL_MAP = MappingProxyType(_model_map)  # 创建不可变视图
         self.model_name = model_name
         self.random_state = random_state
         self.cat_features = cat_features
@@ -295,7 +297,7 @@ class MyRegressors:
         _model_object = self.MODEL_MAP[self.model_name][1]
         _get_method = self.MODEL_MAP[self.model_name][0]
         _param_space, _static_params = _get_method()
-        return _model_object, _param_space, _static_params
+        return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
 
 
     def _SVR(self):

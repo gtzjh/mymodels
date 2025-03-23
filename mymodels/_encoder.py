@@ -6,9 +6,11 @@ import json
 from sklearn.model_selection import train_test_split
 
 
+
 # Convert all NumPy types in the mapping dictionary before serialization
 def convert_numpy_types(obj):
-    if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)):
+    if isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64, \
+                        np.uint8, np.uint16, np.uint32, np.uint64)):
         return int(obj)
     elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
         return float(obj)
@@ -133,9 +135,9 @@ class Encoder():
             mapped_frequencies_filled = mapped_frequencies.fillna(0)
             
             new_col_name = col + '_freq'
-            X[new_col_name] = mapped_frequencies_filled
+            result_df = pd.DataFrame({new_col_name: mapped_frequencies_filled}, index=X.index)
             
-            return X.drop(col, axis=1)
+            return result_df
         
         elif self.method == 'binary':
             return self.encoder.transform(X)
@@ -163,8 +165,10 @@ class Encoder():
             }
 
         elif self.method == 'label':
-            mapping[self._cat_cols] = dict(zip(self.encoder.classes_, 
-                                               self.encoder.transform(self.encoder.classes_)))
+            mapping = {
+                self._cat_cols: dict(zip(self.encoder.classes_, 
+                                   self.encoder.transform(self.encoder.classes_)))
+            }
             
         elif self.method == 'target':
             temp_df = pd.DataFrame({self._cat_cols: self.X[self._cat_cols].unique()})
@@ -201,7 +205,7 @@ def fit_transform_multi_features(
         categorical_X: pd.DataFrame,
         encoder_methods: str | list[str] | tuple[str] | None,
         y: pd.Series | None = None
-    ) -> tuple[pd.DataFrame, dict]:
+    ) -> tuple[pd.DataFrame, dict, dict]:
     """Transform the categorical features of the dataset
     ONE BY ONE COLUMNS
     如果_encoder_methods为list或是tuple, 则它们的长度要与输入的categorical_X的列数相同
@@ -266,7 +270,7 @@ def transform_multi_features(
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("data/titanic/train.csv", encoding="utf-8", na_values=np.nan)
+    data = pd.read_csv("data/titanic.csv", encoding="utf-8", na_values=np.nan)
     data = data[["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked", "Survived"]]
     data = data.dropna()
     data = data.reset_index(drop=True)
@@ -286,7 +290,7 @@ if __name__ == "__main__":
 
 
     ###################################################################################
-    """Test function `trans_category` in single encode method"""
+    """Test function `trans_category` in per encode method"""
     for method in [
         "onehot", 
         "label", "target", "frequency", "binary", "ordinal"
@@ -324,8 +328,7 @@ if __name__ == "__main__":
 
 
     ###################################################################################
-    """Test function `trans_category` in multiple encode methods"""
-    """
+    """Test function `trans_category` in multiple encode methods
     transformed_X_df, encoder_dict, mapping_dict = fit_transform_multi_features(
         data.loc[:, cat_cols],
         encoder_methods = ["onehot", "label"],

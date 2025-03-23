@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import pathlib
 
 
-from ._encoder import transform_multi_features
-
 shap.initjs()
 matplotlib.use('Agg')
 plt.rc('font', family = 'Times New Roman')
@@ -66,9 +64,6 @@ class MyExplainer:
         """Transform categorical data to numerical data
         'Cause the input data for calculating SHAP values must be consistent with the training data,
         so we need to convert the categorical variables in the test data to numerical variables.
-
-        在sklearn中, 无论模型是二分类还是多分类模型, 输出的结果都将会是每个类别的概率值,
-        因此shap_values的维度将会是(n_samples, n_features, n_targets),
         """
 
         # Sampling or not
