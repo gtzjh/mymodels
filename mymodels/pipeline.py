@@ -145,15 +145,15 @@ class MyPipeline:
             self,
             sample_train_k: int | None = None,
             sample_test_k:  int | None = None,
-            _plot: bool = True
+            plot: bool = True
         ):
         """Use SHAP for explanation
         Use training set to build the explainer, use test set to calculate SHAP values
         """
 
-        assert isinstance(sample_train_k, int) or sample_train_k is None, \
+        assert isinstance(sample_train_k, (int, float)) or sample_train_k is None, \
             "sample_train_k must be an integer or None, 100 is recommended when using non-tree model."
-        assert isinstance(sample_test_k, int) or sample_test_k is None, \
+        assert isinstance(sample_test_k, (int, float)) or sample_test_k is None, \
             "sample_test_k must be an integer or None, 100 is recommended when using non-tree model."
         
         # Explain the model
@@ -167,12 +167,7 @@ class MyPipeline:
             sample_test_k = sample_test_k,
             cat_features = self.cat_features
         )
-        explainer.explain()
-        
-        if _plot:
-            explainer.summary_plot()
-            explainer.dependence_plot()
-            explainer.partial_dependence_plot()
+        explainer.explain(plot = plot)
         
         return None
     
