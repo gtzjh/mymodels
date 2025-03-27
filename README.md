@@ -1,8 +1,8 @@
-# mymodels: An automated and efficient workflow for Explainable Machine Learning (XAI).
+# mymodels: An automated and efficient workflow for Interpretable Machine Learning.
 
 ## Supported Models
 
-### Regression Models
+### For Regression Task
 
 - [Support Vector Regression (SVR)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html)
 - [K-Nearest Neighbors Regression (KNR)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html)
@@ -15,7 +15,7 @@
 - [LightGBM](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html)
 - [CatBoost](https://catboost.ai/en/docs/concepts/python-reference_catboostregressor)
 
-### Classification Models
+### For Classification Task
 
 - [Support Vector Classification (SVC)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
 - [K-Nearest Neighbors Classification (KNC)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html)
@@ -115,6 +115,12 @@ mymodels.explain(
 
 `run_housing.py`: For regression task.
 
+> https://www.kaggle.com/datasets/jamalshah811/housingdata
+
 `run_obesity.py`: For multi-class classification task.
 
+> https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset
+
 `run_titanic.py`: For binary classification task.
+
+> https://www.kaggle.com/c/titanic/data
