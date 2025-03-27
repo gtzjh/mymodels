@@ -41,7 +41,7 @@ log-odds 是 SHAP 值计算的理想空间，能够保证特征贡献的可加�
 
 >> def log_odds(x):
 >>     return np.log(x / (1 - x))
->> print("\n第一个样本的log-odds转换后的概率值[阴性, 阳性]:")
+>> print("\n第一个样本的输出概率的log-odds转换后的值[阴性, 阳性]:")
 >> print(log_odds(proba[0]), log_odds(proba[1]))
 
 >> feature_sum_i = np.sum(self.shap_values[0, :])
