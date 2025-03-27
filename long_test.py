@@ -6,9 +6,9 @@ def titanic_test():
         mymodels = MyPipeline(
             results_dir = f"results/catc",
             random_state = 0,
-            show = True,  # 是否显示图表
-            plot_format = "pdf",  # 图表格式
-            plot_dpi = 300  # 图表分辨率
+            show = True,
+            plot_format = "jpg",
+            plot_dpi = 300
         )
         mymodels.load(
             file_path = "data/titanic.csv",
@@ -42,9 +42,9 @@ def titanic_test():
                 mymodels = MyPipeline(
                     results_dir = f"results/{n}/{e}",
                     random_state = 0,
-                    show = True,  # 是否显示图表
-                    plot_format = "pdf",  # 图表格式
-                    plot_dpi = 300  # 图表分辨率
+                    show = True,
+                    plot_format = "jpg",
+                    plot_dpi = 300
                 )
                 mymodels.load(
                     file_path = "data/titanic.csv",

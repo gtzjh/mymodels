@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score
+from sklearn.metrics import roc_curve, auc, roc_auc_score
+from sklearn.preprocessing import label_binarize
 import yaml, pathlib, json
 
 
@@ -174,16 +176,22 @@ class Evaluator:
                   json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
-        """
-        self._plot_regression_results(
-            self.accuracy_dict["test_r2"],
-            self.accuracy_dict["test_rmse"],
-            self.accuracy_dict["test_mae"],
-            self.y_test,
-            self.y_test_pred
-        )
-        """
-        
+        if self.model_name in ["svr", "knr", "mlpr", "adar", \
+                               "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
+            self._plot_regression_results(
+                self.accuracy_dict["test_r2"],
+                self.accuracy_dict["test_rmse"],
+                self.accuracy_dict["test_mae"],
+                self.y_test,
+                self.y_test_pred
+            )
+        else:
+            self._plot_classification_results(
+                self.y_test,
+                self.y_test_pred,
+                self.y_train,
+                self.y_train_pred
+            )
 
         # Output train and test results
         if self.save_raw_data:
@@ -209,7 +217,92 @@ class Evaluator:
 
     
     def _plot_classification_results(self, y_test, y_test_pred, y_train, y_train_pred):
-        pass
+        """Creates ROC curve plots for classification model evaluation.
+        
+        For binary classification, plots a single ROC curve.
+        For multiclass classification, plots one-vs-rest ROC curves for each class.
+        
+        Args:
+            y_test: Actual test target values.
+            y_test_pred: Predicted test target values (probabilities for each class if available, otherwise labels).
+            y_train: Actual training target values (not used in this implementation).
+            y_train_pred: Predicted training target values (not used in this implementation).
+            
+        Returns:
+            None: The function saves the plot to disk and does not return a value.
+        """
+        plt.figure()
+
+        # Get unique classes
+        classes = np.unique(y_test)
+        n_classes = len(classes)
+    
+        ###########################################################################################
+        # Binary classification case
+        if n_classes == 2:            
+            # Compute ROC curve and ROC area
+            fpr, tpr, _ = roc_curve(y_test, y_test_pred)
+            roc_auc = auc(fpr, tpr)
+            
+            # Plot ROC curve
+            plt.plot(fpr, tpr, lw=2, label=f'ROC curve (AUC = {roc_auc:.3f})')
+            plt.plot([0, 1], [0, 1], 'k--', lw=2)  # Diagonal reference line
+            
+        # Multiclass classification case
+        else:
+            # Convert y_test to binary format (one-hot encoding)
+            y_test_bin = label_binarize(y_test, classes=classes)
+            # If only labels available, create a simple one-hot encoding
+            y_score = label_binarize(y_test_pred, classes=classes)
+            
+            # Compute ROC curve and ROC area for each class
+            fpr = dict()
+            tpr = dict()
+            roc_auc = dict()
+            
+            for i in range(n_classes):
+                fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+                roc_auc[i] = auc(fpr[i], tpr[i])
+                plt.plot(fpr[i], tpr[i], lw=2, 
+                         label=f'ROC curve of class {classes[i]} (AUC = {roc_auc[i]:.3f})')
+        ###########################################################################################
+        
+        # Plotting
+        # Formatting the plot
+        plt.xlabel('False Positive Rate', fontdict={'size': 14})
+        plt.ylabel('True Positive Rate', fontdict={'size': 14})
+        plt.title('Receiver Operating Characteristic (ROC) Curve', fontdict={'size': 16})
+        plt.legend(loc="lower right", prop={'size': 12})
+        plt.grid(alpha=0.3)
+        
+        # Add accuracy metrics in the plot
+        plt.annotate(f"Accuracy: {self.accuracy_dict['test_accuracy']:.3f}\n"
+                     f"Precision: {self.accuracy_dict['test_precision']:.3f}\n"
+                     f"Recall: {self.accuracy_dict['test_recall']:.3f}\n"
+                     f"F1: {self.accuracy_dict['test_f1']:.3f}",
+                     xy=(0.05, 0.05), xycoords='axes fraction',
+                     bbox=dict(boxstyle="round,pad=0.5", fc="white", alpha=0.8),
+                     fontsize=12)
+        
+        # Set appearance
+        ax = plt.gca()
+        ax.spines['right'].set_color('none')
+        ax.spines['top'].set_color('none')
+        plt.xticks(size=14)
+        plt.yticks(size=14)
+        
+        # Save and show
+        plt.tight_layout()
+        plt.savefig(
+            self.results_dir.joinpath('roc_curve_plot.' + self.plot_format),
+            dpi=self.plot_dpi
+        )
+        
+        if self.show:
+            plt.show()
+            
+        plt.close()
+        
         return None
 
 

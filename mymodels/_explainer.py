@@ -16,37 +16,39 @@ plt.rc('font', family = 'Times New Roman')
 
 
 """
-    # 在二分类任务中,
-    # TreeExplainer对xgboost, lightgbm, catboost输出的正类的概率值p进行对数几率(log-odds)转换:
-    # ln(p/(1 - p))
-    # 该值>0代表预测为正类(p>0.5), <0代表预测为负类(p<0.5), =0代表预测为中性(p=0.5),
-    # 某一个样本在所有特征的shap_values的和, 再加上base_value(expected_value)即为该样本的预测概率的对数值,
-    # 因此shap_values的维度将会是(n_samples, n_features)
+SHAP 的可加性: 样本在所有特征的shap_values的和, 再加上base_value(expected_value)即为该样本的预测输出值。
 
-    # 二分类模型预测的概率值
-    proba = self.model_obj.predict_proba(self.used_X_test)[0]
-    print("\n第一个样本的模型预测概率值[阴性, 阳性]:")
-    print(proba[0], proba[1])
+xgboost, lightgbm, catboost都是在log-odds空间中工作, 并将最后的预测值转换回概率值
+因此, TreeExplainer会对它们输出的概率进行对数几率转换, 会回到模型原始的log-odds空间中解释
+log-odds 是 SHAP 值计算的理想空间，能够保证特征贡献的可加性、无界性和一致的解释。
+对数几率转换: ln(p/(1 - p))
+该值>0代表预测为正类(p>0.5), <0代表预测为负类(p<0.5), =0代表预测为中性(p=0.5),
 
-    # 尝试对两个类别的输出概率进行log-odds转换
-    # 对于二分类问题, 正类的对数几率与负类的对数几率符号相反但绝对值相同
-    # 即: log-odds(p) = -log-odds(1 - p)
-    def log_odds(x):
-        return np.log(x / (1 - x))
-    print("\n第一个样本的log-odds转换后的概率值[阴性, 阳性]:")
-    print(log_odds(proba[0]), log_odds(proba[1]))
+对于二分类任务, 输出的shap_values的维度是(n_samples, n_features), shap_values的值是指对正类的贡献, 是在 log-odds 空间中解释
+对于多分类任务, 输出的shap_values的维度是(n_samples, n_features, n_targets), shap_values的值是指对每个类别的贡献
 
-    # 由于在xgboost, lightgbm, catboost的内部, 是在log-odds的空间中工作, 并将最后的预测值转换回概率值
-    # 在TreeExplainer中, 会回到模型原始的log-odds空间中解释
-    # 因此, 输出的shap_values和base_value是log-odds空间中的值
-    # 所以, 将每个特征的shap_values值的和, 再加上base_value, 即为预测概率的log-odds值
-    feature_sum_i = np.sum(self.shap_values[0, :])
-    base_value_i = self.shap_base_values[0]
-    sum_i = feature_sum_i + base_value_i
-    print("\n第一个样本的shap预测值(shap_values + base_value) | shap_values的和 | base_value")
-    print(sum_i, feature_sum_i, base_value_i)
+举例
+二分类模型预测的概率值
+使用 `.predict_proba()` 方法获取预测概率值
 
-    # log-odds 是 SHAP 值计算的理想空间，能够保证特征贡献的可加性、无界性和一致的解释。
+>> proba = self.model_obj.predict_proba(self.used_X_test)[0]
+>> print("\n第一个样本的模型预测概率值[阴性, 阳性]:")
+>> print(proba[0], proba[1])
+
+尝试对两个类别的输出概率进行log-odds转换
+对于二分类问题, 正类的对数几率与负类的对数几率符号相反但绝对值相同
+即: log-odds(p) = -log-odds(1 - p)
+
+>> def log_odds(x):
+>>     return np.log(x / (1 - x))
+>> print("\n第一个样本的log-odds转换后的概率值[阴性, 阳性]:")
+>> print(log_odds(proba[0]), log_odds(proba[1]))
+
+>> feature_sum_i = np.sum(self.shap_values[0, :])
+>> base_value_i = self.shap_base_values[0]
+>> sum_i = feature_sum_i + base_value_i
+>> print("\n第一个样本的shap预测值(shap_values + base_value) | shap_values的和 | base_value")
+>> print(sum_i, feature_sum_i, base_value_i)
 """
 
 
@@ -307,13 +309,16 @@ class MyExplainer:
         results_dir.mkdir(parents = True, exist_ok = True)
 
         def _plot_dependence_plot(_feature_name):
-            fig = plt.figure()
+            # Close any existing figures before creating a new one
+            plt.close('all')
+            # shap.dependence_plot creates its own figure internally
             shap.dependence_plot(_feature_name, shap_values, self.used_X_test, show = False)
             plt.tight_layout()
             plt.savefig(results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
             if self.show:
                 plt.show()
-            plt.close()
+            # Make sure to close all figures
+            plt.close('all')
             return None
 
         for i in self.feature_names:
