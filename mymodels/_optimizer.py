@@ -57,6 +57,9 @@ class MyOptimizer:
         self.final_x_test = None
         self._model_obj = None  # An instance of the model
         self._task_type = None
+        self.show = None
+        self.plot_format = None
+        self.plot_dpi = None
 
         # After fit()
         self.optimal_params = None
@@ -73,6 +76,9 @@ class MyOptimizer:
         model_name: str,
         cat_features: list[str] | tuple[str] | None = None,
         encode_method: str | list[str] | tuple[str] | None = None,
+        show: bool = False,
+        plot_format: str = "jpg",
+        plot_dpi: int = 500
     ):
         """Train and optimize a machine learning model.
         
@@ -104,6 +110,9 @@ class MyOptimizer:
         self.model_name = model_name
         self.cat_features = cat_features
         self.encode_method = encode_method
+        self.show = show
+        self.plot_format = plot_format
+        self.plot_dpi = plot_dpi
 
         self.final_x_train = self.x_train  # The training set which is for final prediction after encoding
         self.final_x_test = self.x_test    # The test set which is for final prediction after encoding
@@ -181,6 +190,8 @@ class MyOptimizer:
             _task_type = "classification"
         else:
             raise ValueError(f"Invalid model name: {_model_name}")
+
+        
         
         return _task_type
         
@@ -333,7 +344,11 @@ class MyOptimizer:
         
         # Save the figure
         plt.tight_layout()
-        plt.savefig(self.results_dir.joinpath("optimization_history.jpg"), dpi=500)
+        plt.savefig(self.results_dir.joinpath("optimization_history." + self.plot_format), dpi = self.plot_dpi)
+
+        if self.show:
+            plt.show()
+            
         plt.close()
         
         return None

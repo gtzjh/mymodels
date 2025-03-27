@@ -10,8 +10,8 @@ import logging
 # logging.getLogger().setLevel(logging.WARNING)
 
 
-shap.initjs()
-matplotlib.use('Agg')
+# shap.initjs()
+# matplotlib.use('Agg')
 plt.rc('font', family = 'Times New Roman')
 
 
@@ -114,6 +114,11 @@ class MyExplainer:
         self.shap_base_values = None
         self.feature_names = None
 
+        # After plot_results()
+        self.show = None
+        self.plot_format = None
+        self.plot_dpi = None
+
         self._check_input()
 
     
@@ -151,11 +156,21 @@ class MyExplainer:
         return None
 
     
-    def explain(self, plot: bool = True):
+    def explain(
+            self,
+            plot: bool,
+            show: bool,
+            plot_format: str,
+            plot_dpi: int
+        ):
         """Transform categorical data to numerical data
         'Cause the input data for calculating SHAP values must be consistent with the training data,
         so we need to convert the categorical variables in the test data to numerical variables.
         """
+        self.show = show
+        self.plot_format = plot_format
+        self.plot_dpi = plot_dpi
+
 
         if self.model_name == "gbdtc" and len(self.classes_) > 2:
             logging.warning("SHAP currently does not support explanation for multi-class GBDT models")
@@ -216,19 +231,26 @@ class MyExplainer:
 
 
     def plot_results(self):
+
         if self.shap_values.ndim == 2:
             # 回归任务中使用的所有模型、
             # 二分类任务中使用的SVC, adaboost, gbdt, xgboost, lightgbm, catboost模型,
             # 输出的shap_values的维度都是(n_samples, n_features)
 
             # Summary plot for demonstrating feature importance
-            self.summary_plot(self.shap_values, self.results_dir.joinpath("shap_summary.jpg"))
-            logging.info("SHAP summary plot saved to: %s", self.results_dir.joinpath("shap_summary.jpg"))
+            self.summary_plot(
+                shap_values = self.shap_values,
+                save_dir = self.results_dir,
+                file_name = "shap_summary",
+                title = "SHAP Summary Plot"
+            )
 
             # Dependence plot for demonstrating relationship between feature values and SHAP values
-            self.dependence_plot(self.shap_values, self.results_dir.joinpath("dependence_plots/"))
-            logging.info("SHAP dependence plot saved to: %s", self.results_dir.joinpath("dependence_plots/"))
-
+            self.dependence_plot(
+                shap_values = self.shap_values,
+                save_dir = self.results_dir.joinpath("dependence_plots/")
+            )
+    
         elif self.shap_values.ndim == 3:
             # 二分类任务中使用sklearn的决策树、随机森林模型,
             # 以及多分类任务使用的所有模型，
@@ -243,39 +265,41 @@ class MyExplainer:
             for i in range(0, len(self.classes_)):
                 # Summary plot for demonstrating feature importance
                 self.summary_plot(
-                    self.shap_values[:, :, i],
-                    summary_plot_dir.joinpath(f"class_{self.classes_[i]}.jpg"),
+                    shap_values = self.shap_values[:, :, i],
+                    save_dir = summary_plot_dir,
+                    file_name = f"class_{self.classes_[i]}",
                     title = f"SHAP Summary Plot for Class: {self.classes_[i]}"
                 )
-                logging.info("SHAP summary plots saved to: %s", summary_plot_dir.joinpath(f"class_{self.classes_[i]}.jpg"))
 
                 # Dependence plot for demonstrating relationship between feature values and SHAP values
                 dependence_plot_dir = self.results_dir.joinpath(f"dependence_plots/class_{self.classes_[i]}/")
                 dependence_plot_dir.mkdir(parents = True, exist_ok = True)
                 self.dependence_plot(
-                    self.shap_values[:, :, i],
-                    dependence_plot_dir
+                    shap_values = self.shap_values[:, :, i],
+                    save_dir = dependence_plot_dir
                 )
-                logging.info("SHAP dependence plots saved to: %s", dependence_plot_dir)
         else:
             raise ValueError(f"Invalid SHAP values dimension: {self.shap_values.ndim}")
         
         return None
 
 
-    def summary_plot(self, shap_values, save_file_path: str | pathlib.Path, title: str = "SHAP Summary Plot"):
+    def summary_plot(self, shap_values, save_dir: pathlib.Path, file_name: str, title: str):
         """Summary Plot
         https://shap.readthedocs.io/en/latest/release_notes.html#release-v0-36-0
         """
+        fig = plt.figure()
         shap.summary_plot(shap_values, self.used_X_test, show = False)
         plt.title(title)
         plt.tight_layout()
-        plt.savefig(pathlib.Path(save_file_path), dpi = 500)
+        plt.savefig(save_dir.joinpath(file_name + '.' + self.plot_format), dpi = self.plot_dpi)
+        if self.show:
+            plt.show()
         plt.close()
         return None
 
 
-    def dependence_plot(self, shap_values, save_dir: str | pathlib.Path):
+    def dependence_plot(self, shap_values, save_dir: pathlib.Path):
         """Dependence Plot
         https://shap.readthedocs.io/en/latest/example_notebooks/api_examples/plots/scatter.html#Using-color-to-highlight-interaction-effects
         """
@@ -283,14 +307,17 @@ class MyExplainer:
         results_dir.mkdir(parents = True, exist_ok = True)
 
         def _plot_dependence_plot(_feature_name):
+            fig = plt.figure()
             shap.dependence_plot(_feature_name, shap_values, self.used_X_test, show = False)
             plt.tight_layout()
-            plt.savefig(results_dir.joinpath(_feature_name + '.jpg'), dpi = 500)
+            plt.savefig(results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
+            if self.show:
+                plt.show()
             plt.close()
             return None
 
         for i in self.feature_names:
-            _plot_dependence_plot(i)
+            _plot_dependence_plot(str(i))
             
         return None
     

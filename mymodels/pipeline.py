@@ -16,10 +16,15 @@ class MyPipeline:
             self,
             results_dir: str | pathlib.Path,
             random_state: int = 0,
+            show: bool = True,
+            plot_format: str = "jpg",
+            plot_dpi: int = 500
         ):
-        self.results_dir = pathlib.Path(results_dir)
-        self.results_dir.mkdir(parents = True, exist_ok = True)
+        self.results_dir = results_dir
         self.random_state = random_state
+        self.show = show
+        self.plot_format = plot_format
+        self.plot_dpi = plot_dpi
 
         # Global variables statement
         # In load()
@@ -39,7 +44,37 @@ class MyPipeline:
         self._used_X_test = None
         self._y_train_pred = None
         self._y_test_pred = None
+
+        self._check_pipeline_input()
+
+    
+
+    def _check_pipeline_input(self):
+        """Check input parameters for pipeline.
         
+        This function validates the following parameters:
+            - results_dir: Must be a valid directory path
+            - random_state: Must be an integer
+            - show: Must be a boolean
+
+        Raises:
+            ValueError: If any parameter validation fails
+        """
+        assert isinstance(self.results_dir, pathlib.Path) or isinstance(self.results_dir, str), \
+            "results_dir must be a valid directory path"
+        if isinstance(self.results_dir, str):
+            self.results_dir = pathlib.Path(self.results_dir)
+        self.results_dir.mkdir(parents = True, exist_ok = True)
+        assert isinstance(self.random_state, int), "random_state must be an integer"
+        assert isinstance(self.show, bool), "show must be a boolean"
+        assert isinstance(self.plot_format, str), "plot_format must be a string"
+        assert self.plot_format in ["jpg", "png", "jpeg", "tiff", "pdf", "svg", "eps"], \
+            "plot_format must be one of the following: jpg, png, jpeg, tiff, pdf, svg, eps"
+        assert isinstance(self.plot_dpi, int), "plot_dpi must be an integer"
+
+        return None
+
+
 
     def load(
         self,
@@ -68,7 +103,9 @@ class MyPipeline:
             print(f"\nTrain y data head:")
             print(self._y_train.head(10))
             print(f"\nTotally features: {self._x_train.shape[1]}")
+
         return None
+
 
 
     def optimize(
@@ -103,7 +140,10 @@ class MyPipeline:
             x_test=self._x_test,
             model_name=self.model_name,
             cat_features=self.cat_features,
-            encode_method=self.encode_method
+            encode_method=self.encode_method,
+            show = self.show,
+            plot_format = self.plot_format,
+            plot_dpi = self.plot_dpi
         )
         
         # For evaluate()
@@ -118,34 +158,35 @@ class MyPipeline:
         return None
     
 
+
     def evaluate(self):
         """Evaluate the model
         the results will be saved in the results_dir,
         and output to the console
         """
-        evaluator = Evaluator(
-            model_name=self.model_name,
-            results_dir=self.results_dir,
-            plot=False,
-            print_results=True,
-            save_results=True,
-            save_raw_data=True
-        )
+        evaluator = Evaluator(model_name=self.model_name)
         evaluator.evaluate(
             y_test = self._y_test,
             y_test_pred = self._y_test_pred,
             y_train = self._y_train,
-            y_train_pred = self._y_train_pred
+            y_train_pred = self._y_train_pred,
+            results_dir = self.results_dir,
+            show = self.show,
+            plot_format = self.plot_format,
+            plot_dpi = self.plot_dpi,
+            print_results = True,
+            save_results = True,
+            save_raw_data = True
         )
 
         return None
+
 
 
     def explain(
             self,
             sample_train_k: int | None = None,
             sample_test_k:  int | None = None,
-            plot: bool = True
         ):
         """Use SHAP for explanation
         Use training set to build the explainer, use test set to calculate SHAP values
@@ -167,10 +208,16 @@ class MyPipeline:
             sample_test_k = sample_test_k,
             cat_features = self.cat_features
         )
-        explainer.explain(plot = plot)
+        explainer.explain(
+            plot = True,
+            show = self.show,
+            plot_format = self.plot_format,
+            plot_dpi = self.plot_dpi
+        )
         
         return None
     
+
 
     def _check_optimize_input(self):
         """Check input parameters for optimization.

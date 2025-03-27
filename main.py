@@ -3,8 +3,11 @@ from mymodels.pipeline import MyPipeline
 
 def main():
     mymodels = MyPipeline(
-        results_dir = "results/catc",
-        random_state = 0,
+        results_dir = "results/catc",  # 结果保存路径
+        random_state = 0,  # 随机种子
+        show = True,  # 是否显示图表
+        plot_format = "pdf",  # 图表格式
+        plot_dpi = 300  # 图表分辨率
     )
     mymodels.load(
         file_path = "data/titanic.csv",
@@ -18,7 +21,7 @@ def main():
         cat_features = ["Pclass", "Sex", "Embarked"],
         encode_method = None,
         cv = 5,
-        trials = 10,
+        trials = 6,
         n_jobs = -1,
         plot_optimization = True
     )
@@ -26,7 +29,6 @@ def main():
     mymodels.explain(
         sample_train_k = 0.5,
         sample_test_k = 0.5,
-        plot = True
     )
 
     return None

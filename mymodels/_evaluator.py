@@ -9,70 +9,6 @@ import yaml, pathlib, json
 plt.rc('font', family = 'Times New Roman')
 
 
-def _plot_classifier(y_test, y_test_pred, y_train, y_train_pred, results_dir):
-    pass
-    return None
-
-
-def _plot_regr(_r2_value, _rmse_value, _mae_value, _y, _y_pred, _results_dir):
-    """Creates a scatter plot of actual vs predicted values for regression model evaluation.
-
-    This function generates a visualization comparing actual values to predicted values
-    from a regression model. It includes a scatter plot of the data points, a linear fit line,
-    a y=x reference line, and displays performance metrics (R2, RMSE, MAE) in the legend.
-
-    Args:
-        _r2_value (float): R-squared value of the regression model.
-        _rmse_value (float): Root Mean Squared Error value of the regression model.
-        _mae_value (float): Mean Absolute Error value of the regression model.
-        _y (pandas.Series): Actual target values.
-        _y_pred (pandas.Series or numpy.ndarray): Predicted target values.
-        _results_dir (str or pathlib.Path): Directory where the plot image will be saved.
-
-    Returns:
-        None: The function saves the plot to disk and does not return a value.
-    """
-    plt.figure(figsize = (8, 8), dpi = 500)
-    plt.scatter(_y, _y_pred, color = '#4682B4', alpha = 0.4, s = 150)
-    
-    # 定义x轴的上下限，为了防止轴须图中的离散值改变了坐标轴定位
-    _min = _y.min() - abs(_y.min()) * 0.15
-    _max = _y.max() + abs(_y.max()) * 0.15
-    plt.xlim(_min, _max)
-    plt.ylim(_min, _max)
-
-    # 进行散点的线性拟合
-    param = np.polyfit(_y, _y_pred, 1)
-    y2 = param[0] * _y + param[1]
-
-    _y = _y.to_numpy()
-    y2 = y2.to_numpy()
-
-    _line1, = plt.plot(_y, y2, color = 'black', label = 'y = ' + f'{param[0]:.2f}' + " * x" + " + " + f'{param[1]:.2f}')
-    _line2, = plt.plot([_min, _max], [_min, _max], '--', color = 'gray', label = 'y = x') # 绘制 y = x 的虚线
-    _plot_r2, = plt.plot(0, 0, '-', color = 'w', label = f'R2      :  {_r2_value:.3f}')
-    _plot_rmse, = plt.plot(0, 0, '-', color = 'w', label = f'RMSE:  {_rmse_value:.3f}')
-    _plot_mae, = plt.plot(0, 0, '-', color = 'w', label = f'MAE  :  {_mae_value:.3f}')
-
-    plt.legend(handles = [_line1, _line2, _plot_r2, _plot_rmse, _plot_mae], 
-               loc = 'upper left', fancybox = True, shadow = True, fontsize = 16, prop = {'size': 16})
-    
-    plt.ylabel('Predicted values', fontdict = {'size': 18})
-    plt.xlabel('Actual values', fontdict = {'size': 18})
-    plt.yticks(size = 16)
-    plt.xticks(size = 16)
-
-    ax = plt.gca()
-    ax.spines['right'].set_color('none')
-    ax.spines['top'].set_color('none')
-
-    plt.savefig(_results_dir.joinpath('accuracy_plot.jpg'), dpi = 500)
-    plt.close()
-
-    return None
-
-
-
 class Evaluator:
     """A class for evaluating machine learning regression models.
     
@@ -83,39 +19,49 @@ class Evaluator:
     def __init__(
             self,
             model_name,
-            results_dir: str | pathlib.Path,
-            plot = True,   # Plot scatter plot
-            print_results = True,  # Print results to console
-            save_results = True,    # Save results to files
-            save_raw_data = False    # Save raw data to files
         ):
-        """Initialize the Evaluator with model and configuration settings.
+        """Initialize the Evaluator with model name.
         
         Args:
-            results_dir (str | pathlib.Path): Directory to save evaluation results.
-            plot (bool, optional): Whether to generate accuracy plots. Defaults to True.
-            print_results (bool, optional): Whether to print results to console. Defaults to True.
-            save_results (bool, optional): Whether to save results to files. Defaults to True.
-            save_raw_data (bool, optional): Whether to save raw prediction data. Defaults to False.
+            model_name (str): Name of the model to evaluate. Must be one of the supported model types:
+                - Regression models: 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr'
+                - Classification models: 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc'
         """
         self.model_name = model_name
-        self.results_dir = pathlib.Path(results_dir)
-
-        # Options
-        self.plot = plot
-        self.print_results = print_results
-        self.save_results = save_results
-        self.save_raw_data = save_raw_data
 
         # Will change in runtime
+        self.y_test = None
+        self.y_test_pred = None
+        self.y_train = None
+        self.y_train_pred = None
+
         self.accuracy_dict = None
+        
+        self.results_dir = None
+        self.show = None
+        self.plot_format = None
+        self.plot_dpi = None
+        self.print_results = None
+        self.save_results = None
+        self.save_raw_data = None
+
 
     
-    def evaluate(self, y_test, y_test_pred, y_train, y_train_pred):
-        self.y_test = y_test
-        self.y_test_pred = y_test_pred
-        self.y_train = y_train
-        self.y_train_pred = y_train_pred
+    def evaluate(
+            self,
+            y_test,
+            y_test_pred,
+            y_train,
+            y_train_pred,
+            results_dir: str | pathlib.Path,
+            show: bool,
+            plot_format: str,
+            plot_dpi: int,
+            print_results: bool,
+            save_results: bool,
+            save_raw_data: bool
+        ):
+
         """Evaluate the model on test and training data.
         
         Performs model evaluation by:
@@ -128,6 +74,19 @@ class Evaluator:
             y_train: Actual training target values
             y_train_pred: Predicted training target values
         """
+
+        self.y_test = y_test
+        self.y_test_pred = y_test_pred
+        self.y_train = y_train
+        self.y_train_pred = y_train_pred
+        self.results_dir = pathlib.Path(results_dir)
+        self.show = show
+        self.plot_format = plot_format
+        self.plot_dpi = plot_dpi
+        self.print_results = print_results
+        self.save_results = save_results
+        self.save_raw_data = save_raw_data
+
 
         if self.model_name in ["svr", "knr", "mlpr", "adar", \
                                "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
@@ -143,6 +102,7 @@ class Evaluator:
         self._output()
 
         return None
+
 
 
     def _get_accuracy_4_regression_task(self, y_test, y_test_pred, y_train, y_train_pred):
@@ -167,6 +127,7 @@ class Evaluator:
         })
         return None
     
+
 
     def _get_accuracy_4_classification_task(self, y_test, y_test_pred, y_train, y_train_pred):
         """Calculate classification accuracy metrics for both test and training data.
@@ -195,6 +156,7 @@ class Evaluator:
         return None
 
 
+
     def _output(self):
         """Process output options based on configuration.
         
@@ -212,16 +174,16 @@ class Evaluator:
                   json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
-        if self.plot:
-            _plot_regr(
-                self.accuracy_dict["test_r2"],
-                self.accuracy_dict["test_rmse"],
-                self.accuracy_dict["test_mae"],
-                self.y_test,
-                self.y_test_pred,
-                self.results_dir
-            )
-
+        """
+        self._plot_regression_results(
+            self.accuracy_dict["test_r2"],
+            self.accuracy_dict["test_rmse"],
+            self.accuracy_dict["test_mae"],
+            self.y_test,
+            self.y_test_pred
+        )
+        """
+        
 
         # Output train and test results
         if self.save_raw_data:
@@ -241,5 +203,78 @@ class Evaluator:
                                                "y_train_pred": y_train_pred_1d})
             test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = False)
             train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = False)    
+
+        return None
+
+
+    
+    def _plot_classification_results(self, y_test, y_test_pred, y_train, y_train_pred):
+        pass
+        return None
+
+
+
+    def _plot_regression_results(self, _r2_value, _rmse_value, _mae_value, _y, _y_pred):
+        """Creates a scatter plot of actual vs predicted values for regression model evaluation.
+
+        This function generates a visualization comparing actual values to predicted values
+        from a regression model. It includes a scatter plot of the data points, a linear fit line,
+        a y=x reference line, and displays performance metrics (R2, RMSE, MAE) in the legend.
+
+        Args:
+            _r2_value (float): R-squared value of the regression model.
+            _rmse_value (float): Root Mean Squared Error value of the regression model.
+            _mae_value (float): Mean Absolute Error value of the regression model.
+            _y (pandas.Series): Actual target values.
+            _y_pred (pandas.Series or numpy.ndarray): Predicted target values.
+            _results_dir (str or pathlib.Path): Directory where the plot image will be saved.
+
+        Returns:
+            None: The function saves the plot to disk and does not return a value.
+        """
+        plt.figure(figsize = (8, 8), dpi = 500)
+        plt.scatter(_y, _y_pred, color = '#4682B4', alpha = 0.4, s = 150)
+        
+        # 定义x轴的上下限，为了防止轴须图中的离散值改变了坐标轴定位
+        _min = _y.min() - abs(_y.min()) * 0.15
+        _max = _y.max() + abs(_y.max()) * 0.15
+        plt.xlim(_min, _max)
+        plt.ylim(_min, _max)
+
+        # 进行散点的线性拟合
+        param = np.polyfit(_y, _y_pred, 1)
+        y2 = param[0] * _y + param[1]
+
+        _y = _y.to_numpy()
+        y2 = y2.to_numpy()
+
+        _line1, = plt.plot(_y, y2, color = 'black', label = 'y = ' + f'{param[0]:.2f}' + " * x" + " + " + f'{param[1]:.2f}')
+        _line2, = plt.plot([_min, _max], [_min, _max], '--', color = 'gray', label = 'y = x') # 绘制 y = x 的虚线
+        _plot_r2, = plt.plot(0, 0, '-', color = 'w', label = f'R2      :  {_r2_value:.3f}')
+        _plot_rmse, = plt.plot(0, 0, '-', color = 'w', label = f'RMSE:  {_rmse_value:.3f}')
+        _plot_mae, = plt.plot(0, 0, '-', color = 'w', label = f'MAE  :  {_mae_value:.3f}')
+
+        plt.legend(handles = [_line1, _line2, _plot_r2, _plot_rmse, _plot_mae], 
+                loc = 'upper left', fancybox = True, shadow = True, fontsize = 16, prop = {'size': 16})
+        
+        plt.ylabel('Predicted values', fontdict = {'size': 18})
+        plt.xlabel('Actual values', fontdict = {'size': 18})
+        plt.yticks(size = 16)
+        plt.xticks(size = 16)
+
+        ax = plt.gca()
+        ax.spines['right'].set_color('none')
+        ax.spines['top'].set_color('none')
+
+
+        plt.savefig(
+            self.results_dir.joinpath('accuracy_plot.' + self.plot_format),
+            dpi = self.plot_dpi
+        )
+
+        if self.show:
+            plt.show()
+
+        plt.close()
 
         return None
