@@ -1,9 +1,8 @@
-# mymodels: An automated and efficient workflow for Interpretable Machine Learning.
+# mymodels: Automated Interpretable Machine Learning Workflow
 
 ## Supported Models
 
-### For Regression Task
-
+### Regression Tasks
 - [Support Vector Regression (SVR)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html)
 - [K-Nearest Neighbors Regression (KNR)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html)
 - [Multi-Layer Perceptron (MLP)](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html)
@@ -15,8 +14,7 @@
 - [LightGBM](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html)
 - [CatBoost](https://catboost.ai/en/docs/concepts/python-reference_catboostregressor)
 
-### For Classification Task
-
+### Classification Tasks
 - [Support Vector Classification (SVC)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
 - [K-Nearest Neighbors Classification (KNC)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html)
 - [Multi-Layer Perceptron (MLP)](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html)
@@ -28,99 +26,86 @@
 - [LightGBM](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html)
 - [CatBoost](https://catboost.ai/en/docs/concepts/python-reference_catboostclassifier)
 
+**Note:** SHAP currently doesn't support multi-class classification tasks when using GBDT models.
 
-*SHAP DOES NOT CURRENTLY SUPPORT MULTI-CLASSIFICATION TASKS WHEN USING GBDT.*
+## Prerequisites
 
+1. **Python Proficiency**  
+   Recommended resource: [Liao Xuefeng's Python Tutorial](https://liaoxuefeng.com/books/python/introduction/index.html). Key chapters:
+   - Basic syntax (Chapters 7-11)
+   - Built-in modules (Chapter 17)
+   - Practical project implementation
 
-## 0. Prerequisites
+2. **Machine Learning Fundamentals**  
+   [CS229 by Andrew Ng](https://www.bilibili.com/video/BV1JE411w7Ub) provides essential theoretical foundations.
 
-1. Python programming proficiency. [Liao Xuefeng's Python Tutorial](https://liaoxuefeng.com/books/python/introduction/index.html) provides excellent beginner guidance. Study up to Chapter 17 (Built-in Modules), with special focus on Chapters 7-11. Complete the exercises after each section. Most importantly, **validate your learning through a practical project** - for example, writing a web scraper or implementing small utilities [(here's my example web scraper)](https://github.com/gtzjh/WundergroundSpider). Avoid using ChatGPT during initial learning, but you can use it later for code optimization suggestions.
+3. **Technical Skills**:
+   - Environment management with conda/pip
+   - Terminal/Command Line proficiency
+   - Version control with Git ([Learning Resources](https://github.com/gtzjh/learngit))
 
-2. Machine learning fundamentals. [CS229 by Andrew Ng](https://www.bilibili.com/video/BV1JE411w7Ub) is an excellent resource.
+## Environment Setup (Windows)
 
-3. Additional skills:
+**Requirements**:
+- Python 3.10
+- 1.75 GB available disk space
 
-    **Understanding how to create and manage environments using conda and pip**, and how to use them in editors (VSCode, Cursor etc.)
-
-    **Proficiency with Terminal/Command Line**
-
-    Recommended to learn [Git](https://github.com/gtzjh/learngit) - try creating your own GitHub project and learn to manage code with version control.
-
-## 1. Environment Setup (Windows)
-
-**Python 3.10 required**
-*Approximately 1.75 GiB disk space required*
-
-Using Conda:
 ```bash
 conda env create -f requirement.yml -n mymodels -y
 conda activate mymodels
 ```
 
-## 2. Usage
+## Basic Usage
 
-Take `run_titanic.py` as an example.
-
-1. Build an instance of the pipeline
+Example implementation (`run_titanic.py`):
 
 ```python
+# 1. Initialize pipeline
 mymodels = MyPipeline(
-    results_dir = "results/catc",
-    random_state = 0,
-    show = True,
-    plot_format = "pdf",
-    plot_dpi = 300
+    results_dir="results/catc",  # Output directory
+    random_state=0,              # Reproducibility seed
+    show=True,                   # Display plots inline
+    plot_format="pdf",           # Export format
+    plot_dpi=300                 # Image resolution
 )
-```
 
-2. Load the data
-
-```python
+# 2. Load and preprocess data
 mymodels.load(
-    file_path = "data/titanic.csv",
-    y = "Survived",
-    x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-    test_ratio = 0.4,
-    inspect = False
+    file_path="data/titanic.csv",
+    target="Survived",
+    features=["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+    test_ratio=0.4,             # Train-test split ratio
+    inspect=False               # Set to True for data exploration
 )
-```
 
-3. Optimize model
-
-```python
+# 3. Model optimization
 mymodels.optimize(
-    model_name = "catc",
-    cat_features = ["Pclass", "Sex", "Embarked"],
-    encode_method = None,
-    cv = 5,
-    trials = 6,
-    n_jobs = -1,
-    plot_optimization = True
+    model_name="catc",
+    categorical_features=["Pclass", "Sex", "Embarked"],
+    encoding_strategy=None,     # Auto-detection enabled
+    cv_folds=5,                 # Cross-validation
+    optimization_trials=6,      # Hyperparameter search iterations
+    parallel_jobs=-1,           # Use all available cores
+    visualize_optim=True        # Generate optimization plots
 )
-```
 
-4. Evaluate model
-```python
+# 4. Model evaluation
 mymodels.evaluate()
-```
 
-```python
+# 5. Explainability analysis
 mymodels.explain(
-    sample_train_k = 0.5,
-    sample_test_k = 0.5,
+    train_subsample=0.5,        # Fraction of training data to use
+    test_subsample=0.5          # Fraction of test data to use
 )
 ```
 
-## 3. Other Usage
+## Example Implementations
 
-`run_housing.py`: For regression task.
+- `run_housing.py`: Regression task  
+  Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
 
-> https://www.kaggle.com/datasets/jamalshah811/housingdata
+- `run_obesity.py`: Multi-class classification  
+  Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
 
-`run_obesity.py`: For multi-class classification task.
-
-> https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset
-
-`run_titanic.py`: For binary classification task.
-
-> https://www.kaggle.com/c/titanic/data
+- `run_titanic.py`: Binary classification  
+  Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
