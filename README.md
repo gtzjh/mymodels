@@ -1,4 +1,4 @@
-**Machine learning pipeline with automated hyperparameter tuning using Optuna and model interpretation with SHAP (SHapley Additive exPlanations).**
+# mymodels: An automated and efficient workflow for Explainable Machine Learning (XAI).
 
 ## Supported Models
 
@@ -33,6 +33,7 @@
 
 
 ## 0. Prerequisites
+
 1. Python programming proficiency. [Liao Xuefeng's Python Tutorial](https://liaoxuefeng.com/books/python/introduction/index.html) provides excellent beginner guidance. Study up to Chapter 17 (Built-in Modules), with special focus on Chapters 7-11. Complete the exercises after each section. Most importantly, **validate your learning through a practical project** - for example, writing a web scraper or implementing small utilities [(here's my example web scraper)](https://github.com/gtzjh/WundergroundSpider). Avoid using ChatGPT during initial learning, but you can use it later for code optimization suggestions.
 
 2. Machine learning fundamentals. [CS229 by Andrew Ng](https://www.bilibili.com/video/BV1JE411w7Ub) is an excellent resource.
@@ -58,75 +59,62 @@ conda activate mymodels
 
 ## 2. Usage
 
-Configure parameters in `main.py`:
+Take `run_titanic.py` as an example.
 
-1. Build an instance of the pipeline:
+1. Build an instance of the pipeline
 
 ```python
 mymodels = MyPipeline(
-        results_dir = "results/catc",  # 结果保存路径
-        random_state = 0,  # 随机种子
-        show = True,  # 是否显示图表
-        plot_format = "pdf",  # 图表格式
-        plot_dpi = 300  # 图表分辨率
-    )
+    results_dir = "results/catc",
+    random_state = 0,
+    show = True,
+    plot_format = "pdf",
+    plot_dpi = 300
+)
 ```
 
-2. Load the data:
+2. Load the data
+
 ```python
 mymodels.load(
-        file_path = "data/titanic.csv",
-        y = "Survived",
-        x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-        test_ratio = 0.4,
-        inspect = False
-    )
+    file_path = "data/titanic.csv",
+    y = "Survived",
+    x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+    test_ratio = 0.4,
+    inspect = False
+)
 ```
 
-3. Run the pipeline step by step:
+3. Optimize model
 
 ```python
-# Optimize model with hyperparameter tuning
 mymodels.optimize(
-        model_name = "catc",
-        cat_features = ["Pclass", "Sex", "Embarked"],
-        encode_method = None,
-        cv = 5,
-        trials = 6,
-        n_jobs = -1,
-        plot_optimization = True
-    )
-# Evaluate the model
+    model_name = "catc",
+    cat_features = ["Pclass", "Sex", "Embarked"],
+    encode_method = None,
+    cv = 5,
+    trials = 6,
+    n_jobs = -1,
+    plot_optimization = True
+)
+```
+
+4. Evaluate model
+```python
 mymodels.evaluate()
-# Explain model with SHAP
+```
+
+```python
 mymodels.explain(
-        sample_train_k = 0.5,
-        sample_test_k = 0.5,
-    )
+    sample_train_k = 0.5,
+    sample_test_k = 0.5,
+)
 ```
 
+## 3. Other Usage
 
-Description of parameters:
+`run_housing.py`: For regression task.
 
-| Parameter     | Description                                                                                                  |
-|---------------|--------------------------------------------------------------------------------------------------------------|
-| model_name    | Model selection: "svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr" for regression;<br>"svc", "knc", "mlpc", "dtc", "rfc", "gbdtc", "adac", "xgbc", "lgbc", "catc" for classification |
-| results_dir   | Directory to save results (string or pathlib.Path object)                                                   |
-| cat_features  | List/tuple of categorical feature names (required if using non-CatBoost models)                             |
-| encode_method | Encoding method(s) for categorical features: "onehot", "binary", "ordinal", "label", "target", "frequency".<br>Must match length of cat_features when using list/tuple. |
-| random_state  | Controls randomness in: data splitting, model training, cross-validation, and SHAP sampling                |
-| file_path     | Path to the data file (string or pathlib.Path object)                                                      |
-| y             | Target variable name or index                                                                               |
-| x_list        | List of feature names or indices to use                                                                     |
-| test_ratio    | Proportion of data to use for testing (default: 0.3)                                                        |
-| inspect       | Whether to print data information during loading (default: True)                                            |
-| cv            | Number of cross-validation folds for optimization (default: 5)                                              |
-| trials        | Number of optimization trials (default: 50)                                                                 |
-| n_jobs        | Number of parallel jobs for optimization (default: 5)                                                       |
-| shap_ratio    | Proportion of test data to use for SHAP analysis (default: 0.3)                                             |
-| interpret     | Whether to run explanation with SHAP (default: True)                                                        |
+`run_obesity.py`: For multi-class classification task.
 
-Execute the command:
-```bash
-python main.py
-```
+`run_titanic.py`: For binary classification task.
