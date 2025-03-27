@@ -6,6 +6,9 @@ def titanic_test():
         mymodels = MyPipeline(
             results_dir = f"results/catc",
             random_state = 0,
+            show = True,  # 是否显示图表
+            plot_format = "pdf",  # 图表格式
+            plot_dpi = 300  # 图表分辨率
         )
         mymodels.load(
             file_path = "data/titanic.csv",
@@ -27,7 +30,6 @@ def titanic_test():
         mymodels.explain(
             sample_train_k = 0.5,
             sample_test_k = 0.5,
-            plot = True
         )
     except Exception as e:
         with open("error-titanic-catboost.txt", "a") as f:
@@ -40,6 +42,9 @@ def titanic_test():
                 mymodels = MyPipeline(
                     results_dir = f"results/{n}/{e}",
                     random_state = 0,
+                    show = True,  # 是否显示图表
+                    plot_format = "pdf",  # 图表格式
+                    plot_dpi = 300  # 图表分辨率
                 )
                 mymodels.load(
                     file_path = "data/titanic.csv",
@@ -54,14 +59,13 @@ def titanic_test():
                     encode_method = e,
                     cv = 5,
                     trials = 10,
-                    n_jobs = 5,
+                    n_jobs = -1,
                     plot_optimization = True
                 )
                 mymodels.evaluate()
                 mymodels.explain(
-                    sample_train_k = 50,
-                    sample_test_k = 50,
-                    plot = True
+                    sample_train_k = 0.5,
+                    sample_test_k = 0.5,
                 )
             except Exception as error:
                 with open("error-titanic-models.txt", "a") as f:

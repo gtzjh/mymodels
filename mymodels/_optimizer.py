@@ -8,6 +8,8 @@ from joblib import Parallel, delayed
 import optuna
 from functools import partial
 import json
+import logging
+
 
 from ._encoder import fit_transform_multi_features, transform_multi_features
 from .models import MyRegressors, MyClassifiers
@@ -191,7 +193,16 @@ class MyOptimizer:
         else:
             raise ValueError(f"Invalid model name: {_model_name}")
 
+        # Check if the target variable is suitable for the task type
+        if _task_type == "classification" and pd.api.types.is_float_dtype(self.y_train):
+            logging.warning(
+                """\nThe target variable is a float type, which is not suitable for classification tasks. Please check the configuration CAREFULLY!\n"""
+            )
         
+        if _task_type == "regression" and self.y_train.nunique() <= 3:
+            logging.warning(
+                """\nThe target variable has only %d unique values, which might not be suitable for regression tasks. Consider using classification instead.\n""" % self.y_train.nunique()
+            )
         
         return _task_type
         
@@ -348,7 +359,7 @@ class MyOptimizer:
 
         if self.show:
             plt.show()
-            
+
         plt.close()
         
         return None
