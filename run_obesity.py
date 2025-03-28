@@ -24,21 +24,21 @@ def clean_data():
 
 
 def main():
-    mymodels = MyPipeline(
+    mymodel = MyPipeline(
         results_dir = "results/obesity",
         random_state = 0,
         show = False,
         plot_format = "jpg",
         plot_dpi = 500
     )
-    mymodels.load(
+    mymodel.load(
         file_path = "data/obesity.csv",
         y = "0be1dad",
         x_list = range(1, 17),
         test_ratio = 0.3,
         inspect = False
     )
-    mymodels.optimize(
+    mymodel.optimize(
         model_name = "xgbc",
         cat_features = ["Gender", "CAEC", "CALC", "MTRANS"],
         encode_method = ["label", "ordinal", "ordinal", "frequency"],
@@ -47,8 +47,8 @@ def main():
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodels.evaluate()
-    mymodels.explain(
+    mymodel.evaluate()
+    mymodel.explain(
         sample_train_k = 1000,
         sample_test_k = 1000,
     )

@@ -24,21 +24,21 @@ def clean_data():
 
 
 def main():
-    mymodels = MyPipeline(
+    mymodel = MyPipeline(
         results_dir = "results/housing",
         random_state = 0,
         show = False,
         plot_format = "jpg",
         plot_dpi = 500
     )
-    mymodels.load(
+    mymodel.load(
         file_path = "data/housing.csv",
         y = "MEDV",
         x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
         test_ratio = 0.3,
         inspect = False
     )
-    mymodels.optimize(
+    mymodel.optimize(
         model_name = "xgbr",
         cat_features = None,
         encode_method = None,
@@ -47,8 +47,8 @@ def main():
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodels.evaluate()
-    mymodels.explain(
+    mymodel.evaluate()
+    mymodel.explain(
         sample_train_k = 50,
         sample_test_k = 50,
     )

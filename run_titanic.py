@@ -2,21 +2,21 @@ from mymodels.pipeline import MyPipeline
 
 
 def main():
-    mymodels = MyPipeline(
+    mymodel = MyPipeline(
         results_dir = "results/titanic",
         random_state = 0,
         show = False,
         plot_format = "jpg",
         plot_dpi = 500
     )
-    mymodels.load(
+    mymodel.load(
         file_path = "data/titanic.csv",
         y = "Survived",
         x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
         test_ratio = 0.3,
         inspect = False
     )
-    mymodels.optimize(
+    mymodel.optimize(
         model_name = "xgbc",
         cat_features = ["Pclass", "Sex", "Embarked"],
         encode_method = "onehot",
@@ -25,8 +25,8 @@ def main():
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodels.evaluate()
-    mymodels.explain(
+    mymodel.evaluate()
+    mymodel.explain(
         sample_train_k = 50,
         sample_test_k = 50,
     )
