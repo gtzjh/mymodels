@@ -10,7 +10,7 @@ In recent years, interpretable machine learning has become increasingly prominen
 
 However, the process of building an interpretable machine learning model is complex and time-consuming, expecially for the beginners. 
 And there is a lack of a comprehensive and easy-to-use tool for excuting the interpretable machine learning workflow.
-This project aims to automate the process of building an interpretable machine learning model workflow, and SAVE YOUR TIME!
+This project aims to automate this process and SAVE YOUR TIME !
 
 
 ## Prerequisites for Beginners
@@ -94,17 +94,17 @@ from mymodels.pipeline import MyPipeline
 
 #### Construct an object for workflow. 
 
-The instance named `mymodel`
+The created instance here named mymodel.
 
 - `results_dir`: Directory path where your results will be stored. Accepts either a string or pathlib.Path object. The directory will be created if it doesn't exist.
 
-- `random_state`: Random seed for the entire pipeline (data splitting, model tuning, etc.). Default: 0.
+- `random_state`: Random seed for the entire pipeline (data splitting, model tuning, etc.). (Default is 0)
 
-- `show`: Whether to display the figure on the screen. Default: False.
+- `show`: Whether to display the figure on the screen. (Default is `False`)
 
-- `plot_format`: Output format for figures.
+- `plot_format`: Output format for figures. (Default is jpg)
 
-- `plot_dpi`: Controlling the resolution of output figures.
+- `plot_dpi`: Controlling the resolution of output figures. (Default is 500)
 
 ```python
 mymodel = MyPipeline(
@@ -124,9 +124,9 @@ mymodel = MyPipeline(
 
 - `x_list`: A `list` object (or a `tuple` object) of the independent variables. Each element in `list` (or `tuple`) must be a `str` object represented column name or a `int` object represented the column index.
 
-- `test_ratio`: The proportion of test data. Default 0.3.
+- `test_ratio`: The proportion of test data. (Default is 0.3)
 
-- `inspect`: Whether to display the y column or the independent variables you chose in the terminal.
+- `inspect`: Whether to display the y column or the independent variables you chose in the terminal. (Default is `True`)
 
 ```python
 mymodel.load(
@@ -140,11 +140,11 @@ mymodel.load(
 
 #### Execute the optimization
 
-- `model_name`: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end of the document.
+- `model_name`: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
 
-- `cat_features`: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. Default is `None`.
+- `cat_features`: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. (Default is `None`)
 
-- encode_method: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable.
+- `encode_method`: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable.
 
   If the `cat_features` is presented, and the `model_name` is not `catr` or `catc`, then the `encode_method` must be presented
 
@@ -152,17 +152,17 @@ mymodel.load(
 
   If a `list` (or a `tuple`) of encode methods is presented, i.e. `["onehot", "binary", "target"]`, they will be implemented to the three categorical features respectively.
 
-  A full list of supported encode methods can be found in [Supported Encode methods](#supported-encode-methods).
+  A full list of supported encode methods can be found at the end.
 
-  Default is `None`.
+  (Default is `None`)
 
-- `cv`: Cross-validation in the tuning process. Default is 5.
+- `cv`: Cross-validation in the tuning process. (Default is 5)
 
-- `trials`: How many trials in the Bayesian tuning process (Based on the [Optuna framework](https://optuna.org/))
+- `trials`: How many trials in the Bayesian tuning process (Based on [Optuna](https://optuna.org/)). (Default is 50)
 
-- `n_jobs`: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`
+- `n_jobs`: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`. (Default is 5)
 
-- `plot_optimization`: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory if the value is `True`.
+- `plot_optimization`: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory. (Default is `True`)
 
 
 ```python
@@ -194,11 +194,11 @@ mymodel.evaluate()
 
 Explain the model using SHAP (SHapley Additive exPlanations):
 
-`sample_train_k`: Sampling the samples in the training set for **background value calculation**. Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it.
+`sample_train_k`: Sampling the samples in the training set for **background value calculation**. Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. (Default is `None`)
 
-`sample_test_k`: Similar meaning to the `sample_train_k`. The test set will be implemented for **SHAP value calculation**.
+`sample_test_k`: Similar meaning to the `sample_train_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
 
-The figures (Summary plot, Dependence plots) will be output to the dir you defined above.
+The figures (Summary plot, Dependence plots) will be output to the directory you defined above.
 
 
 ```python
@@ -270,7 +270,9 @@ if __name__ == "__main__":
 
 ## Supplementary Information
 
-### Supported Models (Click to see the official documentation)
+### Supported Models
+
+Click the link to see the official documentation.
 
 #### For Regression Tasks
 | `model_name` | Models|
