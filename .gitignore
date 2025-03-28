@@ -212,8 +212,6 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
-# pkgdown site
-docs/
 
 # translation temp files
 po/*~
