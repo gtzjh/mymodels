@@ -1,13 +1,16 @@
 <div style="text-align: center;">
 
-<h1>🚀 mymodels: Automated Interpretable Machine Learning Workflow</h1>
+<h1>🚀 mymodels: Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
 
 </div>
 
-🔍 中文介绍请参见[中文文档](docs/20250328mymodels.md)。
+🔍 中文介绍请参见[此处](docs/20250328mymodels.md)。
 
 In recent years, interpretable machine learning has become increasingly prominent in fields like geography, remote sensing, and urban planning. Machine learning models excel at capturing complex data relationships due to their powerful fitting capabilities. Meanwhile, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—help demystify these "black-box" models. Interpretable machine learning provides valuable insights into ranking feature importance, revealing nonlinear response thresholds, and analyzing interaction relationships between factors.
 
+However, the process of building an interpretable machine learning model is complex and time-consuming, expecially for the beginners. 
+And there is a lack of a comprehensive and easy-to-use tool for excuting the interpretable machine learning workflow.
+This project aims to automate the process of building an interpretable machine learning model workflow, and SAVE YOUR TIME!
 
 
 ## Prerequisites for Beginners
@@ -267,10 +270,10 @@ if __name__ == "__main__":
 
 ## Supplementary Information
 
-### Supported Models
+### Supported Models (Click to see the official documentation)
 
 #### For Regression Tasks
-| `model_name` | Model |
+| `model_name` | Models|
 |------------|-------|
 | svr        | [Support Vector Regression (SVR)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) |
 | knr        | [K-Nearest Neighbors Regression (KNR)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html) |
@@ -285,7 +288,7 @@ if __name__ == "__main__":
 
 #### For Classification Tasks
 
-| `model_name` | Model |
+| `model_name` | Models|
 |------------|-------|
 | svc        | [Support Vector Classification (SVC)](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) |
 | knc        | [K-Nearest Neighbors Classification (KNC)](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html) |
@@ -303,13 +306,13 @@ if __name__ == "__main__":
 
 ### Supported Encoding Methods
 
-| Method     | Description                          |
+| `encode_method`     | Description                          |
 |------------|--------------------------------------|
-| `onehot`   | One-hot encoding                     |
-| `binary`   | Binary encoding                      |
-| `target`   | Target/mean encoding                 |
-| `ordinal`  | Ordinal encoding                     |
-| `count`    | Count encoding                       |
-| `frequency`| Frequency encoding                   |
+| onehot   | One-hot encoding                     |
+| binary   | Binary encoding                      |
+| target   | Target/mean encoding                 |
+| ordinal  | Ordinal encoding                     |
+| count    | Count encoding                       |
+| frequency| Frequency encoding                   |
 
 
