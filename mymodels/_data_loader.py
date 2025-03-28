@@ -48,7 +48,6 @@ def data_loader(
         raise ValueError("`y` must be either a string or " \
                          "index within the whole dataset")
 
-
     # Verify x_list contains valid column identifiers and select data
     # All elements must be either strings (column names) or integers (column indices)
     x_list = list(x_list)
@@ -61,7 +60,9 @@ def data_loader(
                          "or indices within the whole dataset")
 
     # Clean data by dropping rows with missing values
-    _data = pd.concat([x_data, y_data], axis = 1)
+    _data = pd.concat([x_data, y_data], axis = 1, join = "inner", verify_integrity = True)
+    
+    # Drop empty rows
     _data = _data.dropna()
     _data = _data.reset_index(drop = True)
     x_data = _data.iloc[:, :-1]

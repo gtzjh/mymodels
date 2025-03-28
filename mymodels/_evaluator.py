@@ -31,14 +31,17 @@ class Evaluator:
         """
         self.model_name = model_name
 
+        # Global variables statement
         # Will change in runtime
         self.y_test = None
         self.y_test_pred = None
         self.y_train = None
         self.y_train_pred = None
 
+        # Store the accuracy metrics
         self.accuracy_dict = None
-        
+
+        # Auxiliary variables
         self.results_dir = None
         self.show = None
         self.plot_format = None

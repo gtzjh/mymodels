@@ -142,7 +142,7 @@ class MyOptimizer:
                 self.y_train,
             )
             self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
-            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train], axis = 1)
+            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train], axis = 1, join="inner", verify_integrity=True)
 
             # Transform test set
             _transformed_X_test = transform_multi_features(
@@ -150,7 +150,7 @@ class MyOptimizer:
                 _encoder_dict
             )
             self.final_x_test = self.final_x_test.drop(columns = self.cat_features)
-            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test], axis = 1)
+            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test], axis = 1, join="inner", verify_integrity=True)
 
             # Save mapping dictionary
             with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
@@ -297,7 +297,7 @@ class MyOptimizer:
                         y_fold_train,
                     )
                     X_fold_train = X_fold_train.drop(columns = self.cat_features)
-                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train], axis = 1)
+                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train], axis = 1, join="inner", verify_integrity=True)
                     
                     # Encode validation set
                     transformed_fold_val = transform_multi_features(
@@ -305,7 +305,7 @@ class MyOptimizer:
                         _encoder_dict
                     )                    
                     X_fold_val = X_fold_val.drop(columns = self.cat_features)
-                    X_fold_val = pd.concat([X_fold_val, transformed_fold_val], axis = 1)
+                    X_fold_val = pd.concat([X_fold_val, transformed_fold_val], axis = 1, join="inner", verify_integrity=True)
             #######################################################################
 
             # Create and train the model

@@ -251,7 +251,8 @@ def fit_transform_multi_features(
         mapping_dict[c] = encoder.get_mapping()
         mapping_dict[c] = convert_numpy_types(mapping_dict[c])
     
-    transformed_X_df = pd.concat(transformed_X_list, axis=1)
+    transformed_X_df = pd.concat(transformed_X_list, axis=1, join="inner", verify_integrity=True)
+
     return transformed_X_df, encoder_dict, mapping_dict
 
 
@@ -268,7 +269,7 @@ def transform_multi_features(
     for c in categorical_X.columns:
         transformed_X = encoder_dict[c].transform(X=categorical_X.loc[:, c].to_frame())
         categorical_X_list.append(transformed_X)
-    transformed_X_df = pd.concat(categorical_X_list, axis=1)
+    transformed_X_df = pd.concat(categorical_X_list, axis=1, join="inner", verify_integrity=True)
 
     return transformed_X_df
 
