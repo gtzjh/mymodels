@@ -312,9 +312,9 @@ Click the link to see the official documentation.
 |------------|--------------------------------------|
 | onehot   | One-hot encoding                     |
 | binary   | Binary encoding                      |
-| target   | Target/mean encoding                 |
+| target   | Target encoding                 |
 | ordinal  | Ordinal encoding                     |
-| count    | Count encoding                       |
+| label    | Label encoding                       |
 | frequency| Frequency encoding                   |
 
 
