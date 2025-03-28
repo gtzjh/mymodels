@@ -38,7 +38,7 @@ This project aims to automate this process and SAVE YOUR TIME !
 
     - Environment management with conda/pip
     - Terminal/Command Line proficiency
-    - Version control with Git ([Git学习资源](https://github.com/gtzjh/learngit))
+    - Version control with Git ([My note of learning Git](https://github.com/gtzjh/learngit))
 
 ## Environment Setup (Windows, same for Linux and macOS)
 
