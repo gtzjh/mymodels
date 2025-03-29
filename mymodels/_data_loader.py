@@ -36,7 +36,7 @@ def data_loader(
 
     print("""
 ================================================================================
-Open-Source Disclaimer Notice
+Open-Source Statements
 
 This project mymodels is distributed under the MIT License.
 Source code and test cases are available at: https://github.com/gtzjh/mymodels

@@ -237,11 +237,18 @@ class MyPipeline:
             shap_data = _shap_data,
             sample_background_data_k = sample_background_data_k,
             sample_shap_data_k = sample_shap_data_k,
-            cat_features = self.cat_features
         )
 
         # Output the explanation results
+        """Input the numeric features for Partial Dependence Plot
+        I known this is very ugly, but it's the only way to make the Partial Dependence Plot (PDP) work correctly.
+        If you have any better idea, please let me know [zhongjh86@outlook.com].
+        """
+        _numeric_features = self._x_train.columns.tolist()
+        if self.cat_features:
+            _numeric_features = [x for x in _numeric_features if x not in self.cat_features]
         explainer.explain(
+            numeric_features = _numeric_features,
             plot = True,
             show = self.show,
             plot_format = self.plot_format,

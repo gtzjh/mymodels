@@ -18,7 +18,7 @@ def main():
         inspect = False
     )
     mymodel.optimize(
-        model_name = "xgbc",
+        model_name = "rfc",
         cat_features = ["Pclass", "Sex", "Embarked"],
         encode_method = "onehot",
         cv = 5,

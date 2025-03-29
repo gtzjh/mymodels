@@ -35,12 +35,12 @@ def main():
         file_path = "data/housing.csv",
         y = "MEDV",
         x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
-        index_col = ["ID1", "ID2", "ID3"],  # It's strongly recommended to set the index column if you want to output the raw data and the shap values.
+        index_col = ["ID1", "ID2", "ID3"],
         test_ratio = 0.3,
         inspect = False
     )
     mymodel.optimize(
-        model_name = "xgbr",
+        model_name = "lgbr",
         cat_features = None,
         encode_method = None,
         cv = 5,
