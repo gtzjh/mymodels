@@ -386,8 +386,8 @@ class MyExplainer:
                 columns=self.feature_names,
                 index=self.shap_data.index
             )
-            print(self.shap_values_dataframe.head(30))
             # Output the raw data
+            self.shap_data.to_csv(self.results_dir.joinpath("shap_data.csv"), index = True)
             self.shap_values_dataframe.to_csv(self.results_dir.joinpath("shap_values.csv"), index = True)
 
         elif self.shap_values.ndim == 3:
@@ -396,6 +396,7 @@ class MyExplainer:
             # Create a dictionary of DataFrames, one for each class
             _shap_values_dir = self.results_dir.joinpath("shap_values/")
             _shap_values_dir.mkdir(parents = True, exist_ok = True)
+            self.shap_data.to_csv(_shap_values_dir.joinpath("shap_data.csv"), index = True)
             self.shap_values_dataframe = {}
             for i, class_name in enumerate(self.classes_):
                 self.shap_values_dataframe[class_name] = pd.DataFrame(
