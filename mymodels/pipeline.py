@@ -16,7 +16,7 @@ class MyPipeline:
             self,
             results_dir: str | pathlib.Path,
             random_state: int = 0,
-            show: bool = True,
+            show: bool = False,
             plot_format: str = "jpg",
             plot_dpi: int = 500
         ):
@@ -81,6 +81,7 @@ class MyPipeline:
         file_path: str | pathlib.Path,
         y: str | int, 
         x_list: list[str | int],
+        index_col: str | int | list[str | int] | tuple[str | int] | None = None,
         test_ratio: float = 0.3,
         inspect: bool = True
     ):
@@ -89,6 +90,7 @@ class MyPipeline:
             file_path=file_path,
             y=y,
             x_list=x_list,
+            index_col=index_col,
             test_ratio=test_ratio,
             random_state=self.random_state
         )
@@ -159,10 +161,14 @@ class MyPipeline:
     
 
 
-    def evaluate(self):
+    def evaluate(
+            self,
+            save_raw_data: bool = True
+        ):
         """Evaluate the model
-        the results will be saved in the results_dir,
-        and output to the console
+
+        Args:
+            save_raw_data (bool): Whether to save the raw prediction data. Default is True.
         """
         evaluator = Evaluator(model_name=self.model_name)
         evaluator.evaluate(
@@ -176,7 +182,7 @@ class MyPipeline:
             plot_dpi = self.plot_dpi,
             print_results = True,
             save_results = True,
-            save_raw_data = True
+            save_raw_data = save_raw_data
         )
 
         return None
@@ -185,34 +191,62 @@ class MyPipeline:
 
     def explain(
             self,
-            sample_train_k: int | None = None,
-            sample_test_k:  int | None = None,
+            select_background_data: str = "train",
+            select_shap_data: str = "test",
+            sample_background_data_k: int | float | None = None,
+            sample_shap_data_k:  int | float | None = None,
+            output_raw_data: bool = False
         ):
         """Use SHAP for explanation
-        Use training set to build the explainer, use test set to calculate SHAP values
+        Use training set to build the explainer, use test set to calculate SHAP values is the default behavior.
         """
+        # Check input parameters
+        assert select_background_data in ["train", "test", "all"], \
+            "select_background_data must be one of the following: train, test, all"
+        assert select_shap_data in ["train", "test", "all"], \
+            "select_shap_data must be one of the following: train, test, all"
 
-        assert isinstance(sample_train_k, (int, float)) or sample_train_k is None, \
-            "sample_train_k must be an integer or None, 100 is recommended when using non-tree model."
-        assert isinstance(sample_test_k, (int, float)) or sample_test_k is None, \
-            "sample_test_k must be an integer or None, 100 is recommended when using non-tree model."
+        assert isinstance(sample_background_data_k, (int, float)) or sample_background_data_k is None, \
+            "sample_background_data_k must be an integer or float or None, 100 is recommended for explaining non-tree model."
+        assert isinstance(sample_shap_data_k, (int, float)) or sample_shap_data_k is None, \
+            "sample_shap_data_k must be an integer or float or None, 100 is recommended for explaining non-tree model."
         
+        # Background data for building the explainer
+        if select_background_data == "train":
+            _background_data = self._used_X_train
+        elif select_background_data == "test":
+            _background_data = self._used_X_test
+        elif select_background_data == "all":
+            _background_data = pd.concat([self._used_X_train, self._used_X_test]).sort_index()
+
+        # SHAP data for calculating SHAP values
+        if select_shap_data == "train":
+            _shap_data = self._used_X_train
+        elif select_shap_data == "test":
+            _shap_data = self._used_X_test
+        elif select_shap_data == "all":
+            _shap_data = pd.concat([self._used_X_train, self._used_X_test]).sort_index()
+
+
         # Explain the model
         explainer = MyExplainer(
             results_dir = self.results_dir,
             model_object = self._optimal_model,
             model_name = self.model_name,
-            used_X_train = self._used_X_train,
-            used_X_test = self._used_X_test,
-            sample_train_k = sample_train_k,
-            sample_test_k = sample_test_k,
+            background_data = _background_data,
+            shap_data = _shap_data,
+            sample_background_data_k = sample_background_data_k,
+            sample_shap_data_k = sample_shap_data_k,
             cat_features = self.cat_features
         )
+
+        # Output the explanation results
         explainer.explain(
             plot = True,
             show = self.show,
             plot_format = self.plot_format,
-            plot_dpi = self.plot_dpi
+            plot_dpi = self.plot_dpi,
+            output_raw_data = output_raw_data
         )
         
         return None
@@ -241,6 +275,7 @@ class MyPipeline:
             ValueError: If any parameter validation fails
             AssertionError: If model_name is invalid or encode_method is provided with CatBoost
         """
+
         # Check model_name validity
         assert self.model_name in \
             ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr",

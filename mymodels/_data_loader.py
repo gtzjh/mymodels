@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pathlib
+import logging
 from sklearn.model_selection import train_test_split
 
 
@@ -11,6 +12,7 @@ def data_loader(
         file_path,
         y,
         x_list,
+        index_col,
         test_ratio,
         random_state
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
@@ -20,6 +22,7 @@ def data_loader(
         file_path (str): The path to the CSV file.
         y (str or int): The column name or index of the dependent variable.
         x_list (list or tuple): A list of column names or indices of the independent variables.
+        index_col (str or int or list or tuple or None): The column name or index of the index column.
         test_ratio (float): The ratio of the test set.
         random_state (int): The random state for the train_test_split.
     
@@ -30,10 +33,31 @@ def data_loader(
             - y_train: Training target Series
             - y_test: Testing target Series
     """
+
+    print("""
+================================================================================
+Open-Source Disclaimer Notice
+
+This project mymodels is distributed under the MIT License.
+Source code and test cases are available at: https://github.com/gtzjh/mymodels
+
+DISCLAIMER:
+- The author provides no warranties or guarantees regarding the accuracy, 
+reliability, or suitability of computational results.
+- Users assume all risks associated with the application of this software.
+- Commercial implementations require independent validation.
+
+For inquiries, contact: [zhongjh86@outlook.com]
+================================================================================
+""")
+    # Check if index_col is provided
+    if index_col is None:
+        logging.warning("index_col is unpresented. It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values.")
+
     assert isinstance(file_path, str) or isinstance(file_path, pathlib.Path), \
         "file_path must be a string or pathlib.Path"
-    _df = pd.read_csv(file_path, encoding = "utf-8", na_values = np.nan)
-
+    _df = pd.read_csv(file_path, encoding = "utf-8", na_values = np.nan, index_col = index_col)
+    # print(_df.head(30))
 
     assert (test_ratio > 0 and test_ratio <= 1) and isinstance(test_ratio, float), \
         "test_ratio must be between (0, 1]"
@@ -59,12 +83,15 @@ def data_loader(
         raise ValueError("`x_list` must be either a list or tuple of strings " \
                          "or indices within the whole dataset")
 
+    # print(x_data.head(30))
+    # print(y_data.head(30))
+
     # Clean data by dropping rows with missing values
     _data = pd.concat([x_data, y_data], axis = 1, join = "inner", verify_integrity = True)
     
     # Drop empty rows
     _data = _data.dropna()
-    _data = _data.reset_index(drop = True)
+    # _data = _data.reset_index(drop = True)
     x_data = _data.iloc[:, :-1]
     y_data = _data.iloc[:, -1]
 
@@ -83,7 +110,10 @@ def data_loader(
         mapping_dict = encoder.get_mapping()
         print(mapping_dict)
 
+    # print(x_data.head(30))
+
     # Split data into training and testing sets
+    # X_train, X_test, y_train, y_test
     return train_test_split(
         x_data, y_data, 
         test_size = test_ratio,

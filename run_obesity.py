@@ -7,7 +7,7 @@ from mymodels.pipeline import MyPipeline
 
 def clean_data():
     data = pd.read_csv("data/obesity.csv", encoding = "utf-8", na_values = np.nan)
-    print(data.info())
+    # print(data.info())
 
     # Identify non-numerical features
     non_numerical_features = data.select_dtypes(include=['object', 'category']).columns.tolist()
@@ -34,12 +34,14 @@ def main():
     mymodel.load(
         file_path = "data/obesity.csv",
         y = "0be1dad",
-        x_list = range(1, 17),
+        x_list = ["Gender","Age","Height","Weight","family_history_with_overweight",\
+                  "FAVC","FCVC","NCP","CAEC","SMOKE","CH2O","SCC","FAF","TUE","CALC","MTRANS"],
+        index_col = "id",
         test_ratio = 0.3,
         inspect = False
     )
     mymodel.optimize(
-        model_name = "xgbc",
+        model_name = "lgbc",
         cat_features = ["Gender", "CAEC", "CALC", "MTRANS"],
         encode_method = ["label", "ordinal", "ordinal", "frequency"],
         cv = 5,
@@ -47,10 +49,13 @@ def main():
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodel.evaluate()
+    mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
-        sample_train_k = 1000,
-        sample_test_k = 1000,
+        select_background_data = "all",
+        select_shap_data = "all",
+        sample_background_data_k = None,
+        sample_shap_data_k = None,
+        output_raw_data = True
     )
 
     return None

@@ -1,6 +1,6 @@
 <div style="text-align: center;">
 
-<h1 align="center">🚀 mymodels: Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
+<h1 align="center">🚀 mymodels 🚀 : Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
 
 </div>
 
@@ -96,15 +96,15 @@ from mymodels.pipeline import MyPipeline
 
 The created instance here named mymodel.
 
-- `results_dir`: Directory path where your results will be stored. Accepts either a string or pathlib.Path object. The directory will be created if it doesn't exist.
+- **results_dir**: Directory path where your results will be stored. Accepts either a string or pathlib.Path object. The directory will be created if it doesn't exist.
 
-- `random_state`: Random seed for the entire pipeline (data splitting, model tuning, etc.). (Default is 0)
+- **random_state**: Random seed for the entire pipeline (data splitting, model tuning, etc.). (Default is 0)
 
-- `show`: Whether to display the figure on the screen. (Default is `False`)
+- **show**: Whether to display the figure on the screen. (Default is `False`)
 
-- `plot_format`: Output format for figures. (Default is jpg)
+- **plot_format**: Output format for figures. (Default is jpg)
 
-- `plot_dpi`: Controlling the resolution of output figures. (Default is 500)
+- **plot_dpi**: Controlling the resolution of output figures. (Default is 500)
 
 ```python
 mymodel = MyPipeline(
@@ -118,21 +118,24 @@ mymodel = MyPipeline(
 
 #### Load data
 
-- `file_path`: In which the data you want to input. **.csv format is mandatory**. 
+- **file_path**: In which the data you want to input. **.csv format is mandatory**. 
 
-- `y`: The target you want to predict. A `str` object represented column name or a `int` object represented the column index are both acceptable.
+- **y**: The target you want to predict. A `str` object represented column name or a `int` object represented the column index are both acceptable.
 
-- `x_list`: A `list` object (or a `tuple` object) of the independent variables. Each element in `list` (or `tuple`) must be a `str` object represented column name or a `int` object represented the column index.
+- **x_list**: A `list` object (or a `tuple` object) of the independent variables. Each element in `list` (or `tuple`) must be a `str` object represented column name or a `int` object represented the column index.
 
-- `test_ratio`: The proportion of test data. (Default is 0.3)
+- **index_col**: An `int` object or `str` object representing the index column. It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values. Also, it's acceptable to provide a `list` object (or a `tuple` object) for representing multiple index columns. (Default is `None`)
 
-- `inspect`: Whether to display the y column or the independent variables you chose in the terminal. (Default is `True`)
+- **test_ratio**: The proportion of test data. (Default is 0.3)
+
+- **inspect**: Whether to display the y column or the independent variables you chose in the terminal. (Default is `True`)
 
 ```python
 mymodel.load(
     file_path = "data/titanic.csv",
     y = "Survived",
     x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+    index_col = ["PassengerId", "Name"],
     test_ratio = 0.3,
     inspect = False
 )
@@ -140,11 +143,11 @@ mymodel.load(
 
 #### Execute the optimization
 
-- `model_name`: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
+- **model_name**: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
 
-- `cat_features`: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. (Default is `None`)
+- **cat_features**: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. (Default is `None`)
 
-- `encode_method`: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable.
+- **encode_method**: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable.
 
   If the `cat_features` is presented, and the `model_name` is not `catr` or `catc`, then the `encode_method` must be presented
 
@@ -156,13 +159,13 @@ mymodel.load(
 
   (Default is `None`)
 
-- `cv`: Cross-validation in the tuning process. (Default is 5)
+- **cv**: Cross-validation in the tuning process. (Default is 5)
 
-- `trials`: How many trials in the Bayesian tuning process (Based on [Optuna](https://optuna.org/)). (Default is 50)
+- **trials**: How many trials in the Bayesian tuning process (Based on [Optuna](https://optuna.org/)). (Default is 50)
 
-- `n_jobs`: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`. (Default is 5)
+- **n_jobs**: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`. (Default is 5)
 
-- `plot_optimization`: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory. (Default is `True`)
+- **plot_optimization**: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory. (Default is `True`)
 
 
 ```python
@@ -179,32 +182,43 @@ mymodel.optimize(
 
 Evaluate the model's accuracy.
 
-The accuracy results will be output to the directory you defined above:
+- **save_raw_data**: Whether to save the raw prediction data. Default is `True`.
 
-- A `.yml` file named `accuracy` will document the results of model's accuracy.
+    The accuracy results will be output to the directory you defined above:
 
-- A figure named `roc_curve_plot` document the classification accuracy.
+    - A `.yml` file named `accuracy` will document the results of model's accuracy.
 
-- Or a figure named `accuracy_plot` (it is a scatter plot) for regression task.
+    - A figure named `roc_curve_plot` document the classification accuracy.
+
+    - Or a figure named `accuracy_plot` (it is a scatter plot) for regression task.
 
 
 ```python
-mymodel.evaluate()
+mymodel.evaluate(save_raw_data = True)
 ```
 
 Explain the model using SHAP (SHapley Additive exPlanations):
 
-`sample_train_k`: Sampling the samples in the training set for **background value calculation**. Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. (Default is `None`)
+- **select_background_data**: The data used for **background value calculation**. Default is `"train"`, meaning that all data in the training set will be used. `"test"` means that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"train"`)
 
-`sample_test_k`: Similar meaning to the `sample_train_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
+- **select_shap_data**: The data used for **calculating SHAP values**. Default is `"test"`, meaning that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"test"`)
+
+- **sample_background_data_k**: Sampling the samples in the training set for **background value calculation**. Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. (Default is `None`)
+
+- **sample_shap_data_k**: Similar meaning to the `sample_background_data_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
+
+- **output_raw_data**: Whether to save the raw data. Default is `False`.
 
 The figures (Summary plot, Dependence plots) will be output to the directory you defined above.
 
 
 ```python
 mymodel.explain(
-    sample_train_k = 50,
-    sample_test_k = 50,
+    select_background_data = "all",
+    select_shap_data = "all",
+    sample_background_data_k = None,
+    sample_shap_data_k = None,
+    output_raw_data = True
 )
 ```
 
@@ -219,22 +233,24 @@ python run_titanic.py
 ```python
 from mymodels.pipeline import MyPipeline
 
+
 def main():
-    mymodels = MyPipeline(
+    mymodel = MyPipeline(
         results_dir = "results/titanic",
         random_state = 0,
         show = False,
         plot_format = "jpg",
         plot_dpi = 500
     )
-    mymodels.load(
+    mymodel.load(
         file_path = "data/titanic.csv",
         y = "Survived",
         x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+        index_col = ["PassengerId", "Name"],
         test_ratio = 0.3,
         inspect = False
     )
-    mymodels.optimize(
+    mymodel.optimize(
         model_name = "xgbc",
         cat_features = ["Pclass", "Sex", "Embarked"],
         encode_method = "onehot",
@@ -243,13 +259,17 @@ def main():
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodels.evaluate()
-    mymodels.explain(
-        sample_train_k = 50,
-        sample_test_k = 50,
+    mymodel.evaluate(save_raw_data = True)
+    mymodel.explain(
+        select_background_data = "all",
+        select_shap_data = "all",
+        sample_background_data_k = None,
+        sample_shap_data_k = None,
+        output_raw_data = True
     )
 
     return None
+
 
 if __name__ == "__main__":
     main()
@@ -308,13 +328,32 @@ Click the link to see the official documentation.
 
 ### Supported Encoding Methods
 
-| `encode_method`     | Description                          |
-|------------|--------------------------------------|
-| onehot   | One-hot encoding                     |
-| binary   | Binary encoding                      |
-| target   | Target encoding                 |
-| ordinal  | Ordinal encoding                     |
-| label    | Label encoding                       |
-| frequency| Frequency encoding                   |
+| `encode_method` | Description |
+|------------|------------------|
+| onehot   | One-hot encoding   |
+| binary   | Binary encoding    |
+| target   | Target encoding    |
+| ordinal  | Ordinal encoding   |
+| label    | Label encoding     |
+| frequency| Frequency encoding |
 
 
+## Legal Statements
+
+### Licensing
+This project is licensed under the [MIT License](LICENSE). You may freely use, modify, 
+and distribute the code subject to the license terms.
+
+### Disclaimer of Liability
+The software is provided "AS IS" without warranty of any kind. The developer:
+- Makes no representations about computational result accuracy
+- Declines all liability for direct/indirect damages arising from system use
+- Recommends independent verification for production environments
+
+### User Responsibility
+By using this software, you agree to:
+- Acknowledge any dependencies (see requirements.txt)
+- Conduct domain-specific validation for critical applications
+- Comply with all applicable laws in your jurisdiction
+
+📮 Contact maintainer: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)

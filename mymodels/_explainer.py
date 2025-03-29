@@ -7,7 +7,7 @@ import pathlib
 import logging
 
 
-# logging.getLogger().setLevel(logging.WARNING)
+logging.getLogger().setLevel(logging.WARNING)
 
 
 # shap.initjs()
@@ -31,7 +31,7 @@ log-odds 是 SHAP 值计算的理想空间，能够保证特征贡献的可加�
 二分类模型预测的概率值
 使用 `.predict_proba()` 方法获取预测概率值
 
->> proba = self.model_obj.predict_proba(self.used_X_test)[0]
+>> proba = self.model_obj.predict_proba(self.shap_data)[0]
 >> print("\n第一个样本的模型预测概率值[阴性, 阳性]:")
 >> print(proba[0], proba[1])
 
@@ -52,60 +52,75 @@ log-odds 是 SHAP 值计算的理想空间，能够保证特征贡献的可加�
 """
 
 
+"""SHAP visualization functions comparison and selection guide.
+
+Attributes:
+    Supported visualization methods:
+    1. partial_dependence_plot (currently unused):
+        - Shows average marginal effect of a feature on model output
+        - Similar to traditional Partial Dependence Plot (PDP)
+        - X-axis: Feature values, Y-axis: Model predictions
+
+    2. dependence_plot (implemented):
+        - Visualizes feature value vs SHAP value relationship
+        - Automatically detects interactions (color-codes 2nd influential feature)
+        - X-axis: Feature values, Y-axis: SHAP values
+
+    3. summary_plot (implemented):
+        - Displays feature importance and value impacts
+        - Combines feature importance with SHAP value distributions
+        - Y-axis: Feature names, X-axis: SHAP values
+
+Key Differences Table:
+    | Function                | Data Used       | SHAP Values | Interactions | Output Scale   |
+    |-------------------------|-----------------|-------------|--------------|----------------|
+    | partial_dependence_plot | Raw features    | ❌          | ❌          | Model output   |
+    | dependence_plot         | Features+SHAP   | ✅          | ✅          | SHAP values    |
+    | summary_plot            | SHAP values     | ✅          | ❌          | SHAP magnitude |
+
+Implementation Note:
+    Current implementation focuses on:
+    - summary_plot for global feature importance
+    - dependence_plot for detailed feature analysis
+    - Partial dependence plots are deprecated in this implementation due to:
+        * Lack of categorical feature support
+        * Redundancy with dependence_plot functionality
+"""
+
+
 class MyExplainer:
-    """SHAP visualization functions comparison and selection guide.
-
-    Attributes:
-        Supported visualization methods:
-        1. partial_dependence_plot (currently unused):
-            - Shows average marginal effect of a feature on model output
-            - Similar to traditional Partial Dependence Plot (PDP)
-            - X-axis: Feature values, Y-axis: Model predictions
-
-        2. dependence_plot (implemented):
-            - Visualizes feature value vs SHAP value relationship
-            - Automatically detects interactions (color-codes 2nd influential feature)
-            - X-axis: Feature values, Y-axis: SHAP values
-
-        3. summary_plot (implemented):
-            - Displays feature importance and value impacts
-            - Combines feature importance with SHAP value distributions
-            - Y-axis: Feature names, X-axis: SHAP values
-
-    Key Differences Table:
-        | Function                | Data Used       | SHAP Values | Interactions | Output Scale   |
-        |-------------------------|-----------------|-------------|--------------|----------------|
-        | partial_dependence_plot | Raw features    | ❌          | ❌          | Model output   |
-        | dependence_plot         | Features+SHAP   | ✅          | ✅          | SHAP values    |
-        | summary_plot            | SHAP values     | ✅          | ❌          | SHAP magnitude |
-
-    Implementation Note:
-        Current implementation focuses on:
-        - summary_plot for global feature importance
-        - dependence_plot for detailed feature analysis
-        - Partial dependence plots are deprecated in this implementation due to:
-          * Lack of categorical feature support
-          * Redundancy with dependence_plot functionality
-    """
-
     def __init__(
             self,
             results_dir: str | pathlib.Path,
             model_object,
             model_name: str,
-            used_X_train: pd.DataFrame,
-            used_X_test: pd.DataFrame,
-            sample_train_k: int | None = None,
-            sample_test_k:  int | None = None,
+            background_data: pd.DataFrame,
+            shap_data: pd.DataFrame,
+            sample_background_data_k: int | float | None = None,
+            sample_shap_data_k:  int | float | None = None,
             cat_features: list[str] | tuple[str] | None = None,           
         ):
+        """Initialize the MyExplainer with model and data.
+
+        Args:
+            results_dir (str|pathlib.Path): Directory to save explanation results.
+            model_object: Trained model object to be explained.
+            model_name (str): Identifier for the model type (e.g., 'rfr', 'xgbc').
+            background_data (pd.DataFrame): Reference data for SHAP explainer.
+            shap_data (pd.DataFrame): Data samples to be explained.
+            sample_background_data_k (int|float|None): If int, the number of background samples
+                to use; if float, the fraction of background data to sample; if None, use all data.
+            sample_shap_data_k (int|float|None): If int, the number of samples to explain;
+                if float, the fraction of data to explain; if None, explain all data.
+            cat_features (list[str]|tuple[str]|None): Names of categorical features in the dataset.
+        """
         self.results_dir = pathlib.Path(results_dir)
         self.model_obj = model_object
         self.model_name = model_name
-        self.used_X_train = used_X_train
-        self.used_X_test = used_X_test
-        self.sample_train_k = sample_train_k
-        self.sample_test_k = sample_test_k
+        self.background_data = background_data
+        self.shap_data = shap_data
+        self.sample_background_data_k = sample_background_data_k
+        self.sample_shap_data_k = sample_shap_data_k
         self.cat_features = cat_features
 
         # After checking input
@@ -115,6 +130,7 @@ class MyExplainer:
         self.shap_values = None
         self.shap_base_values = None
         self.feature_names = None
+        self.shap_values_dataframe = None
 
         # After plot_results()
         self.show = None
@@ -131,22 +147,22 @@ class MyExplainer:
             self.results_dir.mkdir(parents=True)
 
         # Validate dataframes
-        assert isinstance(self.used_X_train, pd.DataFrame), "used_X_train must be a pandas DataFrame"
-        assert isinstance(self.used_X_test, pd.DataFrame), "used_X_test must be a pandas DataFrame"
+        assert isinstance(self.background_data, pd.DataFrame), "background_data must be a pandas DataFrame"
+        assert isinstance(self.shap_data, pd.DataFrame), "shap_data must be a pandas DataFrame"
             
         # Validate sample sizes
-        if self.sample_train_k is not None:
-            if not isinstance(self.sample_train_k, (int, float)) or self.sample_train_k < 0:
-                raise ValueError("sample_train_k must be a positive integer or float")
+        if self.sample_background_data_k:
+            if not isinstance(self.sample_background_data_k, (int, float)) or self.sample_background_data_k < 0:
+                raise ValueError("sample_background_data_k must be a positive integer or float")
                 
-        if self.sample_test_k is not None:
-            if not isinstance(self.sample_test_k, (int, float)) or self.sample_test_k < 0:
-                raise ValueError("sample_test_k must be a positive integer or float")
-            if self.sample_test_k > len(self.used_X_test):
-                raise ValueError("sample_test_k cannot be larger than test set size")
+        if self.sample_shap_data_k:
+            if not isinstance(self.sample_shap_data_k, (int, float)) or self.sample_shap_data_k < 0:
+                raise ValueError("sample_shap_data_k must be a positive integer or float")
+            if self.sample_shap_data_k > len(self.shap_data):
+                raise ValueError("sample_shap_data_k cannot be larger than shap_data set size")
 
         # Validate categorical features if provided
-        if self.cat_features is not None:
+        if self.cat_features:
             if not isinstance(self.cat_features, (list, tuple)):
                 raise TypeError("cat_features must be a list or tuple")
 
@@ -160,10 +176,11 @@ class MyExplainer:
     
     def explain(
             self,
-            plot: bool,
-            show: bool,
-            plot_format: str,
-            plot_dpi: int
+            plot: bool = True,
+            show: bool = False,
+            plot_format: str = "jpg",
+            plot_dpi: int = 500,
+            output_raw_data: bool = False
         ):
         """Transform categorical data to numerical data
         'Cause the input data for calculating SHAP values must be consistent with the training data,
@@ -175,26 +192,30 @@ class MyExplainer:
 
 
         if self.model_name == "gbdtc" and len(self.classes_) > 2:
-            logging.warning("SHAP currently does not support explanation for multi-class GBDT models")
+            logging.error("SHAP currently does not support explanation for multi-class GBDT models")
             return None
 
-        # Sampling or not
-        if self.sample_train_k is not None:
-            if isinstance(self.sample_train_k, float):
-                self.used_X_train = shap.sample(self.used_X_train, int(self.sample_train_k * len(self.used_X_train)))
-            elif isinstance(self.sample_train_k, int):
-                self.used_X_train = shap.sample(self.used_X_train, self.sample_train_k)
-        if self.sample_test_k is not None:
-            if isinstance(self.sample_test_k, float):
-                self.used_X_test = shap.sample(self.used_X_test, int(self.sample_test_k * len(self.used_X_test)))
-            elif isinstance(self.sample_test_k, int):
-                self.used_X_test = shap.sample(self.used_X_test, self.sample_test_k)
+        # Sampling or not for reducing the size of the background data and shap data
+        if self.sample_background_data_k:
+            if isinstance(self.sample_background_data_k, float):
+                self.background_data = shap.sample(self.background_data,
+                                                   int(self.sample_background_data_k * len(self.background_data)))
+            elif isinstance(self.sample_background_data_k, int):
+                self.background_data = shap.sample(self.background_data, 
+                                                   self.sample_background_data_k)
 
+        if self.sample_shap_data_k:
+            if isinstance(self.sample_shap_data_k, float):
+                self.shap_data = shap.sample(self.shap_data,
+                                             int(self.sample_shap_data_k * len(self.shap_data)))
+            elif isinstance(self.sample_shap_data_k, int):
+                self.shap_data = shap.sample(self.shap_data,
+                                             self.sample_shap_data_k)
 
         # Set the explainer
         # 这里没有使用shap.Explainer，因为对于xgboost和random forest, 它没有选择TreeExplainer
         if self.model_name in ["svr", "knr", "mlpr", "adar"]:
-            _explainer = shap.KernelExplainer(self.model_obj.predict, self.used_X_train)
+            _explainer = shap.KernelExplainer(self.model_obj.predict, self.background_data)
         elif self.model_name in ["svc", "adac"]:
             # `decision_function` 本身的含义：
             # 返回样本到决策边界的带符号距离（或决策分数）
@@ -203,12 +224,12 @@ class MyExplainer:
             # 负值：模型倾向于将样本分类为负类（类别 0）
             # 数值大小：模型确信度的度量
             # 此时输出的shap_values的维度都是(n_samples, n_features), shap_values的值是指对正样本的贡献
-            _explainer = shap.KernelExplainer(self.model_obj.decision_function, self.used_X_train)
+            _explainer = shap.KernelExplainer(self.model_obj.decision_function, self.background_data)
         elif self.model_name in ["knc", "mlpc"]:
             # 对于sklearn的knc和mlpc, 因为其模型内部的决策机制是基于概率
             # 所以使用KernelExplainer对它们进行解释的时候，输出的shap_values是概率值
             # 同时注意，输出的shap_values的维度是(n_samples, n_features, n_targets)
-            _explainer = shap.KernelExplainer(self.model_obj.predict_proba, self.used_X_train)
+            _explainer = shap.KernelExplainer(self.model_obj.predict_proba, self.background_data)
         elif self.model_name in ["dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr",
                                  "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
             # 对sklearn的decision tree和random forest, 因为其模型内部的决策机制是基于概率
@@ -219,16 +240,21 @@ class MyExplainer:
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")
         
-
-        _explanation = _explainer(self.used_X_test)
+        # Calculate SHAP values
+        _explanation = _explainer(self.shap_data)
         self.shap_values = _explanation.values
         self.shap_base_values = _explanation.base_values
         self.feature_names = _explanation.feature_names
-        
+
+
         # Plot the results
         if plot:
             self.plot_results()
-
+        
+        # Output the raw data
+        if output_raw_data:
+            self.output_shap_values()
+    
         return None
 
 
@@ -291,7 +317,7 @@ class MyExplainer:
         https://shap.readthedocs.io/en/latest/release_notes.html#release-v0-36-0
         """
         fig = plt.figure()
-        shap.summary_plot(shap_values, self.used_X_test, show = False)
+        shap.summary_plot(shap_values, self.shap_data, show = False)
         plt.title(title)
         plt.tight_layout()
         plt.savefig(save_dir.joinpath(file_name + '.' + self.plot_format), dpi = self.plot_dpi)
@@ -312,7 +338,7 @@ class MyExplainer:
             # Close any existing figures before creating a new one
             plt.close('all')
             # shap.dependence_plot creates its own figure internally
-            shap.dependence_plot(_feature_name, shap_values, self.used_X_test, show = False)
+            shap.dependence_plot(_feature_name, shap_values, self.shap_data, show = False)
             plt.tight_layout()
             plt.savefig(results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
             if self.show:
@@ -339,15 +365,48 @@ class MyExplainer:
                 shap.partial_dependence_plot(
                     _feature_name,
                     self.model_obj.predict,
-                    self.used_X_test,
+                    self.shap_data,
                     model_expected_value = True,
                     feature_expected_value = False,
                     ice = False,
                     show = False
                 )
                 plt.tight_layout()
-                plt.savefig(_results_dir.joinpath(_feature_name + '.jpg'), dpi = 500)
+                plt.savefig(_results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
                 plt.close()
         return None 
     """
+
+    def output_shap_values(self):
+        # Create a DataFrame from SHAP values with feature names as columns
+        if self.shap_values.ndim == 2:
+            # For regression and binary classification models with 2D SHAP values
+            self.shap_values_dataframe = pd.DataFrame(
+                data=self.shap_values,
+                columns=self.feature_names,
+                index=self.shap_data.index
+            )
+            print(self.shap_values_dataframe.head(30))
+            # Output the raw data
+            self.shap_values_dataframe.to_csv(self.results_dir.joinpath("shap_values.csv"), index = True)
+
+        elif self.shap_values.ndim == 3:
+            # For multi-class classification models with 3D SHAP values, 
+            # or 2D SHAP values for binary classification models like SVC, KNC, MLPC, DTC, RFC, GBDTC
+            # Create a dictionary of DataFrames, one for each class
+            _shap_values_dir = self.results_dir.joinpath("shap_values/")
+            _shap_values_dir.mkdir(parents = True, exist_ok = True)
+            self.shap_values_dataframe = {}
+            for i, class_name in enumerate(self.classes_):
+                self.shap_values_dataframe[class_name] = pd.DataFrame(
+                    data=self.shap_values[:, :, i],
+                    columns=self.feature_names,
+                    index=self.shap_data.index
+                )
+            # Output the raw data
+            for _class_name, _df in self.shap_values_dataframe.items():
+                # print(_df.head(30))
+                _df.to_csv(_shap_values_dir.joinpath(f"shap_values_{_class_name}.csv"), index = True)
+        
+        return None
     

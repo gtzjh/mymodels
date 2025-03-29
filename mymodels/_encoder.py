@@ -279,7 +279,7 @@ if __name__ == "__main__":
     data = pd.read_csv("data/titanic.csv", encoding="utf-8", na_values=np.nan)
     data = data[["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked", "Survived"]]
     data = data.dropna()
-    data = data.reset_index(drop=True)
+    # data = data.reset_index(drop=True)
 
     cat_cols = ["Sex", "Embarked"]
 

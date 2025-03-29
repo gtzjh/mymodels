@@ -212,8 +212,8 @@ class Evaluator:
                                               "y_test_pred": y_test_pred_1d})
             train_results = pd.DataFrame(data={"y_train": self.y_train,
                                                "y_train_pred": y_train_pred_1d})
-            test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = False)
-            train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = False)    
+            test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = True)
+            train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = True)    
 
         return None
 

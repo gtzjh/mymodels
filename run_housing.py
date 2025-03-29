@@ -35,6 +35,7 @@ def main():
         file_path = "data/housing.csv",
         y = "MEDV",
         x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
+        index_col = ["ID1", "ID2", "ID3"],  # It's strongly recommended to set the index column if you want to output the raw data and the shap values.
         test_ratio = 0.3,
         inspect = False
     )
@@ -43,19 +44,22 @@ def main():
         cat_features = None,
         encode_method = None,
         cv = 5,
-        trials = 10,
+        trials = 5,
         n_jobs = 5,
         plot_optimization = True
     )
-    mymodel.evaluate()
+    mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
-        sample_train_k = 50,
-        sample_test_k = 50,
+        select_background_data = "all",
+        select_shap_data = "all",
+        sample_background_data_k = None,
+        sample_shap_data_k = None,
+        output_raw_data = True
     )
 
     return None
 
 
 if __name__ == "__main__":
-    clean_data()
+    # clean_data()
     main()
