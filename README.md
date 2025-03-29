@@ -1,6 +1,6 @@
 <div style="text-align: center;">
 
-<h1>🚀 mymodels: Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
+<h1 align="center">🚀 mymodels: Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
 
 </div>
 
