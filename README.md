@@ -167,6 +167,12 @@ mymodel.load(
 
 - **plot_optimization**: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory. (Default is `True`)
 
+    Several files will be output in the results directory:
+
+    - `params.yml` will document the best parameters.
+
+    - `mapping.json` will document the mapping relationship between the categorical features and the encoded features.
+
 
 ```python
 mymodel.optimize(
