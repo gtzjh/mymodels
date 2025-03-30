@@ -4,7 +4,7 @@
 
 </div>
 
-🔍 中文介绍请参见 [此处](docs/20250328mymodels.md)。
+🔍 中文介绍请参见 [此处](docs/20250330release-zh.md)。
 
 **关注公众号：👉GT地学志👈 获取项目更新。**
 
@@ -415,7 +415,6 @@ The following packages are required:
 | lgbc      | [LightGBM Classifier](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html) |
 | catc       | [CatBoost Classifier](https://catboost.ai/en/docs/concepts/python-reference_catboostclassifier) |
 
-**Note:** SHAP currently doesn't support multi-class classification tasks when using GBDT models.
 
 
 ### 🛠️ Supported Encoding Methods
@@ -437,7 +436,7 @@ The following packages are required:
 - SHAP currently doesn't support multi-class classification tasks when using GBDT models.
 
 
-## ⚖️ Legal Statements
+## ⚖️ Statements
 
 ### 📜 Licensing
 This project is licensed under the [MIT License](LICENSE). You may freely use, modify, 
@@ -451,7 +450,7 @@ The software is provided "AS IS" without warranty of any kind. The developer:
 
 ### ⚠️ User Responsibility
 By using this software, you agree to:
-- Acknowledge any dependencies (see requirements.yml)
+- Acknowledge any dependencies (see requirement.yml)
 - Conduct domain-specific validation for critical applications
 - Comply with all applicable laws in your jurisdiction
 

@@ -410,8 +410,6 @@ if __name__ == "__main__":
 | lgbc      | [LightGBM分类器](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html) |
 | catc       | [CatBoost分类器](https://catboost.ai/en/docs/concepts/python-reference_catboostclassifier) |
 
-**注意：** 当使用GBDT模型时，SHAP目前不支持多类分类任务。
-
 
 ### 🛠️ 支持的编码方法
 
@@ -432,7 +430,7 @@ if __name__ == "__main__":
 - 当使用GBDT模型时，SHAP目前不支持多类分类任务。
 
 
-## ⚖️ 法律声明
+## ⚖️ 声明
 
 ### 📜 许可证
 本项目根据[MIT许可证](LICENSE)授权。您可以在遵守许可条款的前提下自由使用、修改和分发代码。
@@ -445,7 +443,7 @@ if __name__ == "__main__":
 
 ### ⚠️ 用户责任
 使用本软件，即表示您同意：
-- 确认任何依赖项（见requirements.yml）
+- 确认任何依赖项（见requirement.yml）
 - 为关键应用程序进行特定领域验证
 - 遵守您所在司法管辖区的所有适用法律
 
