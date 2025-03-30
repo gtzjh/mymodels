@@ -2,20 +2,22 @@
 
 <h1 align="center">🚀 mymodels 🚀 : Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
 
+<img src="docs/qrcode.jpg" alt="mymodels" width="110">
+
 </div>
 
 🔍 中文介绍请参见[此处](docs/20250328mymodels.md)。
 
-In recent years, interpretable machine learning has become increasingly prominent in fields like geography, remote sensing, and urban planning. Machine learning models excel at capturing complex data relationships due to their powerful fitting capabilities. Meanwhile, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—help demystify these "black-box" models. Interpretable machine learning provides valuable insights into ranking feature importance, revealing nonlinear response thresholds, and analyzing interaction relationships between factors.
+## 📊 Introduction
 
-However, the process of building an interpretable machine learning model is complex and time-consuming, expecially for the beginners. 
-And there is a lack of a comprehensive and easy-to-use tool for excuting the interpretable machine learning workflow.
-This project aims to automate this process and SAVE YOUR TIME !
+Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors.
+
+Despite these advantages, implementing interpretable machine learning workflows remains a complex and time-intensive process, particularly for those new to the field. There exists a notable gap in comprehensive, user-friendly tooling for executing these workflows efficiently. The mymodels project addresses this gap by automating the interpretable machine learning process, significantly reducing implementation time while maintaining analytical rigor.
 
 
-## Prerequisites for Beginners
+## 👨‍🎓 Prerequisites for Beginners
 
-1. **✨ Python Proficiency**
+1. 💡 **Python Proficiency**
 
     Recommended resource:
 
@@ -30,69 +32,52 @@ This project aims to automate this process and SAVE YOUR TIME !
     
     **DO REMEMBER**: Make a practical demo project after you finish the above learning to enhance what you have learned (i.e., a tiny web crawler). [Here is one of my practice projects](https://github.com/gtzjh/WundergroundSpider)
 
-2. **✨ Machine Learning Fundamentals**
+2. 💡 **Machine Learning Fundamentals**
 
     [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theoretical foundations.
 
-3. **🛠️ Technical Skills**
+3. 🛠️ **Technical Skills**
 
     - Environment management with conda/pip
     - Terminal/Command Line proficiency
     - Version control with Git ([My note of learning Git](https://github.com/gtzjh/learngit))
 
-## Environment Setup (Windows, same for Linux and macOS)
+## 🛠️ Environment Setup (Windows, same for Linux and macOS)
+
+### Create environment
 
 **Requirements**:
 - Python 3.10
 - 1.75 GB available disk space
 
-The following packages will be installed:
-  - catboost=1.2.7
-  - ipython=8.30.0
-  - lightgbm=4.5.0
-  - matplotlib-base=3.9.3
-  - numba=0.60.0
-  - numpy=1.26.4
-  - optuna=4.1.0
-  - pandas=2.2.3
-  - pip=24.3.1
-  - plotly=5.24.1
-  - py-xgboost=2.1.4
-  - python-graphviz=0.20.3
-  - python=3.10.16
-  - scikit-learn=1.5.2
-  - scipy=1.14.1
-  - setuptools=75.6.0
-  - shap=0.46.0
-  - tqdm=4.67.1
-  - wheel=0.45.1
-  - category_encoders=2.6.3
-
-Create the environment
-
 ```bash
 conda env create -f requirement.yml -n mymodels -y
 ```
 
-Activate environment
+---
+
+### Activate environment
 
 ```base
 conda activate mymodels
 ```
 
-## Usage
+---
+
+## 🚀 How to Use
 
 We take `run_titanic.py` as an example:
 
-### Code Explanations
 
-#### Import the package.
+### Import the package.
 
 ```python
 from mymodels.pipeline import MyPipeline
 ```
 
-#### Construct an object for workflow. 
+---
+
+### Construct an object for workflow. 
 
 The created instance here named mymodel.
 
@@ -116,7 +101,9 @@ mymodel = MyPipeline(
 )
 ```
 
-#### Load data
+---
+
+### Load data
 
 - **file_path**: In which the data you want to input. **.csv format is mandatory**. 
 
@@ -141,7 +128,9 @@ mymodel.load(
 )
 ```
 
-#### Execute the optimization
+---
+
+### Execute the optimization
 
 - **model_name**: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
 
@@ -202,7 +191,9 @@ mymodel.optimize(
 )
 ```
 
-Evaluate the model's accuracy.
+---
+
+### Evaluate the model's accuracy.
 
 - **save_raw_data**: Whether to save the raw prediction data. Default is `True`.
 
@@ -219,7 +210,9 @@ Evaluate the model's accuracy.
 mymodel.evaluate(save_raw_data = True)
 ```
 
-Explain the model using SHAP (SHapley Additive exPlanations):
+---
+
+### Explain the model using SHAP (SHapley Additive exPlanations):
 
 - **select_background_data**: The data used for **background value calculation**. Default is `"train"`, meaning that all data in the training set will be used. `"test"` means that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"train"`)
 
@@ -244,11 +237,15 @@ mymodel.explain(
 )
 ```
 
-Run the code
+---
+
+### Run the code
 
 ```bash
 python run_titanic.py
 ```
+
+---
 
 ### Full Code
 
@@ -300,7 +297,7 @@ if __name__ == "__main__":
 ```
 
 
-## Other Examples
+## 🎯 Try These Examples
 
 - `run_housing.py`: Regression task  
   Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
@@ -312,9 +309,34 @@ if __name__ == "__main__":
   Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
 
 
-## Supplementary Information
+## 📚 Supplementary Information
 
-### Supported Models
+### 🛠️ Required Packages
+
+The following packages are required:
+  - catboost=1.2.7
+  - ipython=8.30.0
+  - lightgbm=4.5.0
+  - matplotlib-base=3.9.3
+  - numba=0.60.0
+  - numpy=1.26.4
+  - optuna=4.1.0
+  - pandas=2.2.3
+  - pip=24.3.1
+  - plotly=5.24.1
+  - py-xgboost=2.1.4
+  - python-graphviz=0.20.3
+  - python=3.10.16
+  - scikit-learn=1.5.2
+  - scipy=1.14.1
+  - setuptools=75.6.0
+  - shap=0.46.0
+  - tqdm=4.67.1
+  - wheel=0.45.1
+  - category_encoders=2.6.3
+
+
+### 🛠️ Supported Models
 
 Click the link to see the official documentation.
 
@@ -350,7 +372,7 @@ Click the link to see the official documentation.
 **Note:** SHAP currently doesn't support multi-class classification tasks when using GBDT models.
 
 
-### Supported Encoding Methods
+### 🛠️ Supported Encoding Methods
 
 | `encode_method` | Description |
 |------------|------------------|
@@ -362,22 +384,30 @@ Click the link to see the official documentation.
 | frequency| Frequency encoding |
 
 
-## Legal Statements
+### ⚠️ Something You Should Know
 
-### Licensing
+- When using the `catc` model for classification tasks, or `catr` model for regression tasks, the `encode_method` must be `None`.
+
+- SHAP currently doesn't support multi-class classification tasks when using GBDT models.
+
+
+## ⚖️ Legal Statements
+
+### 📜 Licensing
 This project is licensed under the [MIT License](LICENSE). You may freely use, modify, 
 and distribute the code subject to the license terms.
 
-### Disclaimer of Liability
+### ⚠️ Disclaimer of Liability 
 The software is provided "AS IS" without warranty of any kind. The developer:
 - Makes no representations about computational result accuracy
 - Declines all liability for direct/indirect damages arising from system use
 - Recommends independent verification for production environments
 
-### User Responsibility
+### ⚠️ User Responsibility
 By using this software, you agree to:
 - Acknowledge any dependencies (see requirements.txt)
 - Conduct domain-specific validation for critical applications
 - Comply with all applicable laws in your jurisdiction
+
 
 📮 Contact maintainer: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
