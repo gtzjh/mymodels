@@ -165,13 +165,27 @@ mymodel.load(
 
 - **n_jobs**: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`. (Default is 5)
 
-- **plot_optimization**: Whether to display the tuning process. Default is `True`. A figure named `optimization_history` will be output in the results directory. (Default is `True`)
+- **optimize_history**: Whether to save the optimization history. (Default is `True`)
+
+- **save_optimal_params**: Whether to save the best parameters. (Default is `True`)
+
+- **save_optimal_model**: Whether to save the optimal model. (Default is `True`)
 
     Several files will be output in the results directory:
 
     - `params.yml` will document the best parameters.
 
     - `mapping.json` will document the mapping relationship between the categorical features and the encoded features.
+    
+    - `optimal-model.joblib` will save the optimal model from sklearn.
+
+    - `optimal-model.cbm` will save the optimal model from CatBoost.
+
+    - `optimal-model.txt` will save the optimal model from LightGBM.
+
+    - `optimal-model.json` will save the optimal model from XGBoost.
+
+    - `optimal-model.pkl` will save all types of optimal model for compatibility.
 
 
 ```python
