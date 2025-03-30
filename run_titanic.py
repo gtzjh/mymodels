@@ -30,10 +30,10 @@ def main():
     )
     mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
-        select_background_data = "all",
-        select_shap_data = "all",
-        sample_background_data_k = None,
-        sample_shap_data_k = None,
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50,
         output_raw_data = True
     )
 

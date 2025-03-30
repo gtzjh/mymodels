@@ -273,20 +273,22 @@ def main():
         inspect = False
     )
     mymodel.optimize(
-        model_name = "xgbc",
+        model_name = "rfc",
         cat_features = ["Pclass", "Sex", "Embarked"],
         encode_method = "onehot",
         cv = 5,
         trials = 10,
         n_jobs = 5,
-        plot_optimization = True
+        optimize_history = True,
+        save_optimal_params = True,
+        save_optimal_model = True
     )
     mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
-        select_background_data = "all",
-        select_shap_data = "all",
-        sample_background_data_k = None,
-        sample_shap_data_k = None,
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50,
         output_raw_data = True
     )
 

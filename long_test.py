@@ -73,8 +73,8 @@ def titanic_test():
         )
         mymodels.evaluate(save_raw_data = True)
         mymodels.explain(
-            select_background_data = "all",
-            select_shap_data = "all",
+            select_background_data = "train",
+            select_shap_data = "test",
             sample_background_data_k = 50,
             sample_shap_data_k = 50,
             output_raw_data = True
