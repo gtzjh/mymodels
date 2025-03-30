@@ -2,11 +2,13 @@
 
 <h1 align="center">🚀 mymodels 🚀 : Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
 
-<img src="docs/qrcode.jpg" alt="mymodels" width="110">
-
 </div>
 
 🔍 中文介绍请参见[此处](docs/20250328mymodels.md)。
+
+**可关注公众号：GT地学志获取项目最新更新信息**
+
+<img src="docs/qrcode.jpg" alt="mymodels" width="120">
 
 ## 📊 Introduction
 
