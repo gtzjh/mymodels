@@ -118,7 +118,9 @@ class MyPipeline:
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = 5,
-        plot_optimization: bool = True
+        optimize_history: bool = True,
+        save_optimal_params: bool = True,
+        save_optimal_model: bool = True,
     ):
         """Optimize, output the optimal model and encoder objects as well"""
 
@@ -126,16 +128,14 @@ class MyPipeline:
         self.cat_features = list(cat_features) if cat_features is not None else None
         self.encode_method = encode_method
         self._check_optimize_input()
-
+        
+        # Initialize optimizer
         optimizer = MyOptimizer(
-            cv=cv,
-            trials=trials,
             random_state=self.random_state,
             results_dir=self.results_dir,
-            n_jobs=n_jobs,
-            _plot_optimization=plot_optimization
         )
 
+        # Fit the optimizer
         optimizer.fit(
             x_train=self._x_train,
             y_train=self._y_train,
@@ -143,16 +143,26 @@ class MyPipeline:
             model_name=self.model_name,
             cat_features=self.cat_features,
             encode_method=self.encode_method,
+            cv = cv,
+            trials = trials,
+            n_jobs = n_jobs,
+        )
+
+        # Output the optimization history, optimal model and parameters
+        optimizer.output(
+            optimize_history = optimize_history,
+            save_optimal_params = save_optimal_params,
+            save_optimal_model = save_optimal_model,
             show = self.show,
             plot_format = self.plot_format,
             plot_dpi = self.plot_dpi
         )
         
-        # For evaluate()
+        # Output data for evaluate()
         self._y_train_pred = optimizer.y_train_pred
         self._y_test_pred = optimizer.y_test_pred
 
-        # For explain()
+        # Output data for explain()
         self._optimal_model = optimizer.optimal_model
         self._used_X_train = optimizer.final_x_train
         self._used_X_test = optimizer.final_x_test

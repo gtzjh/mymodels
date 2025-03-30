@@ -9,6 +9,7 @@ import optuna
 from functools import partial
 import json
 import logging
+import pickle
 
 
 from ._encoder import fit_transform_multi_features, transform_multi_features
@@ -19,56 +20,70 @@ from .models import MyRegressors, MyClassifiers
 class MyOptimizer:
     def __init__(
             self, 
-            cv: int, 
             random_state: int, 
-            trials: int, 
             results_dir: pathlib.Path, 
-            n_jobs: int = -1, 
-            _plot_optimization: bool = True
         ):
         """A class for training and optimizing various machine learning models.
         
         This class handles hyperparameter optimization for both regression and classification
         models using Optuna.
         
+        Function Call Flow:
+
+        MyOptimizer.__init__
+        |
+        +-- fit()
+        |   |
+        |   +-- _check_task_type() # Determine regression or classification
+        |   |
+        |   +-- _select_model() # Select model and parameter space
+        |   |
+        |   +-- _optimizer() # Run Optuna optimization
+        |      |
+        |      +-- _objective() # Optimization objective function with CV
+        |
+        +-- output() # Process results
+            |
+            +-- _plot_optimize_history() # Plot optimization history
+            |
+            +-- _save_optimal_params() # Save optimal parameters
+            |
+            +-- _save_optimal_model() # Save optimal model
+        
         Args:
-            cv: Number of folds for cross-validation.
             random_state: Random seed for reproducibility.
-            trials: Number of trials to execute in Optuna optimization.
             results_dir: Directory path to store the optimization results.
-            n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
-                (use all available processors).
-            _plot_optimization: Whether to plot the optimization history.
         """
-        self.cv = cv
+        
         self.random_state = random_state
-        self.trials = trials
         self.results_dir = results_dir
-        self.n_jobs = n_jobs
-        self._plot_optimization = _plot_optimization
 
         # Global variables statement
-        # In fit()
+        # Input fit()
         self.x_train = None
         self.y_train = None
         self.x_test = None
         self.model_name = None
         self.cat_features = None
         self.encode_method = None
+        self.cv = None
+        self.trials = None
+        self.n_jobs = None
+        # Inside fit()
         self.final_x_train = None
         self.final_x_test = None
-        self._model_obj = None  # An instance of the model
+        self._model_obj = None
         self._task_type = None
-        self.show = None
-        self.plot_format = None
-        self.plot_dpi = None
-
-        # After fit()
+        # Inside output()
+        self.optuna_study = None
         self.optimal_params = None
         self.optimal_model = None
         self.y_train_pred = None
         self.y_test_pred = None
-
+        self.show = None
+        self.plot_format = None
+        self.plot_dpi = None
+        
 
     def fit(
         self,
@@ -78,9 +93,9 @@ class MyOptimizer:
         model_name: str,
         cat_features: list[str] | tuple[str] | None = None,
         encode_method: str | list[str] | tuple[str] | None = None,
-        show: bool = False,
-        plot_format: str = "jpg",
-        plot_dpi: int = 500
+        cv: int = 5,
+        trials: int = 50,
+        n_jobs: int = -1,
     ):
         """Train and optimize a machine learning model.
         
@@ -102,19 +117,24 @@ class MyOptimizer:
                 "svc", "knc", "mlpc"].
             cat_features: List of categorical feature names, if any.
             encode_method: Method(s) for encoding categorical variables.
+            cv: Number of folds for cross-validation.
+            trials: Number of trials to execute in Optuna optimization.
+            n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
+                (use all available processors).
         
         Returns:
             None. Results are stored in instance attributes.
         """
+
         self.x_train = x_train.copy()
         self.y_train = y_train.copy()
         self.x_test = x_test.copy()
         self.model_name = model_name
         self.cat_features = cat_features
         self.encode_method = encode_method
-        self.show = show
-        self.plot_format = plot_format
-        self.plot_dpi = plot_dpi
+        self.cv = cv
+        self.trials = trials
+        self.n_jobs = n_jobs
 
         self.final_x_train = self.x_train  # The training set which is for final prediction after encoding
         self.final_x_test = self.x_test    # The test set which is for final prediction after encoding
@@ -125,10 +145,10 @@ class MyOptimizer:
         self._model_obj, _param_space, _static_params = self._select_model(self._task_type)
 
         # Execute the optimization
-        optuna_study = self._optimizer(_param_space, _static_params)
+        self.optuna_study = self._optimizer(_param_space, _static_params)
         
         # Save optimal parameters and model
-        self.optimal_params = {**_static_params, **optuna_study.best_trial.params}
+        self.optimal_params = {**_static_params, **self.optuna_study.best_trial.params}
         self.optimal_model = self._model_obj(**self.optimal_params)
 
         #######################################################################
@@ -164,13 +184,6 @@ class MyOptimizer:
         self.y_train_pred = self.optimal_model.predict(self.final_x_train)
         self.y_test_pred = self.optimal_model.predict(self.final_x_test)
 
-        # Plot the optimization history
-        if self._plot_optimization:
-            self._plot_optimize_history(optuna_study)
-
-        # Save optimal parameters
-        self.save_optimal_params()
-
         return None
 
 
@@ -198,7 +211,6 @@ class MyOptimizer:
             logging.warning(
                 """\nThe target variable is a float type, which is not suitable for classification tasks. Please check the configuration CAREFULLY!\n"""
             )
-        
         if _task_type == "regression" and self.y_train.nunique() <= 3:
             logging.warning(
                 """\nThe target variable has only %d unique values, which might not be suitable for regression tasks. Consider using classification instead.\n""" % self.y_train.nunique()
@@ -297,7 +309,10 @@ class MyOptimizer:
                         y_fold_train,
                     )
                     X_fold_train = X_fold_train.drop(columns = self.cat_features)
-                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train], axis = 1, join="inner", verify_integrity=True)
+                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train],
+                                             axis = 1, 
+                                             join="inner", 
+                                             verify_integrity=True)
                     
                     # Encode validation set
                     transformed_fold_val = transform_multi_features(
@@ -305,7 +320,10 @@ class MyOptimizer:
                         _encoder_dict
                     )                    
                     X_fold_val = X_fold_val.drop(columns = self.cat_features)
-                    X_fold_val = pd.concat([X_fold_val, transformed_fold_val], axis = 1, join="inner", verify_integrity=True)
+                    X_fold_val = pd.concat([X_fold_val, transformed_fold_val],
+                                           axis = 1, 
+                                           join="inner", 
+                                           verify_integrity=True)
             #######################################################################
 
             # Create and train the model
@@ -331,10 +349,63 @@ class MyOptimizer:
         return np.mean(cv_scores) - 0.5 * np.std(cv_scores)
     
 
+    def output(
+        self,
+        optimize_history: bool = True,
+        save_optimal_params: bool = True,
+        save_optimal_model: bool = True,
+        show: bool = False,
+        plot_format: str = "jpg",
+        plot_dpi: int = 500
+    ):
+        """Output the optimization history, optimal model and parameters.
+        
+        This method handles the results visualization and saving:
+        1. Plots the optimization history
+        2. Saves the optimal parameters to a YAML file
+        3. Optionally saves the optimal model to a pickle file
+        
+        Args:
+            optimize_history: Whether to plot and save the optimization history.
+            save_optimal_params: Whether to save the optimal parameters to a YAML file.
+            save_optimal_model: Whether to save the optimal model to a pickle file.
+            show: Whether to display the plots.
+            plot_format: Format for saving plots (jpg, png, pdf, etc.).
+            plot_dpi: Resolution for saved plots.
+            
+        Returns:
+            None. Results are saved to files in the results directory.
+        """
+        self.show = show
+        self.plot_format = plot_format
+        self.plot_dpi = plot_dpi
+
+        # Plot the optimization history
+        if optimize_history:
+            self._plot_optimize_history(self.optuna_study)
+
+        # Save optimal parameters
+        if save_optimal_params:
+            self._save_optimal_params()
+
+        # Save optimal model
+        if save_optimal_model:
+            self._save_optimal_model()
+
+        return None
+    
+
     def _plot_optimize_history(self, optuna_study_object: optuna.Study):
         """Plot the optimization history using matplotlib instead of plotly.
 
         This version doesn't require additional packages to save images.
+        Creates a plot showing trial values and best values across optimization trials.
+        
+        Args:
+            optuna_study_object: The completed Optuna study containing trial results.
+            
+        Returns:
+            None. The plot is saved to the results directory.
         """
         # Get the optimization history data
         trials = optuna_study_object.trials
@@ -360,20 +431,49 @@ class MyOptimizer:
         if self.show:
             plt.show()
 
-        plt.close()
+        plt.close("all")
         
         return None
 
 
-    def save_optimal_params(self):
+    def _save_optimal_params(self):
         """Save the optimal parameters to a YAML file.
-        
-        The parameters are saved to the results directory specified during initialization.
-        
-        Returns:
-            None
         """
         with open(self.results_dir.joinpath("params.yml"), 'w', encoding="utf-8") as file:
             yaml.dump(self.optimal_params, file)
         return None
 
+
+    def _save_optimal_model(self):
+        """Save the optimal model using the recommended export method based on model type.
+        
+        Different models have different recommended export methods:
+        - CatBoost: save_model() method to save in binary format
+        - XGBoost: save_model() method to save in binary format  
+        - LightGBM: booster_.save_model() method to save in text format
+        - Scikit-learn models: joblib is recommended over pickle
+        """
+        model_path = self.results_dir.joinpath("optimal-model")
+        
+        # XGBoost models
+        if self.model_name in ["xgbr", "xgbc"]:
+            self.optimal_model.save_model(f"{model_path}.json")
+            
+        # LightGBM models
+        elif self.model_name in ["lgbr", "lgbc"]:
+            self.optimal_model.booster_.save_model(f"{model_path}.txt")
+            
+        # CatBoost models
+        elif self.model_name in ["catr", "catc"]:
+            self.optimal_model.save_model(f"{model_path}.cbm")
+            
+        # For scikit-learn based models, use joblib which is more efficient for numpy arrays
+        else:
+            from joblib import dump
+            dump(self.optimal_model, f"{model_path}.joblib")
+            
+        # Also save a pickle version for backward compatibility
+        with open(self.results_dir.joinpath("optimal-model.pkl"), 'wb') as file:
+            pickle.dump(self.optimal_model, file)
+            
+        return None

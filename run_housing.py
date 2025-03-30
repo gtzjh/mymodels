@@ -40,13 +40,15 @@ def main():
         inspect = False
     )
     mymodel.optimize(
-        model_name = "lgbr",
+        model_name = "xgbr",
         cat_features = None,
         encode_method = None,
         cv = 5,
         trials = 5,
         n_jobs = 5,
-        plot_optimization = True
+        optimize_history = True,
+        save_optimal_params = True,
+        save_optimal_model = True
     )
     mymodel.evaluate(save_raw_data = True)
     mymodel.explain(

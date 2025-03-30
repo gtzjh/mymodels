@@ -16,6 +16,7 @@ def titanic_test():
                 file_path = "data/titanic.csv",
                 y = "Survived",
                 x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+                index_col = ["PassengerId"],
                 test_ratio = 0.4,
                 inspect = False
             )
@@ -24,14 +25,19 @@ def titanic_test():
                 cat_features = ['Pclass', 'Sex', 'Embarked'],
                 encode_method = "onehot",
                 cv = 5,
-                trials = 50,
+                trials = 10,
                 n_jobs = -1,
-                plot_optimization = True
+                optimize_history = True,
+                save_optimal_params = True,
+                save_optimal_model = True
             )
-            mymodels.evaluate()
+            mymodels.evaluate(save_raw_data = True)
             mymodels.explain(
-                sample_train_k = 0.5,
-                sample_test_k = 0.5,
+                select_background_data = "train",
+                select_shap_data = "test",
+                sample_background_data_k = 50,
+                sample_shap_data_k = 50,
+                output_raw_data = True
             )
         except Exception as error:
             with open("error-titanic-models.txt", "a") as f:
@@ -50,6 +56,7 @@ def titanic_test():
             file_path = "data/titanic.csv",
             y = "Survived",
             x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
+            index_col = ["PassengerId"],
             test_ratio = 0.4,
             inspect = False
         )
@@ -60,12 +67,17 @@ def titanic_test():
             cv = 5,
             trials = 10,
             n_jobs = -1,
-            plot_optimization = True
+            optimize_history = True,
+            save_optimal_params = True,
+            save_optimal_model = True
         )
-        mymodels.evaluate()
+        mymodels.evaluate(save_raw_data = True)
         mymodels.explain(
-            sample_train_k = 0.5,
-            sample_test_k = 0.5,
+            select_background_data = "all",
+            select_shap_data = "all",
+            sample_background_data_k = 50,
+            sample_shap_data_k = 50,
+            output_raw_data = True
         )
     except Exception as e:
         with open("error-titanic-catboost.txt", "a") as f:

@@ -24,7 +24,9 @@ def main():
         cv = 5,
         trials = 10,
         n_jobs = 5,
-        plot_optimization = True
+        optimize_history = True,
+        save_optimal_params = True,
+        save_optimal_model = True
     )
     mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
