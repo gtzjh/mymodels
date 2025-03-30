@@ -182,7 +182,9 @@ mymodel.optimize(
     cv = 5,
     trials = 10,
     n_jobs = 5,
-    plot_optimization = True
+    optimize_history = True,
+    save_optimal_params = True,
+    save_optimal_model = True
 )
 ```
 
@@ -220,10 +222,10 @@ The figures (Summary plot, Dependence plots) will be output to the directory you
 
 ```python
 mymodel.explain(
-    select_background_data = "all",
-    select_shap_data = "all",
-    sample_background_data_k = None,
-    sample_shap_data_k = None,
+    select_background_data = "train",
+    select_shap_data = "test",
+    sample_background_data_k = 50,
+    sample_shap_data_k = 50,
     output_raw_data = True
 )
 ```
