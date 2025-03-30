@@ -4,13 +4,15 @@
 
 </div>
 
-🔍 中文介绍请参见[此处](docs/20250328mymodels.md)。
+🔍 中文介绍请参见 [此处](docs/20250328mymodels.md)。
 
-**关注公众号：👉GT地学志👈 获取项目更新**
+**关注公众号：👉GT地学志👈 获取项目更新。**
 
-<img src="docs/qrcode.jpg" alt="mymodels" width="120">
+<img src="docs/qrcode.jpg" alt="mymodels" width="130">
 
-## 📊 Introduction
+
+
+## 🤔 Why mymodels?
 
 Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors.
 
@@ -32,35 +34,47 @@ Despite these advantages, implementing interpretable machine learning workflows 
     - Object-oriented Development (OOP)
     - Some commonly used Python built-in modules
     
-    **DO REMEMBER**: Make a practical demo project after you finish the above learning to enhance what you have learned (i.e., a tiny web crawler). [Here is one of my practice projects](https://github.com/gtzjh/WundergroundSpider)
+    > **DO REMEMBER**: Make a practical demo project after you finish the above learning to enhance what you have learned (i.e., a tiny web crawler). [Here is one of my practice projects](https://github.com/gtzjh/WundergroundSpider)
 
 2. 💡 **Machine Learning Fundamentals**
 
     [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theoretical foundations.
 
-3. 🛠️ **Technical Skills**
+3. 💡 **Technical Skills**
 
     - Environment management with conda/pip
     - Terminal/Command Line proficiency
     - Version control with Git ([My note of learning Git](https://github.com/gtzjh/learngit))
 
-## 🛠️ Environment Setup (Windows, same for Linux and macOS)
+## 🛠️ Environment Setup
+
+Supported platforms:
+
+- Windows (X86) [Tested on Windows 10/11]
+- Linux (X86) [Tested on WSL2.0 (Ubuntu)]
+- macOS (ARM) [Tested on Apple Silicon (M1)]
 
 ### Create environment
 
 **Requirements**:
-- Python 3.10
+- Python 3.10.X
 - 1.75 GB available disk space
+
+Run the following command in terminal:
 
 ```bash
 conda env create -f requirement.yml -n mymodels -y
 ```
 
+> You can also create the environment manually using `pip` according to the `requirement.yml` file:
+
 ---
 
 ### Activate environment
 
-```base
+Run the following command in terminal:
+
+```bash
 conda activate mymodels
 ```
 
@@ -71,7 +85,9 @@ conda activate mymodels
 We take `run_titanic.py` as an example:
 
 
-### Import the package.
+### Import the package
+
+#### Example
 
 ```python
 from mymodels.pipeline import MyPipeline
@@ -79,9 +95,9 @@ from mymodels.pipeline import MyPipeline
 
 ---
 
-### Construct an object for workflow. 
+### Construct an object for workflow
 
-The created instance here named mymodel.
+#### Parameters
 
 - **results_dir**: Directory path where your results will be stored. Accepts either a string or pathlib.Path object. The directory will be created if it doesn't exist.
 
@@ -92,6 +108,8 @@ The created instance here named mymodel.
 - **plot_format**: Output format for figures. (Default is jpg)
 
 - **plot_dpi**: Controlling the resolution of output figures. (Default is 500)
+
+#### Example
 
 ```python
 mymodel = MyPipeline(
@@ -107,17 +125,23 @@ mymodel = MyPipeline(
 
 ### Load data
 
+#### Parameters
+
 - **file_path**: In which the data you want to input. **.csv format is mandatory**. 
 
 - **y**: The target you want to predict. A `str` object represented column name or a `int` object represented the column index are both acceptable.
 
 - **x_list**: A `list` object (or a `tuple` object) of the independent variables. Each element in `list` (or `tuple`) must be a `str` object represented column name or a `int` object represented the column index.
 
-- **index_col**: An `int` object or `str` object representing the index column. It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values. Also, it's acceptable to provide a `list` object (or a `tuple` object) for representing multiple index columns. (Default is `None`)
+- **index_col**: An `int` object or `str` object representing the index column. (Default is `None`)
+
+    > It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values. Also, it's acceptable to provide a `list` object (or a `tuple` object) for representing multiple index columns. 
 
 - **test_ratio**: The proportion of test data. (Default is 0.3)
 
 - **inspect**: Whether to display the y column or the independent variables you chose in the terminal. (Default is `True`)
+
+#### Example
 
 ```python
 mymodel.load(
@@ -134,21 +158,21 @@ mymodel.load(
 
 ### Execute the optimization
 
+#### Parameters
+
 - **model_name**: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
 
 - **cat_features**: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. (Default is `None`)
 
-- **encode_method**: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable.
+- **encode_method**: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable. (Default is `None`)
 
-  If the `cat_features` is presented, and the `model_name` is not `catr` or `catc`, then the `encode_method` must be presented
+  If a single encode method is presented (like below, only `onehot` encode method is presented), it will be implemented to all categorical features (as listed in `encode_method`).
 
-  If a single encode method is presented (like below, only `onehot` encode method is presented), it will be implemented to all categorical features (as listed in `encode_method`); 
+  If a `list` (or a `tuple`) of encode methods is presented, i.e. `["onehot", "binary", "target"]`, they will be implemented to the three categorical features respectively. Hence, the length of `encode_method` must be the same as the length of `cat_features`.
 
-  If a `list` (or a `tuple`) of encode methods is presented, i.e. `["onehot", "binary", "target"]`, they will be implemented to the three categorical features respectively.
+  > A full list of supported encode methods can be found at the end.
 
-  A full list of supported encode methods can be found at the end.
-
-  (Default is `None`)
+  
 
 - **cv**: Cross-validation in the tuning process. (Default is 5)
 
@@ -162,22 +186,25 @@ mymodel.load(
 
 - **save_optimal_model**: Whether to save the optimal model. (Default is `True`)
 
-    Several files will be output in the results directory:
+#### Output
 
-    - `params.yml` will document the best parameters.
+Several files will be output in the results directory:
 
-    - `mapping.json` will document the mapping relationship between the categorical features and the encoded features.
-    
-    - `optimal-model.joblib` will save the optimal model from sklearn.
+- `params.yml` will document the best parameters.
 
-    - `optimal-model.cbm` will save the optimal model from CatBoost.
+- `mapping.json` will document the mapping relationship between the categorical features and the encoded features.
 
-    - `optimal-model.txt` will save the optimal model from LightGBM.
+- `optimal-model.joblib` will save the optimal model from sklearn.
 
-    - `optimal-model.json` will save the optimal model from XGBoost.
+- `optimal-model.cbm` will save the optimal model from CatBoost.
 
-    - `optimal-model.pkl` will save all types of optimal model for compatibility.
+- `optimal-model.txt` will save the optimal model from LightGBM.
 
+- `optimal-model.json` will save the optimal model from XGBoost.
+
+- `optimal-model.pkl` will save all types of optimal model for compatibility.
+
+#### Example
 
 ```python
 mymodel.optimize(
@@ -195,39 +222,52 @@ mymodel.optimize(
 
 ---
 
-### Evaluate the model's accuracy.
+### Evaluate the model's accuracy
+
+#### Parameters
 
 - **save_raw_data**: Whether to save the raw prediction data. Default is `True`.
 
-    The accuracy results will be output to the directory you defined above:
+#### Output
 
-    - A `.yml` file named `accuracy` will document the results of model's accuracy.
+The accuracy results will be output to the directory you defined above:
 
-    - A figure named `roc_curve_plot` document the classification accuracy.
+- A `.yml` file named `accuracy` will document the results of model's accuracy.
 
-    - Or a figure named `accuracy_plot` (it is a scatter plot) for regression task.
+- A figure named `roc_curve_plot` document the classification accuracy.
 
+- Or a figure named `accuracy_plot` (it is a scatter plot) for regression task.
 
+#### Example
 ```python
 mymodel.evaluate(save_raw_data = True)
 ```
 
 ---
 
-### Explain the model using SHAP (SHapley Additive exPlanations):
+### Explain the model using SHAP (SHapley Additive exPlanations)
 
-- **select_background_data**: The data used for **background value calculation**. Default is `"train"`, meaning that all data in the training set will be used. `"test"` means that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"train"`)
+#### Parameters
+
+- **select_background_data**: The data used for **background value calculation**. (Default is `"train"`)
+
+    Default is `"train"`, meaning that all data in the training set will be used. `"test"` means that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. 
 
 - **select_shap_data**: The data used for **calculating SHAP values**. Default is `"test"`, meaning that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"test"`)
 
-- **sample_background_data_k**: Sampling the samples in the training set for **background value calculation**. Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. (Default is `None`)
+- **sample_background_data_k**: Sampling the samples in the training set for **background value calculation**. (Default is `None`)
+    
+    Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. 
 
 - **sample_shap_data_k**: Similar meaning to the `sample_background_data_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
 
 - **output_raw_data**: Whether to save the raw data. Default is `False`.
 
+#### Output
+
 The figures (Summary plot, Dependence plots) will be output to the directory you defined above.
 
+#### Example
 
 ```python
 mymodel.explain(
@@ -242,6 +282,10 @@ mymodel.explain(
 ---
 
 ### Run the code
+
+Tap `F5` to run in Debug mode in VSCode.
+
+Or run the following command in terminal:
 
 ```bash
 python run_titanic.py
@@ -340,7 +384,7 @@ The following packages are required:
 
 ### 🛠️ Supported Models
 
-Click the link to see the official documentation.
+*Click the following links in the second column to see the official documentation.*
 
 #### For Regression Tasks
 | `model_name` | Models|
@@ -407,7 +451,7 @@ The software is provided "AS IS" without warranty of any kind. The developer:
 
 ### ⚠️ User Responsibility
 By using this software, you agree to:
-- Acknowledge any dependencies (see requirements.txt)
+- Acknowledge any dependencies (see requirements.yml)
 - Conduct domain-specific validation for critical applications
 - Comply with all applicable laws in your jurisdiction
 
