@@ -6,7 +6,7 @@
 
 🔍 中文介绍请参见[此处](docs/20250328mymodels.md)。
 
-**可关注公众号：GT地学志获取项目最新更新信息**
+**关注公众号：👉GT地学志👈 获取项目更新**
 
 <img src="docs/qrcode.jpg" alt="mymodels" width="120">
 
