@@ -435,24 +435,4 @@ The following packages are required:
 
 - SHAP currently doesn't support multi-class classification tasks when using GBDT models.
 
-
-## ⚖️ Statements
-
-### 📜 Licensing
-This project is licensed under the [MIT License](LICENSE). You may freely use, modify, 
-and distribute the code subject to the license terms.
-
-### ⚠️ Disclaimer of Liability 
-The software is provided "AS IS" without warranty of any kind. The developer:
-- Makes no representations about computational result accuracy
-- Declines all liability for direct/indirect damages arising from system use
-- Recommends independent verification for production environments
-
-### ⚠️ User Responsibility
-By using this software, you agree to:
-- Acknowledge any dependencies (see requirement.yml)
-- Conduct domain-specific validation for critical applications
-- Comply with all applicable laws in your jurisdiction
-
-
 📮 Contact maintainer: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)

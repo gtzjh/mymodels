@@ -36,18 +36,14 @@ def data_loader(
 
     print("""
 ================================================================================
-Open-Source Statements
-
-This project mymodels is distributed under the MIT License.
-Source code and test cases are available at: https://github.com/gtzjh/mymodels
+This project is distributed under the MIT License.
+Source code are available at: https://github.com/gtzjh/mymodels
 
 DISCLAIMER:
 - The author provides no warranties or guarantees regarding the accuracy, 
 reliability, or suitability of computational results.
 - Users assume all risks associated with the application of this software.
 - Commercial implementations require independent validation.
-
-For inquiries, contact: [zhongjh86@outlook.com]
 ================================================================================
 """)
     # Check if index_col is provided
