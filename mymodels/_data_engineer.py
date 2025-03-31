@@ -5,6 +5,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import logging
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+import category_encoders as ce
 
 
 
@@ -20,7 +22,7 @@ class MyEngineer:
     
     Step:
     1. Imputation of missing values
-    2. Removal of outliers
+    2. Cleaning of outliers
     3. Encoding of categorical features
     4. Data standardization or normalization
 
@@ -29,11 +31,11 @@ class MyEngineer:
     """
     def __init__(
         self,
+        outlier_cols: list[str] | tuple[str] | None = None,
         missing_values_cols: list[str] | tuple[str] | None = None,
         impute_method: str | list[str] | tuple[str] | None = None,
         cat_features: list[str] | tuple[str] | None = None,
         encode_method: str | list[str] | tuple[str] | None = None,
-        outlier_cols: list[str] | tuple[str] | None = None,
         scale_cols: list[str] | tuple[str] | None = None,
         scale_method: str | list[str] | tuple[str] | None = None,
         random_state: int = 0,
@@ -46,6 +48,14 @@ class MyEngineer:
             "median": SimpleImputer(missing_values=np.nan, strategy="median"),
             "most_frequent": SimpleImputer(missing_values=np.nan, strategy="most_frequent"),
             "constant": SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=0)
+        }
+        self.VALID_ENCODE_METHOD = {
+            "onehot": OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+            "binary": ce.BinaryEncoder(),
+            "label": LabelEncoder(),
+            "ordinal": ce.OrdinalEncoder(),
+            "frequency": "value_counts",
+            "target": ce.TargetEncoder(),
         }
         self.VALID_SCALE_METHOD = {
             "standard": StandardScaler(),
@@ -73,15 +83,18 @@ class MyEngineer:
         if missing_values_cols is not None:
             assert all(s in self.VALID_IMPUTE_METHOD.keys() for s in impute_method), \
                 f"impute_method must be one of {list(self.VALID_IMPUTE_METHOD.keys())}"
+        if cat_features is not None:
+            assert all(s in self.VALID_ENCODE_METHOD.keys() for s in encode_method), \
+                f"encode_method must be one of {list(self.VALID_ENCODE_METHOD.keys())}"
         if scale_cols is not None:
             assert all(s in self.VALID_SCALE_METHOD.keys() for s in scale_method), \
                 f"scale_method must be one of {list(self.VALID_SCALE_METHOD.keys())}"
         
+        self.outlier_cols = outlier_cols
         self.missing_values_cols = missing_values_cols
         self.impute_method = impute_method
         self.cat_features = cat_features
         self.encode_method = encode_method
-        self.outlier_cols = outlier_cols
         self.scale_cols = scale_cols
         self.scale_method = scale_method
         self.random_state = random_state
@@ -95,25 +108,24 @@ class MyEngineer:
         """Construct the data engineering pipeline.
         
         Returns:
-            self.pipeline: The data engineering pipeline, in sklearn.pipeline.Pipeline object.
+            self.pipeline: The data engineering pipeline, in `sklearn.pipeline.Pipeline` object.
         """
-        imputer_column_transformer = None
         outlier_cleaner_column_transformer = None
+        imputer_column_transformer = None
         encoder_column_transformer = None
         scaler_column_transformer = None
 
         _PIPELINE_DICT = {
-            "imputer": imputer_column_transformer,
             "outlier_cleaner": outlier_cleaner_column_transformer,
+            "imputer": imputer_column_transformer,
             "encoder": encoder_column_transformer,
             "scaler": scaler_column_transformer
         }
+        if self.outlier_cols is not None:
+            _PIPELINE_DICT["outlier_cleaner"] = self._outlier_cleaner()
 
         if self.missing_values_cols is not None:
             _PIPELINE_DICT["imputer"] = self._imputer()
-        
-        if self.outlier_cols is not None:
-            _PIPELINE_DICT["outlier_cleaner"] = self._outlier_removal()
 
         if self.cat_features is not None:
             _PIPELINE_DICT["encoder"] = self._encoder()
@@ -125,18 +137,25 @@ class MyEngineer:
         _PIPELINE_DICT = {k: v for k, v in _PIPELINE_DICT.items() if v is not None}
         
         # Construct the pipeline using the filtered dictionary
-        _pipeline = Pipeline(list(_PIPELINE_DICT.items()))
-        # logging.debug(f"_pipeline:\n{_pipeline}")
+        return Pipeline(list(_PIPELINE_DICT.items()))
 
-        return _pipeline
 
-    
+
+    def _outlier_cleaner(self):
+        """Clean the outliers.
+        
+        Returns:
+            _outlier_cleaner_column_transformer: A column transformer, in sklearn.compose.ColumnTransformer object.
+        """
+        return None
+
+
 
     def _imputer(self):
         """Impute the missing values.
         
         Returns:
-            _imputer_pipeline: A column transformer, in sklearn.compose.ColumnTransformer object.
+            _imputer_column_transformer: A column transformer, in sklearn.compose.ColumnTransformer object.
         """
         _imputer_column_transformer_list = list()
         for _m_c, _i_m in zip(self.missing_values_cols, self.impute_method):
@@ -152,35 +171,41 @@ class MyEngineer:
             verbose_feature_names_out = False
         )
 
-        _imputer_column_transformer = _imputer_column_transformer.set_output(transform="pandas")
-        
-        """
-        # Set the output to pandas DataFrame
-        try:
-            
-            logging.debug("Imputer configured to output pandas DataFrame")
-        except AttributeError:
-            logging.warning("set_output method not available for imputer in this scikit-learn version")
-        
-        """
-
+        _imputer_column_transformer.set_output(transform="pandas")
         return _imputer_column_transformer
 
 
 
-    def _outlier_removal(self):
-        pass
-    
-
     def _encoder(self):
-        pass
+        """Encode the categorical features.
+        
+        Returns:
+            _encoder_column_transformer: A column transformer, in sklearn.compose.ColumnTransformer object.
+        """
+        _encoder_column_transformer_list = list()
+        for _e_c, _e_m in zip(self.cat_features, self.encode_method):
+            _encoder_column_transformer_list.append(
+                ("encode_" + str(_e_c), self.VALID_ENCODE_METHOD[_e_m], [_e_c])
+            )
+
+        _encoder_column_transformer = ColumnTransformer(
+            _encoder_column_transformer_list,
+            remainder = "passthrough",
+            n_jobs = 1,
+            verbose = False,
+            verbose_feature_names_out = False
+        )
+        logging.debug(f"_encoder_column_transformer:\n{_encoder_column_transformer}")
+        _encoder_column_transformer.set_output(transform="pandas")
+        return _encoder_column_transformer
+
 
 
     def _scaler(self):
         """Scale the data.
         
         Returns:
-            _scaler_pipeline: A column transformer, in sklearn.compose.ColumnTransformer object.
+            _scaler_column_transformer: A column transformer, in sklearn.compose.ColumnTransformer object.
         """
         _scaler_column_transformer_list = list()
         for _s_c, _s_m in zip(self.scale_cols, self.scale_method):
@@ -196,23 +221,44 @@ class MyEngineer:
             verbose_feature_names_out = False
         )
 
-        _scaler_column_transformer = _scaler_column_transformer.set_output(transform="pandas")
-        
-        # Set the output to pandas DataFrame
-        """
-        try:
-            
-            logging.debug("Scaler configured to output pandas DataFrame")
-        except AttributeError:
-            logging.warning("set_output method not available for scaler in this scikit-learn version")
-        
-        """
-        # logging.debug(f"_scaler_column_transformer:\n{_scaler_column_transformer}")
-
+        _scaler_column_transformer.set_output(transform="pandas")
+        logging.debug(f"_scaler_column_transformer:\n{_scaler_column_transformer}")
         return _scaler_column_transformer
     
 
+
 if __name__ == "__main__":
+    # obesity demo
+    data = pd.read_csv("data/obesity.csv", index_col=["id"], na_values=np.nan, encoding="utf-8")
+    # logging.debug(f"data.head(10):\n{data.head(10)}")
+    # logging.debug(f"data.info():\n{data.info()}")
+    # logging.debug(f"data.describe():\n{data.describe()}")
+
+    # Create a sample DataFrame
+    Engineer = MyEngineer(
+        missing_values_cols=None,
+        impute_method=None,
+        cat_features=["Gender", "CAEC", "CALC", "MTRANS"],
+        encode_method="binary",
+        outlier_cols=None,
+        scale_cols=None,
+        scale_method=None,
+        random_state=0,
+        n_jobs=1,
+        verbose=False
+    )
+    eng_pipeline = Engineer.construct()
+
+    # Fit the pipeline
+    eng_pipeline.fit(data)
+
+    # Transform the data
+    transformed_data = eng_pipeline.transform(data)
+    logging.debug(f"transformed_data:\n{transformed_data.info()}")
+
+
+    # housing demo
+    """
     data = pd.read_csv("data/housing.csv", index_col=["ID"], na_values=np.nan, encoding="utf-8")
     logging.debug(f"data.head(10):\n{data.head(10)}")
     logging.debug(f"data.info():\n{data.info()}")
@@ -240,5 +286,8 @@ if __name__ == "__main__":
     transformed_data = eng_pipeline.transform(data)
     logging.debug(f"transformed_data.describe():\n{transformed_data.describe().round(4)}")
 
+    """
+    
+    
 
 

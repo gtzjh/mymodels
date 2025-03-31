@@ -286,11 +286,253 @@ def test_mixed_transformations(sample_data):
     # Check that column C remains unchanged
     assert_array_equal(result['C'].values, sample_data['C'].values)
 
+# ====================== 4. Categorical Encoding Tests ======================
+
+def test_ordinal_encoding(sample_data):
+    """
+    Test that ordinal encoding correctly transforms categorical data.
+    
+    Expected result:
+    - Column D should be transformed to ordinal encoded values
+    - Each unique category should have a unique ordinal value
+    - All other columns should remain unchanged
+    """
+    # Setup the engineer with ordinal encoding for column D
+    engineer = MyEngineer(
+        cat_features=['D'],
+        encode_method=['ordinal'],
+        missing_values_cols=None,
+        scale_cols=None
+    )
+    
+    pipeline = engineer.construct()
+    pipeline.fit(sample_data)
+    result = pipeline.transform(sample_data)
+    
+    # Check that column D has been transformed
+    assert result['D'].dtype == np.int64 \
+        or result['D'].dtype == np.int32 \
+        or result['D'].dtype == np.float64
+    
+    # Check that each unique category has a unique ordinal value
+    unique_categories = sample_data['D'].unique()
+    encoded_values = []
+    
+    for category in unique_categories:
+        # Find indices where the original data has this category
+        indices = sample_data[sample_data['D'] == category].index
+        # Get the encoded value for the first occurrence
+        encoded_value = result.loc[indices[0], 'D']
+        # Store the encoded value
+        encoded_values.append(encoded_value)
+        
+        # Check that all occurrences of this category have the same encoded value
+        for idx in indices:
+            assert result.loc[idx, 'D'] == encoded_value
+    
+    # Check that each category has a unique encoded value
+    assert len(set(encoded_values)) == len(unique_categories)
+    
+    # Check that columns A, B, and C remain unchanged
+    assert_array_equal(result['A'].values, sample_data['A'].values)
+    assert_array_equal(result['B'].values, sample_data['B'].values)
+    assert_array_equal(result['C'].values, sample_data['C'].values)
+
+def test_onehot_encoding(sample_data):
+    """
+    Test that OneHot encoding correctly transforms categorical data.
+    
+    Expected result:
+    - Column D should be transformed to multiple one-hot encoded columns
+    - Each unique category should have its own column
+    - One-hot encoded columns should have correct naming format
+    - All other columns should remain unchanged
+    - New unseen categories should be handled gracefully
+    """
+    # Setup the engineer with OneHot encoding for column D
+    engineer = MyEngineer(
+        cat_features=['D'],
+        encode_method=['onehot'],
+        missing_values_cols=None,
+        scale_cols=None
+    )
+    
+    pipeline = engineer.construct()
+    pipeline.fit(sample_data)
+    result = pipeline.transform(sample_data)
+    
+    # 1. Test correct transformation
+    # Get unique categories in the original data
+    unique_categories = sample_data['D'].unique()
+    
+    # Check that one-hot columns are created (one per category)
+    # Column naming pattern may vary, so we need to find them first
+    onehot_columns = [col for col in result.columns if 'D' in col and col != 'D']
+    assert len(onehot_columns) == len(unique_categories)
+    
+    # Verify each row has exactly one 1 and the rest 0s in the one-hot encoded columns
+    for idx in sample_data.index:
+        onehot_values = [result.loc[idx, col] for col in onehot_columns]
+        assert sum(onehot_values) == 1.0
+        assert all(val == 0.0 or val == 1.0 for val in onehot_values)
+    
+    # 2. Test correct column naming
+    # Depending on how OneHotEncoder names columns, we need to check the pattern
+    # For scikit-learn's OneHotEncoder with handle_unknown='ignore', the pattern is usually
+    # something like 'encode_D_cat', 'encode_D_dog', etc.
+    
+    # Find corresponding one-hot column for each category
+    for category in unique_categories:
+        # Find all rows with this category
+        category_indices = sample_data[sample_data['D'] == category].index
+        
+        # For each one-hot column, check if it correctly represents this category
+        for col in onehot_columns:
+            # If this column represents this category, it should have 1 for all category_indices
+            if all(result.loc[idx, col] == 1.0 for idx in category_indices):
+                # Check if column name contains the category name
+                # This is a loose check as naming conventions can vary
+                assert col.startswith('D_')
+                break
+    
+    # 3. Test handling of unseen categories
+    # Create a new DataFrame with an unseen category
+    new_data = pd.DataFrame({
+        'A': [11, 12],
+        'B': [110, 120],
+        'C': [115, 125],
+        'D': ['bird', 'snake']  # 'bird' and 'snake' were not in the training data
+    })
+    
+    # Transform the new data (no exception should be raised)
+    new_result = pipeline.transform(new_data)
+    
+    # Verify the new result has all the expected columns
+    assert set(new_result.columns) == set(result.columns)
+    
+    # Check that all one-hot encoded columns for the new categories are 0
+    # This is expected behavior when handle_unknown='ignore'
+    for idx in new_data.index:
+        onehot_values = [new_result.loc[idx, col] for col in onehot_columns]
+        # All should be zero since these categories weren't seen during training
+        assert all(val == 0.0 for val in onehot_values)
+    
+    # Check that columns A, B, and C remain unchanged in the new data
+    assert_array_equal(new_result['A'].values, new_data['A'].values)
+    assert_array_equal(new_result['B'].values, new_data['B'].values)
+    assert_array_equal(new_result['C'].values, new_data['C'].values)
+
+def test_binary_encoding(sample_data):
+    """
+    Test that Binary encoding correctly transforms categorical data.
+    
+    Expected result:
+    - Column D should be transformed to multiple binary encoded columns
+    - Binary encoded columns should have naming format of column_name + number
+    - All other columns should remain unchanged
+    - The encoder should handle unseen categories gracefully
+    """
+    # Setup the engineer with Binary encoding for column D
+    engineer = MyEngineer(
+        cat_features=['D'],
+        encode_method=['binary'],
+        missing_values_cols=None,
+        scale_cols=None
+    )
+    
+    pipeline = engineer.construct()
+    pipeline.fit(sample_data)
+    result = pipeline.transform(sample_data)
+    
+    # 1. Test correct transformation
+    # Get unique categories in the original data
+    unique_categories = sample_data['D'].unique()
+    
+    # Find binary encoded columns
+    binary_columns = [col for col in result.columns if 'D_' in col]
+    
+    # Check that binary columns are created
+    # For n unique categories, we need at most log2(n) bits rounded up
+    import math
+    expected_bits = math.ceil(math.log2(len(unique_categories)))
+    assert len(binary_columns) >= 1  # Should have at least one binary column
+    
+    # 2. Test correct column naming
+    # Binary encoder typically creates columns named as original_column_0, original_column_1, etc.
+    for i in range(len(binary_columns)):
+        # At least one column should match the pattern D_0, D_1, etc.
+        col_match = False
+        for col in binary_columns:
+            if col == f'D_{i}':
+                col_match = True
+                break
+        assert col_match, f"Expected to find column named 'D_{i}'"
+    
+    # 3. Check that each category has a unique binary representation
+    category_encodings = {}
+    for category in unique_categories:
+        # Find indices where this category appears
+        indices = sample_data[sample_data['D'] == category].index
+        if len(indices) == 0:
+            continue
+            
+        # Get the binary encoding for this category
+        idx = indices[0]
+        encoding = tuple(result.loc[idx, col] for col in binary_columns)
+        
+        # Store the encoding for this category
+        category_encodings[category] = encoding
+        
+        # Check all instances of this category have the same encoding
+        for idx in indices:
+            current_encoding = tuple(result.loc[idx, col] for col in binary_columns)
+            assert current_encoding == encoding, \
+                f"Category {category} has inconsistent encodings"
+    
+    # Check that all categories have different encodings
+    assert len(set(category_encodings.values())) == len(category_encodings), \
+        "Different categories have the same binary encoding"
+    
+    # 4. Test handling of unseen categories
+    # Create a new DataFrame with unseen categories
+    new_data = pd.DataFrame({
+        'A': [11, 12],
+        'B': [110, 120],
+        'C': [115, 125],
+        'D': ['bird', 'snake']  # 'bird' and 'snake' were not in the training data
+    })
+    
+    # Transform the new data (should not raise an exception)
+    new_result = pipeline.transform(new_data)
+    
+    # Check that all expected columns are present
+    assert set(new_result.columns) == set(result.columns)
+    
+    # Check that numeric columns A, B, and C remain unchanged
+    assert_array_equal(new_result['A'].values, new_data['A'].values)
+    assert_array_equal(new_result['B'].values, new_data['B'].values)
+    assert_array_equal(new_result['C'].values, new_data['C'].values)
+    
+    # For unseen categories, check that they receive some encoding
+    # The exact encoding depends on the implementation, but it should be consistent
+    unseen_encodings = {}
+    for category in new_data['D'].unique():
+        indices = new_data[new_data['D'] == category].index
+        idx = indices[0]
+        encoding = tuple(new_result.loc[idx, col] for col in binary_columns)
+        unseen_encodings[category] = encoding
+        
+        # All instances of the same unseen category should have the same encoding
+        for idx in indices:
+            current_encoding = tuple(new_result.loc[idx, col] for col in binary_columns)
+            assert current_encoding == encoding, \
+                f"Unseen category {category} has inconsistent encodings"
+
 
 if __name__ == "__main__":
     import sys
     # Create sample data directly (not using the fixture)
-    np.random.seed(42)
+    np.random.seed(6)
     test_data = pd.DataFrame({
         'A': [1, 2, np.nan, 4, 5, 6, np.nan, 8, 9, 10],
         'B': [np.nan, 20, 30, 40, 50, np.nan, 70, 80, 90, 100],
@@ -298,43 +540,104 @@ if __name__ == "__main__":
         'D': ['cat', 'dog', 'cat', 'fish', 'dog', 'cat', 'fish', 'dog', 'cat', 'dog']
     })
     
+    # Run tests with try-except blocks to catch and display detailed error information
+    all_tests_passed = True
+    
     # Run Core Transformer Functionality tests
     print("\n=== Core Transformer Functionality ===")
-    print("Testing median imputation...")
-    test_median_imputation(test_data)
-    print("✓ Median imputation test passed")
     
-    print("\nTesting standard scaling...")
-    test_standard_scaling(test_data)
-    print("✓ Standard scaling test passed")
+    try:
+        print("Testing median imputation...")
+        test_median_imputation(test_data)
+        print("✓ Median imputation test passed")
+    except Exception as e:
+        print(f"✗ Median imputation test FAILED: {e}")
+        all_tests_passed = False
     
-    print("\nTesting min-max scaling...")
-    test_minmax_scaling(test_data)
-    print("✓ Min-max scaling test passed")
+    try:
+        print("\nTesting standard scaling...")
+        test_standard_scaling(test_data)
+        print("✓ Standard scaling test passed")
+    except Exception as e:
+        print(f"✗ Standard scaling test FAILED: {e}")
+        all_tests_passed = False
+    
+    try:
+        print("\nTesting min-max scaling...")
+        test_minmax_scaling(test_data)
+        print("✓ Min-max scaling test passed")
+    except Exception as e:
+        print(f"✗ Min-max scaling test FAILED: {e}")
+        all_tests_passed = False
     
     # Run Pipeline Process Integrity tests
     print("\n=== Pipeline Process Integrity ===")
-    print("Testing pipeline vs manual steps...")
-    test_pipeline_vs_manual_steps(test_data)
-    print("✓ Pipeline vs manual steps test passed")
     
-    print("\nTesting DataFrame preservation...")
-    test_output_dataframe_preservation(test_data)
-    print("✓ DataFrame preservation test passed")
+    try:
+        print("Testing pipeline vs manual steps...")
+        test_pipeline_vs_manual_steps(test_data)
+        print("✓ Pipeline vs manual steps test passed")
+    except Exception as e:
+        print(f"✗ Pipeline vs manual steps test FAILED: {e}")
+        all_tests_passed = False
+    
+    try:
+        print("\nTesting DataFrame preservation...")
+        test_output_dataframe_preservation(test_data)
+        print("✓ DataFrame preservation test passed")
+    except Exception as e:
+        print(f"✗ DataFrame preservation test FAILED: {e}")
+        all_tests_passed = False
     
     # Run ColumnTransformer Column Assignment tests
     print("\n=== ColumnTransformer Column Assignment ===")
-    print("Testing column targeting...")
-    test_column_targeting(test_data)
-    print("✓ Column targeting test passed")
     
-    print("\nTesting mixed transformations...")
-    test_mixed_transformations(test_data)
-    print("✓ Mixed transformations test passed")
+    try:
+        print("Testing column targeting...")
+        test_column_targeting(test_data)
+        print("✓ Column targeting test passed")
+    except Exception as e:
+        print(f"✗ Column targeting test FAILED: {e}")
+        all_tests_passed = False
     
-    print("\nAll tests passed successfully!")
+    try:
+        print("\nTesting mixed transformations...")
+        test_mixed_transformations(test_data)
+        print("✓ Mixed transformations test passed")
+    except Exception as e:
+        print(f"✗ Mixed transformations test FAILED: {e}")
+        all_tests_passed = False
     
-    # Alternative: use pytest runner
-    # import pytest
-    # pytest.main(["-xvs", __file__])
-
+    # Run Categorical Encoding tests
+    print("\n=== Categorical Encoding Tests ===")
+    
+    try:
+        print("Testing ordinal encoding...")
+        test_ordinal_encoding(test_data)
+        print("✓ Ordinal encoding test passed")
+    except Exception as e:
+        print(f"✗ Ordinal encoding test FAILED: {e}")
+        all_tests_passed = False
+    
+    try:
+        print("\nTesting onehot encoding...")
+        test_onehot_encoding(test_data)
+        print("✓ OneHot encoding test passed")
+    except Exception as e:
+        print(f"✗ OneHot encoding test FAILED: {e}")
+        all_tests_passed = False
+    
+    try:
+        print("\nTesting binary encoding...")
+        test_binary_encoding(test_data)
+        print("✓ Binary encoding test passed")
+    except Exception as e:
+        print(f"✗ Binary encoding test FAILED: {e}")
+        all_tests_passed = False
+    
+    # Print final summary
+    if all_tests_passed:
+        print("\nAll tests passed successfully!")
+    else:
+        print("\nSome tests FAILED! See above for details.")
+        sys.exit(1)  # Exit with non-zero code to indicate test failure

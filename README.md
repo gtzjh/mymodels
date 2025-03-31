@@ -11,9 +11,9 @@
 <img src="docs/qrcode.jpg" alt="mymodels" width="130">
 
 
-## 🎯 Who is this Project for?
+## 🎯 Who is `mymodels` for?
 
-- Scientific researchers or (master/PhD) students seeking to implement interpretable machine learning in their work, but requiring minimal time investment in coding infrastructure. (e.g., the medical students who have to spend most of their time on clinical work).
+Scientific researchers or (master/PhD) students seeking to implement interpretable machine learning in their work, but requiring minimal time investment in coding infrastructure. (e.g., the medical students who have to spend most of their time on clinical work).
 
 The ideal solution for those who want to focus on domain-specific insights rather than practical implementation details.
 
