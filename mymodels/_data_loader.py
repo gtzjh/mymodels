@@ -86,7 +86,7 @@ reliability, or suitability of computational results.
     _data = pd.concat([x_data, y_data], axis = 1, join = "inner", verify_integrity = True)
     
     # Drop empty rows
-    _data = _data.dropna()
+    # _data = _data.dropna()
     # _data = _data.reset_index(drop = True)
     x_data = _data.iloc[:, :-1]
     y_data = _data.iloc[:, -1]

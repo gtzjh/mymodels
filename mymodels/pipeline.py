@@ -33,10 +33,16 @@ class MyPipeline:
         self._y_train = None
         self._y_test = None
 
-        # In optimize()
-        self.model_name = None
+        # In engineering()
+        self.missing_values_cols = None
+        self.impute_method = None
         self.cat_features = None
         self.encode_method = None
+        self.scale_cols = None
+        self.scale_method = None
+
+        # In optimize()
+        self.model_name = None
 
         # After optimization
         self._optimal_model = None
@@ -45,11 +51,11 @@ class MyPipeline:
         self._y_train_pred = None
         self._y_test_pred = None
 
-        self._check_pipeline_input()
+        self._check_init_input()
 
     
 
-    def _check_pipeline_input(self):
+    def _check_init_input(self):
         """Check input parameters for pipeline.
         
         This function validates the following parameters:
@@ -107,14 +113,39 @@ class MyPipeline:
             print(f"\nTotally features: {self._x_train.shape[1]}")
 
         return None
+    
+
+    def engineering(
+        self,
+        missing_values_cols: list[str] | tuple[str] | None = None,
+        impute_method: list[str] | tuple[str] | None = None,
+        cat_features: list[str] | tuple[str] | None = None,
+        encode_method: list[str] | tuple[str] | None = None,
+        scale_cols: list[str] | tuple[str] | None = None,
+        scale_method: list[str] | tuple[str] | None = None,
+    ):
+        """Data engineering for the training and test set.
+        
+        Step:
+        1. Imputation of missing values
+        2. Removal of outliers
+        3. Encoding of categorical features
+        4. Data standardization or normalization
+        """
+        self.missing_values_cols = missing_values_cols
+        self.impute_method = impute_method
+        self.cat_features = cat_features
+        self.encode_method = encode_method
+        self.scale_cols = scale_cols
+        self.scale_method = scale_method
+
+        return None
 
 
 
     def optimize(
         self,
         model_name: str,
-        cat_features: list[str] | tuple[str] | None = None,
-        encode_method: str | list[str] | tuple[str] | None = None,
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = 5,
@@ -122,17 +153,30 @@ class MyPipeline:
         save_optimal_params: bool = True,
         save_optimal_model: bool = True,
     ):
-        """Optimize, output the optimal model and encoder objects as well"""
-
+        """Optimize using Optuna"""
+        
+        # Check model_name validity
+        assert model_name in \
+            ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr",
+             "svc", "knc", "mlpc", "dtc", "rfc", "gbdtc", "adac", "xgbc", "lgbc", "catc"], \
+            "model_name is invalid"
         self.model_name = model_name
-        self.cat_features = list(cat_features) if cat_features is not None else None
-        self.encode_method = encode_method
-        self._check_optimize_input()
+
         
         # Initialize optimizer
         optimizer = MyOptimizer(
             random_state=self.random_state,
             results_dir=self.results_dir,
+        )
+
+        # Data engineering
+        optimizer.engineering(
+            missing_values_cols = self.missing_values_cols,
+            impute_method = self.impute_method,
+            cat_features = self.cat_features,
+            encode_method = self.encode_method,
+            scale_cols = self.scale_cols,
+            scale_method = self.scale_method,
         )
 
         # Fit the optimizer
@@ -141,8 +185,6 @@ class MyPipeline:
             y_train=self._y_train,
             x_test=self._x_test,
             model_name=self.model_name,
-            cat_features=self.cat_features,
-            encode_method=self.encode_method,
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,
@@ -268,100 +310,3 @@ class MyPipeline:
         
         return None
     
-
-
-    def _check_optimize_input(self):
-        """Check input parameters for optimization.
-        
-        This function validates the following parameters:
-            - model_name: Must be one of the supported model types
-            - cat_features: Must be a valid list/tuple of string column names or None
-            - encode_method: Must be compatible with the selected model and cat_features
-        
-        The function enforces these validation rules:
-            1. model_name must be one of the supported regression or classification models
-            2. For CatBoost models (catr, catc), encode_method must be None
-            3. If cat_features is provided:
-               - It must be a non-empty list/tuple of strings
-               - It must not contain duplicates
-               - For non-CatBoost models, encode_method must be provided and valid
-            4. If cat_features is None, encode_method must also be None
-            5. If y is float, regression model must be choosed
-        
-        Raises:
-            ValueError: If any parameter validation fails
-            AssertionError: If model_name is invalid or encode_method is provided with CatBoost
-        """
-
-        # Check model_name validity
-        assert self.model_name in \
-            ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr",
-             "svc", "knc", "mlpc", "dtc", "rfc", "gbdtc", "adac", "xgbc", "lgbc", "catc"], \
-            "model_name is invalid"
-
-        # Check if the target variable is a continuous variable
-        if pd.api.types.is_float_dtype(self._y_train.dtype):
-            assert self.model_name in ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr"], \
-                "The target variable is a continuous variable, but you haven't choosed a regression model"
-        
-        # CatBoost models specific validation
-        if self.model_name in ["catr", "catc"]:
-            assert self.encode_method is None, "encode_method must be None when using CatBoost models"
-        
-        # Categorical features validation
-        if self.cat_features is not None:
-            # Type checking
-            if not isinstance(self.cat_features, (list, tuple)):
-                raise ValueError("cat_features must be a list, tuple or None")
-            
-            # Empty list check
-            if len(self.cat_features) == 0:
-                raise ValueError("cat_features should be None instead of an empty list or tuple")
-            
-            # Element type check
-            if not all(isinstance(feature, str) for feature in self.cat_features):
-                raise ValueError("All elements in cat_features must be strings (column names)")
-            
-            # Duplicate check
-            if len(self.cat_features) != len(set(self.cat_features)):
-                raise ValueError("cat_features contains duplicate feature names")
-            
-            # For non-CatBoost models, encoding method is required
-            if self.model_name not in ["catr", "catc"]:
-                valid_encoder_methods = ["onehot", "binary", "ordinal", "label", "target", "frequency"]
-                
-                # encode_method must be provided
-                if self.encode_method is None:
-                    raise ValueError("encode_method must be provided when using categorical features with non-CatBoost models")
-                
-                # List/tuple of encoding methods
-                if isinstance(self.encode_method, (list, tuple)):
-                    # Check length match
-                    if len(self.encode_method) != len(self.cat_features):
-                        raise ValueError("encode_method must have the same length as cat_features")
-                    
-                    # Check element types
-                    if not all(isinstance(e, str) for e in self.encode_method):
-                        raise ValueError("All elements in encode_method must be strings")
-                    
-                    # Check valid methods
-                    invalid_methods = [e for e in self.encode_method if e not in valid_encoder_methods]
-                    if invalid_methods:
-                        raise ValueError(f"Invalid encoding methods: {invalid_methods}. "
-                                        f"Valid methods are: {valid_encoder_methods}")
-                
-                # Single encoding method for all features
-                elif isinstance(self.encode_method, str):
-                    if self.encode_method not in valid_encoder_methods:
-                        raise ValueError(f"Invalid encoding method: {self.encode_method}. "
-                                        f"Valid methods are: {valid_encoder_methods}")
-                
-                # Invalid encode_method type
-                else:
-                    raise ValueError("encode_method must be a list, tuple, or string")
-        else:
-            # When cat_features is None, encode_method should also be None
-            if self.encode_method is not None:
-                raise ValueError("encode_method should be None when cat_features is None")
-
-        return None

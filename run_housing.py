@@ -6,18 +6,10 @@ from mymodels.pipeline import MyPipeline
 
 
 def clean_data():
-    data = pd.read_csv("data/housing.csv", encoding = "utf-8", na_values = np.nan)
-    print(data.info())
-
-    # Identify non-numerical features
-    non_numerical_features = data.select_dtypes(include=['object', 'category']).columns.tolist()
-    
-    # Calculate and print unique values for non-numerical features
-    print("\nUnique values for non-numerical features:")
-    for feature in non_numerical_features:
-        unique_values = data[feature].unique()
-        print(f"\n{feature} (Count: {len(unique_values)}):")
-        print(unique_values)
+    data = pd.read_csv("data/housing.csv",
+                       encoding = "utf-8",
+                       na_values = np.nan,
+                       index_col = ["ID"])
     
     return None
 
@@ -35,16 +27,24 @@ def main():
         file_path = "data/housing.csv",
         y = "MEDV",
         x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
-        index_col = ["ID1", "ID2", "ID3"],
+        index_col = ["ID"],
         test_ratio = 0.3,
         inspect = False
     )
-    mymodel.optimize(
-        model_name = "xgbr",
+    mymodel.engineering(
+        missing_values_cols = ["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
+        impute_method = ["median", "median", "median", "median", "median", "median"],
         cat_features = None,
         encode_method = None,
+        scale_cols = ["CRIM", "ZN"],
+        scale_method = ["standard", "minmax"]
+        # scale_cols = None,
+        # scale_method = None
+    )
+    mymodel.optimize(
+        model_name = "rfr",
         cv = 5,
-        trials = 5,
+        trials = 10,
         n_jobs = 5,
         optimize_history = True,
         save_optimal_params = True,
@@ -52,10 +52,10 @@ def main():
     )
     mymodel.evaluate(save_raw_data = True)
     mymodel.explain(
-        select_background_data = "all",
-        select_shap_data = "all",
-        sample_background_data_k = None,
-        sample_shap_data_k = None,
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50,
         output_raw_data = True
     )
 

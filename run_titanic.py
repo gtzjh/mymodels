@@ -17,10 +17,16 @@ def main():
         test_ratio = 0.3,
         inspect = False
     )
+    mymodel.engineering(
+        missing_values_cols = ["Age", "Embarked"],
+        impute_method = ["mean", "most_frequent"],
+        cat_features = ["Pclass", "Sex", "Embarked"],
+        encode_method = ["onehot", "onehot", "onehot"],
+        scale_cols = ["Fare"],
+        scale_method = ["standard"]
+    )
     mymodel.optimize(
         model_name = "rfc",
-        cat_features = ["Pclass", "Sex", "Embarked"],
-        encode_method = "onehot",
         cv = 5,
         trials = 10,
         n_jobs = 5,

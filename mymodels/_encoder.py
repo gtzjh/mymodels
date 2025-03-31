@@ -1,9 +1,10 @@
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import category_encoders as ce
-import numpy as np
 import json
 from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
 
 
 # 为了忽略category_encoders带来的FutureWarning
@@ -211,20 +212,10 @@ def fit_transform_multi_features(
         encoder_methods: str | list[str] | tuple[str] | None,
         y: pd.Series | None = None
     ) -> tuple[pd.DataFrame, dict, dict]:
-    """Transform the categorical features of the dataset
-    ONE BY ONE COLUMNS
-    如果_encoder_methods为list或是tuple, 则它们的长度要与输入的categorical_X的列数相同
-    如此确保每种类别都有对应的编码方法
-    如果 _encoder_methods 为str, 则使用该编码方法对所有类别特征进行编码
-    """
     if isinstance(encoder_methods, (list, tuple)):
         assert len(encoder_methods) == len(categorical_X.columns), \
             "The length of list of encoder method must be the same as the list of categorical features"
     else:
-        """
-        如果是只是指定一种编码方法, 则生成一个与输入X同等列数的list, 当中每个元素都是这一编码方法。
-        即为每个分类特征使用相同编码方法
-        """
         encoder_methods = [encoder_methods] * len(categorical_X.columns) if encoder_methods else None
 
     if y is not None:
@@ -260,9 +251,6 @@ def transform_multi_features(
         categorical_X: pd.DataFrame,
         encoder_dict: dict
     ) -> pd.DataFrame:
-    """Transform the categorical features of the dataset
-    ONE BY ONE COLUMNS
-    """
     assert list(categorical_X.columns) == list(encoder_dict.keys())
 
     categorical_X_list = list()
@@ -274,17 +262,16 @@ def transform_multi_features(
     return transformed_X_df
 
 
-
 if __name__ == "__main__":
-    data = pd.read_csv("data/titanic.csv", encoding="utf-8", na_values=np.nan)
+    data = pd.read_csv("data/titanic.csv", encoding="utf-8", na_values=np.nan, index_col=["PassengerId"])
     data = data[["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked", "Survived"]]
-    data = data.dropna()
+    # data = data.dropna()
     # data = data.reset_index(drop=True)
 
     cat_cols = ["Sex", "Embarked"]
 
     def convert_to_category(df):
-        """Convert non-numeric columns in a dataframe to category dtype"""
+        """Convert non-numeric columns to `category` dtype"""
         df_copy = df.copy()
         non_numeric_cols = df_copy.select_dtypes(exclude=['int64', 'float64']).columns
         for col in non_numeric_cols:
@@ -292,60 +279,49 @@ if __name__ == "__main__":
         return df_copy
     data = convert_to_category(data)
     train, test = train_test_split(data.loc[:, :], test_size=0.3, random_state=42)
-    print(train.info())
+    print(train[cat_cols])
+    # print(train.info())
 
 
-    ###################################################################################
-    """Test function `trans_category` in per encode method"""
-    for method in [
-        "onehot", 
-        "label", "target", "frequency", "binary", "ordinal"
-    ]:
-        transformed_train_df, encoder_dict, mapping_dict = fit_transform_multi_features(
-            train.loc[:, cat_cols],
-            encoder_methods = method,
-            y = train["Survived"]
-        )
-        train_transformed = train.drop(columns=cat_cols)
-        train_transformed = pd.concat([train_transformed, transformed_train_df], axis=1)
-        print(train_transformed.info())
-
-        transformed_test_df = transform_multi_features(
-            test.loc[:, cat_cols],
-            encoder_dict
-        )
-        test_transformed = test.drop(columns=cat_cols)
-        test_transformed = pd.concat([test_transformed, transformed_test_df], axis=1)
-        print(test_transformed.info())
-        
-        # Apply conversion to the entire mapping dictionary
-        print(
-            json.dumps(
-                mapping_dict,
-                indent=4,
-                sort_keys=True,
-                ensure_ascii=False,
-                separators=(',', ': ')
-            )
-        )
-        print("-" * 80)
-        
-    ###################################################################################
-
-
-    ###################################################################################
-    """Test function `trans_category` in multiple encode methods
-    transformed_X_df, encoder_dict, mapping_dict = fit_transform_multi_features(
-        data.loc[:, cat_cols],
-        encoder_methods = ["onehot", "label"],
-        y = data["Survived"]
+    column_transformer = ColumnTransformer(
+        [
+            ("onehot", OneHotEncoder(), ["Sex"]),
+            ("binary", ce.BinaryEncoder(), ["Embarked"])
+        ],
+        remainder = "passthrough",
+        n_jobs = None,
+        verbose = False,
+        verbose_feature_names_out = False
     )
-    print(transformed_X_df.head(10))
+    column_transformer.fit(train[["Sex", "Embarked"]])
+    transformed_train_df = column_transformer.transform(train[["Sex", "Embarked"]])
+    print(column_transformer.get_feature_names_out())
+    print(transformed_train_df)
+    
 
+
+    """
+    transformed_train_df, encoder_dict, mapping_dict = fit_transform_multi_features(
+        train.loc[:, cat_cols],
+        encoder_methods = method,
+        y = train["Survived"]
+    )
+    train_transformed = train.drop(columns=cat_cols)
+    train_transformed = pd.concat([train_transformed, transformed_train_df], axis=1)
+    print(train_transformed.info())
+
+    transformed_test_df = transform_multi_features(
+        test.loc[:, cat_cols],
+        encoder_dict
+    )
+    test_transformed = test.drop(columns=cat_cols)
+    test_transformed = pd.concat([test_transformed, transformed_test_df], axis=1)
+    print(test_transformed.info())
+    
     # Apply conversion to the entire mapping dictionary
     print(
         json.dumps(
-            convert_numpy_types(mapping_dict),
+            mapping_dict,
             indent=4,
             sort_keys=True,
             ensure_ascii=False,
@@ -354,7 +330,4 @@ if __name__ == "__main__":
     )
     print("-" * 80)
     """
-    ###################################################################################
-    
-
     

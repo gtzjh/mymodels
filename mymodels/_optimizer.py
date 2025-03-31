@@ -1,17 +1,16 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import optuna
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
-import yaml, pathlib
 from joblib import Parallel, delayed
-import optuna
 from functools import partial
-import json
-import logging
-import pickle
+import json, pickle, yaml, pathlib, logging
+from types import MappingProxyType
 
 
+from ._data_engineer import MyEngineer
 from ._encoder import fit_transform_multi_features, transform_multi_features
 from .models import MyRegressors, MyClassifiers
 
@@ -59,13 +58,14 @@ class MyOptimizer:
         self.results_dir = results_dir
 
         # Global variables statement
+        # Input engineering()
+        self.cat_features = None
+        self.encode_method = None
         # Input fit()
         self.x_train = None
         self.y_train = None
         self.x_test = None
         self.model_name = None
-        self.cat_features = None
-        self.encode_method = None
         self.cv = None
         self.trials = None
         self.n_jobs = None
@@ -83,7 +83,15 @@ class MyOptimizer:
         self.show = None
         self.plot_format = None
         self.plot_dpi = None
-        
+
+    
+    def engineering(self):
+        """Engineer the data.
+        Plant to use the MyEngineer class to engineer the data instead.
+        """
+        pass
+
+    
 
     def fit(
         self,
@@ -91,8 +99,6 @@ class MyOptimizer:
         y_train: pd.Series,
         x_test: pd.DataFrame,
         model_name: str,
-        cat_features: list[str] | tuple[str] | None = None,
-        encode_method: str | list[str] | tuple[str] | None = None,
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = -1,
@@ -130,8 +136,6 @@ class MyOptimizer:
         self.y_train = y_train.copy()
         self.x_test = x_test.copy()
         self.model_name = model_name
-        self.cat_features = cat_features
-        self.encode_method = encode_method
         self.cv = cv
         self.trials = trials
         self.n_jobs = n_jobs
@@ -151,6 +155,16 @@ class MyOptimizer:
         self.optimal_params = {**_static_params, **self.optuna_study.best_trial.params}
         self.optimal_model = self._model_obj(**self.optimal_params)
 
+
+        """        
+        # Data engineering
+        _final_column_transformer = self.column_transformer
+        _transformed_x_train_matrix = _final_column_transformer.fit_transform(self.x_train)
+        _transformed_x_test_matrix = _final_column_transformer.transform(self.x_test)
+
+        """
+
+
         #######################################################################
         # If there are categorical features and the model is not CatBoost
         # then encode the training and test set
@@ -162,7 +176,10 @@ class MyOptimizer:
                 self.y_train,
             )
             self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
-            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train], axis = 1, join="inner", verify_integrity=True)
+            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train],
+                                           axis = 1,
+                                           join="inner",
+                                           verify_integrity=True)
 
             # Transform test set
             _transformed_X_test = transform_multi_features(
@@ -170,7 +187,10 @@ class MyOptimizer:
                 _encoder_dict
             )
             self.final_x_test = self.final_x_test.drop(columns = self.cat_features)
-            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test], axis = 1, join="inner", verify_integrity=True)
+            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test],
+                                          axis = 1,
+                                          join="inner",
+                                          verify_integrity=True)
 
             # Save mapping dictionary
             with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
@@ -185,6 +205,7 @@ class MyOptimizer:
         self.y_test_pred = self.optimal_model.predict(self.final_x_test)
 
         return None
+
 
 
     def _check_task_type(self, _model_name):
@@ -208,16 +229,21 @@ class MyOptimizer:
 
         # Check if the target variable is suitable for the task type
         if _task_type == "classification" and pd.api.types.is_float_dtype(self.y_train):
-            logging.warning(
-                """\nThe target variable is a float type, which is not suitable for classification tasks. Please check the configuration CAREFULLY!\n"""
-            )
+            logging.warning(f"""
+The target variable is a float type, 
+which is not suitable for classification tasks. 
+Please check the configuration CAREFULLY!
+""")
         if _task_type == "regression" and self.y_train.nunique() <= 3:
-            logging.warning(
-                """\nThe target variable has only %d unique values, which might not be suitable for regression tasks. Consider using classification instead.\n""" % self.y_train.nunique()
-            )
+            logging.warning(f"""
+The target variable has only {self.y_train.nunique()} unique values, 
+which might not be suitable for regression tasks. 
+Consider using classification instead.
+""")
         
         return _task_type
         
+
 
     def _select_model(self, _task_type):
         """Select the appropriate model and get its parameter space.
@@ -241,6 +267,7 @@ class MyOptimizer:
                 cat_features = self.cat_features
             ).get()
         return _model_obj, param_space, static_params
+
 
 
     def _optimizer(self, _param_space: dict, _static_params: dict) -> optuna.Study:
@@ -272,6 +299,7 @@ class MyOptimizer:
         return _study
 
 
+
     def _objective(self, trial, _param_space, _static_params) -> float:
         """Objective function for the Optuna study.
         
@@ -289,16 +317,36 @@ class MyOptimizer:
             float: The evaluation metric (R2 for regression, accuracy for classification)
                   adjusted by standard deviation.
         """
+
         # Get parameters for model training
-        param = {**{k: v(trial) for k, v in _param_space.items()},
-                 **_static_params}
+        # Make the param immutable
+        param = MappingProxyType({
+            **{k: v(trial) for k, v in _param_space.items()},
+            **_static_params
+        })
         
+        # Single fold execution
         def _single_fold(train_idx, val_idx, param) -> float:
             X_fold_train = self.x_train.iloc[train_idx]
             y_fold_train = self.y_train.iloc[train_idx]
             X_fold_val = self.x_train.iloc[val_idx]
             y_fold_val = self.y_train.iloc[val_idx]
 
+
+            """
+            # Data engineering
+            _train_row_index = X_fold_train.index
+            _val_row_index = X_fold_val.index
+
+            k_fold_column_transformer = self.column_transformer
+            X_fold_train = k_fold_column_transformer.fit_transform(X_fold_train)
+            X_fold_val = k_fold_column_transformer.transform(X_fold_val)
+            _column_names = k_fold_column_transformer.get_feature_names_out()
+            
+            X_fold_train = pd.DataFrame(X_fold_train, index = _train_row_index, columns = _column_names)
+            X_fold_val = pd.DataFrame(X_fold_val, index = _val_row_index, columns = _column_names)
+            """
+            
             #######################################################################
             # If categorical features exist and model is not CatBoost, encode the input features
             if self.cat_features is not None:
@@ -327,27 +375,38 @@ class MyOptimizer:
             #######################################################################
 
             # Create and train the model
-            validator = self._model_obj(**param)
-            validator.fit(X_fold_train, y_fold_train)
+            _validator = self._model_obj(**param)
+            _validator.fit(X_fold_train, y_fold_train)
 
             # All models inherit from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin
             # and therefore have a score method
-            # Regression returns R2, classification returns accuracy
+            # Return R2 for regression task
             if self._task_type == "regression":
-                return validator.score(X_fold_val, y_fold_val)
+                return _validator.score(X_fold_val, y_fold_val)
+            # Return the overall accuracy for classification task
             else:
-                return validator.score(X_fold_val, y_fold_val)
+                return _validator.score(X_fold_val, y_fold_val)
+
 
         # Parallel processing for validation. Initialize KFold cross validator
         kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+        
+        """
+        # Use the for-in loop for debugging
+        cv_scores = list()
+        for train_idx, val_idx in kf.split(self.x_train):
+            cv_scores.append(_single_fold(train_idx, val_idx, param))
+        """
+
         cv_scores = Parallel(n_jobs=self.n_jobs)(
             delayed(_single_fold)(train_idx, val_idx, param)
             for train_idx, val_idx in kf.split(self.x_train)
         )
-
+    
         # Adjust CV results by subtracting 0.5*std for more stable results
         return np.mean(cv_scores) - 0.5 * np.std(cv_scores)
-    
+
+
 
     def output(
         self,
@@ -395,6 +454,7 @@ class MyOptimizer:
         return None
     
 
+
     def _plot_optimize_history(self, optuna_study_object: optuna.Study):
         """Plot the optimization history using matplotlib instead of plotly.
 
@@ -436,12 +496,14 @@ class MyOptimizer:
         return None
 
 
+
     def _save_optimal_params(self):
         """Save the optimal parameters to a YAML file.
         """
         with open(self.results_dir.joinpath("params.yml"), 'w', encoding="utf-8") as file:
             yaml.dump(self.optimal_params, file)
         return None
+
 
 
     def _save_optimal_model(self):
@@ -477,3 +539,4 @@ class MyOptimizer:
             pickle.dump(self.optimal_model, file)
             
         return None
+    
