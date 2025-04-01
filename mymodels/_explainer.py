@@ -2,84 +2,14 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib
-# Set non-interactive Agg backend before importing pyplot
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pathlib
 import logging
 
 
-logging.getLogger().setLevel(logging.WARNING)
-
-
+# logging.getLogger().setLevel(logging.WARNING)
 # shap.initjs()
-plt.rc('font', family = 'Times New Roman')
-
-
-"""For classification tasks:
-sklearn.gbdt, xgboost, lightgbm, catboost all work in log-odds space, and convert the final predicted values back to probabilities.
-Therefore, TreeExplainer transforms their output probability values p through logit conversion, returning to the model's original log-odds space for explanation.
-That is: ln(p/(1 - p))
-A value >0 represents prediction as positive class (p>0.5), <0 represents prediction as negative class (p<0.5), =0 represents a neutral prediction (p=0.5).
-
-- Log-odds is the ideal space for SHAP value calculation, ensuring additivity, unboundedness, and consistent interpretation of feature contributions.
-- SHAP additivity: The sum of shap_values across all features for a sample, plus the base_value (expected_value), equals the predicted output value for that sample.
-- For binary classification tasks, the output shap_values have dimensions (n_samples, n_features), where values represent contributions to the positive class, explained in log-odds space.
-- For multi-class tasks, the output shap_values have dimensions (n_samples, n_features, n_targets), where values represent contributions to each class, explained in log-odds space.
-
-Taking binary classification as an example:
-Get prediction probability values
->> proba = self.model_obj.predict_proba(self.shap_data)[0]
-The first sample's model prediction probability values [negative, positive]
->> print(proba[0], proba[1])
-
-Try to convert the output probabilities of two classes to log-odds
-For binary classification problems, the log-odds of the positive class and negative class have opposite signs but the same absolute value
-Specifically: log-odds(p) = -log-odds(1 - p)
-Therefore define the conversion formula:
->> def log_odds(x):
->>     return np.log(x / (1 - x))
-The first sample's output probability after log-odds transformation [negative, positive]
->> print(log_odds(proba[0]), log_odds(proba[1]))
-
-Sum up the features:
->> feature_sum_i = np.sum(self.shap_values[0, :])
-
-Add the base_value:
->> base_value_i = self.shap_base_values[0]
-
-This will be the same as the model's prediction:
->> sum_i = feature_sum_i + base_value_i
-"""
-
-
-"""SHAP visualization functions comparison and selection guide.
-
-Attributes:
-    Supported visualization methods:
-    1. partial_dependence_plot:
-        - Shows average marginal effect of a feature on model output
-        - Similar to traditional Partial Dependence Plot (PDP)
-        - X-axis: Feature values, Y-axis: Model predictions
-
-    2. dependence_plot:
-        - Visualizes feature value vs SHAP value relationship
-        - Automatically detects interactions (color-codes 2nd influential feature)
-        - X-axis: Feature values, Y-axis: SHAP values
-
-    3. summary_plot:
-        - Displays feature importance and value impacts
-        - Combines feature importance with SHAP value distributions
-        - Y-axis: Feature names, X-axis: SHAP values
-
-Key Differences Table:
-    | Function                | Data Used       | SHAP Values | Interactions | Output Scale   |
-    |-------------------------|-----------------|-------------|--------------|----------------|
-    | partial_dependence_plot | Raw features    | ❌          | ❌          | Model output   |
-    | dependence_plot         | Features+SHAP   | ✅          | ✅          | SHAP values    |
-    | summary_plot            | SHAP values     | ✅          | ❌          | SHAP magnitude |
-"""
-
+matplotlib.use('Agg')
 
 
 class MyExplainer:
@@ -116,14 +46,12 @@ class MyExplainer:
 
         # After checking input
         self.classes_ = None
-
         # After explain()
         self.shap_values = None
         self.shap_base_values = None
         self.feature_names = None
         self.shap_values_dataframe = None
         self.numeric_features = None
-
         # After plot_results()
         self.show = None
         self.plot_format = None
@@ -171,11 +99,18 @@ class MyExplainer:
             plot_dpi: int = 500,
             output_raw_data: bool = False
         ):
-        """Transform categorical data to numerical data
-        'Cause the input data for calculating SHAP values must be consistent with the training data,
-        so we need to convert the categorical variables in the test data to numerical variables.
+        """Calculate SHAP values and generate explanations.
+        
+        Args:
+            numeric_features: List of feature names considered numerical
+            plot: Whether to generate visualization plots
+            show: Directly display plots when True
+            plot_format: Image format for saving plots (jpg/png/pdf)
+            plot_dpi: Image resolution in dots per inch
+            output_raw_data: Export raw SHAP values to CSV when True
         """
-        self.numeric_features = numeric_features
+        # Convert to list if input is tuple
+        self.numeric_features = list(numeric_features) if isinstance(numeric_features, tuple) else numeric_features
         self.show = show
         self.plot_format = plot_format
         self.plot_dpi = plot_dpi
@@ -207,29 +142,29 @@ class MyExplainer:
 
         ###########################################################################################
         # Set the explainer
-        # 这里没有使用shap.Explainer，因为对于xgboost和random forest, 它没有选择TreeExplainer
+        # Here we do not use shap.Explainer, because for xgboost and random forest, it does not choose TreeExplainer by default
         if self.model_name in ["svr", "knr", "mlpr", "adar"]:
             _explainer = shap.KernelExplainer(self.model_obj.predict, self.background_data)
         elif self.model_name in ["svc", "adac"]:
-            # `decision_function` 本身的含义：
-            # 返回样本到决策边界的带符号距离（或决策分数）
-            # 在二分类任务中：
-            # 正值：模型倾向于将样本分类为正类（类别 1）
-            # 负值：模型倾向于将样本分类为负类（类别 0）
-            # 数值大小：模型确信度的度量
-            # 此时输出的shap_values的维度都是(n_samples, n_features), shap_values的值是指对正样本的贡献
+            # Meaning of `decision_function`:
+            # Returns the signed distance (or decision score) of samples to the decision boundary
+            # In binary classification tasks:
+            # Positive values: model tends to classify the sample as positive class (class 1)
+            # Negative values: model tends to classify the sample as negative class (class 0)
+            # Magnitude: measure of the model's confidence
+            # The output shap_values dimensions are (n_samples, n_features), where values represent contributions to the positive class
             _explainer = shap.KernelExplainer(self.model_obj.decision_function, self.background_data)
         elif self.model_name in ["knc", "mlpc"]:
-            # 对于sklearn的knc和mlpc, 因为其模型内部的决策机制是基于概率
-            # 所以使用KernelExplainer对它们进行解释的时候，输出的shap_values是概率值
-            # 同时注意，输出的shap_values的维度是(n_samples, n_features, n_targets)
+            # For sklearn's knc and mlpc, since their internal decision mechanisms are probability-based
+            # when using KernelExplainer to explain them, the output shap_values are probability values
+            # Also note that the dimensions of the output shap_values are (n_samples, n_features, n_targets)
             _explainer = shap.KernelExplainer(self.model_obj.predict_proba, self.background_data)
         elif self.model_name in ["dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr",
                                  "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
-            # 对sklearn的decision tree和random forest, 因为其模型内部的决策机制是基于概率
-            # 所以使用TreeExplainer对它们进行解释的时候，输出的shap_values是概率值
-            # 而对于sklearn的gbdt, 以及下面提到的xgboost, lightgbm, catboost, 因为其模型内部的决策机制是基于log-odds空间
-            # 所以使用TreeExplainer对它们进行解释的时候，输出的shap_values是log-odds值
+            # For sklearn's decision tree and random forest, since their internal decision mechanisms are probability-based
+            # when using TreeExplainer to explain them, the output shap_values are probability values
+            # For sklearn's gbdt, as well as xgboost, lightgbm, catboost mentioned below, since their internal decision mechanisms are based on log-odds space
+            # when using TreeExplainer to explain them, the output shap_values are log-odds values
             _explainer = shap.TreeExplainer(self.model_obj)
         else:
             raise ValueError(f"Unsupported model: {self.model_name}")
@@ -256,9 +191,9 @@ class MyExplainer:
 
     def _plot_results(self):
         if self.shap_values.ndim == 2:
-            # 回归任务中使用的所有模型、
-            # 二分类任务中使用的SVC, adaboost, gbdt, xgboost, lightgbm, catboost模型,
-            # 输出的shap_values的维度都是(n_samples, n_features)
+            # All models used in regression tasks,
+            # and all models used in binary classification tasks: SVC, adaboost, gbdt, xgboost, lightgbm, catboost,
+            # The dimensions of the output shap_values are (n_samples, n_features)
 
             # Summary plot for demonstrating feature importance
             self._plot_summary(
@@ -284,14 +219,15 @@ class MyExplainer:
                 )
     
         elif self.shap_values.ndim == 3:
-            # 二分类任务中使用sklearn的决策树、随机森林模型,
-            # 以及多分类任务使用的所有模型，
-            # 输出shap_values的维度都是(n_samples, n_features, n_targets)
-            # 其中
-            # 二分类任务中sklearn的决策树、随机森林，shap values代表的是每个特征对样本被分为正类和负类的概率贡献
-            # 因此对每个类别都输出结果，
-            # 保存在shap_summary目录下，并根据类别命名
-            # 同时，在dependence_plots目录下，根据类别创建子目录，并根据类别命名
+            # For binary classification tasks using sklearn's decision tree and random forest models,
+            # as well as all models used in multi-classification tasks,
+            # the dimensions of the output shap_values are (n_samples, n_features, n_targets)
+            # Where:
+            # In binary classification tasks with sklearn's decision tree and random forest, shap values represent 
+            # each feature's contribution to the probability of a sample being classified as positive or negative
+            # Therefore, results are output for each class,
+            # saved in the shap_summary directory, and named according to the class
+            # Similarly, in the dependence_plots directory, subdirectories are created and named according to the class
             summary_plot_dir = self.results_dir.joinpath("shap_summary")
             summary_plot_dir.mkdir(parents = True, exist_ok = True)
             for i in range(0, len(self.classes_)):

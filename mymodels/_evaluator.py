@@ -8,8 +8,6 @@ from sklearn.preprocessing import label_binarize
 import yaml, pathlib, json
 
 
-plt.rc('font', family = 'Times New Roman')
-
 
 class Evaluator:
     """A class for evaluating machine learning regression models.

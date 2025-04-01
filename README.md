@@ -1,14 +1,34 @@
 <div style="text-align: center;">
 
-<h1 align="center">🚀 mymodels 🚀 : Save Your Time ! Automated Interpretable Machine Learning Workflow</h1>
+<h1 align="center">🚀 mymodels 🚀 : Save Your Time ! Efficient Interpretable Machine Learning Workflow</h1>
 
 </div>
 
-🔍 中文介绍请参见 [此处](docs/20250330release-zh.md)。
 
 **关注公众号：👉GT地学志👈 获取项目更新。**
 
 <img src="docs/qrcode.jpg" alt="mymodels" width="130">
+
+Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
+
+
+## **STATEMENTS**
+
+- The **open-source** project is under **very active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+- Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
+
+- Third-party dependencies are used as-is. The project does not guarantee the security, reliability, or compatibility of any third-party libraries.
+
+- This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
+
+- In this project, the `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
+
+- This project **is not suitable** for time-series tasks.
+
+- The explanation of this project is based on the [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html) framework. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. Other explanation methods are comming soon.
+
+
 
 
 ## 🎯 Who is `mymodels` for?
@@ -18,7 +38,7 @@ Scientific researchers or (master/PhD) students seeking to implement interpretab
 The ideal solution for those who want to focus on domain-specific insights rather than practical implementation details.
 
 
-## 🤔 Why mymodels?
+## 🤔 Why `mymodels`?
 
 Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors.
 
@@ -178,7 +198,6 @@ mymodel.load(
 
   > A full list of supported encode methods can be found at the end.
 
-  
 
 - **cv**: Cross-validation in the tuning process. (Default is 5)
 
@@ -191,6 +210,8 @@ mymodel.load(
 - **save_optimal_params**: Whether to save the best parameters. (Default is `True`)
 
 - **save_optimal_model**: Whether to save the optimal model. (Default is `True`)
+
+> Attention: When using the `catc` model for classification tasks, or `catr` model for regression tasks, the `encode_method` must be `None`. Users are responsible for ensuring proper configuration of model parameters.
 
 #### Output
 
@@ -268,6 +289,8 @@ mymodel.evaluate(save_raw_data = True)
 - **sample_shap_data_k**: Similar meaning to the `sample_background_data_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
 
 - **output_raw_data**: Whether to save the raw data. Default is `False`.
+
+> SHAP currently doesn't support multi-class classification tasks when using **GBDT** models. This limitation may affect the interpretability results and users should verify compatibility with their use case.
 
 #### Output
 
@@ -433,12 +456,3 @@ The following packages are required:
 | ordinal  | Ordinal encoding   |
 | label    | Label encoding     |
 | frequency| Frequency encoding |
-
-
-### ⚠️ Something You Should Know
-
-- When using the `catc` model for classification tasks, or `catr` model for regression tasks, the `encode_method` must be `None`.
-
-- SHAP currently doesn't support multi-class classification tasks when using GBDT models.
-
-📮 Contact maintainer: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
