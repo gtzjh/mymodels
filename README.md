@@ -14,13 +14,11 @@ Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
 
 ## ⚠️ **STATEMENTS**
 
-Project `mymodels`, **IS NOT, and WILL NEVER BE**, a comprehensive framework including all the models and methods about interpretable machine learning. 
+Project `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
 
 It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
 
-The developer will try to meet the common needs of the target users to the best extent.
-
-But several statements should be clarified:
+The developer will try to meet the common needs of the target users to the best extent, but several statements should be clarified:
 
 - This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
 
@@ -46,10 +44,9 @@ But several statements should be clarified:
 
 ## 🤔 Why `mymodels`?
 
-Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors.
+Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors. 
 
-Despite these advantages, implementing interpretable machine learning workflows remains a complex and time-intensive process, particularly for those new to the field. There exists a notable gap in comprehensive, user-friendly tooling for executing these workflows efficiently. The mymodels project addresses this gap by automating the interpretable machine learning process, significantly reducing implementation time while maintaining analytical rigor.
-
+Despite these advantages, implementing interpretable machine learning workflows remains a complex and time-intensive process, particularly for those new to the field. There exists a notable gap in comprehensive, user-friendly tooling for executing these workflows efficiently.
 
 ## 👨‍🎓 Prerequisites for Beginners
 

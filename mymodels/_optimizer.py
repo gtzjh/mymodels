@@ -5,7 +5,7 @@ import optuna
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 from sklearn.pipeline import Pipeline
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump
 from functools import partial
 import pickle, yaml, pathlib, logging
 from types import MappingProxyType
@@ -489,7 +489,6 @@ Consider using classifiers INSTEAD.
             
         # For scikit-learn based models, use joblib which is more efficient for numpy arrays
         else:
-            from joblib import dump
             dump(self.optimal_model, f"{model_path}.joblib")
             
         # Also save a pickle version for backward compatibility

@@ -8,7 +8,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mymodels.engineer import MyEngineer
+from mymodels.data_engineer import MyEngineer
 
 
 
