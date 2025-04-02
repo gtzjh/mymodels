@@ -107,284 +107,19 @@ Run the following command in terminal:
 conda activate mymodels
 ```
 
----
+### Try These Notebooks
 
-## 🚀 How to Use
+- Binary classification: [run_titanic.ipynb](run_titanic.ipynb)
 
-We take `run_titanic.py` as an example:
+  Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
 
+- Regression task: [run_housing.ipynb](run_housing.ipynb)
 
-### Import the package
-
-#### Example
-
-```python
-from mymodels.pipeline import MyPipeline
-```
-
----
-
-### Construct an object for workflow
-
-#### Parameters
-
-- **results_dir**: Directory path where your results will be stored. Accepts either a string or pathlib.Path object. The directory will be created if it doesn't exist.
-
-- **random_state**: Random seed for the entire pipeline (data splitting, model tuning, etc.). (Default is 0)
-
-- **show**: Whether to display the figure on the screen. (Default is `False`)
-
-- **plot_format**: Output format for figures. (Default is jpg)
-
-- **plot_dpi**: Controlling the resolution of output figures. (Default is 500)
-
-#### Example
-
-```python
-mymodel = MyPipeline(
-    results_dir = "results/titanic",
-    random_state = 0,
-    show = False,
-    plot_format = "jpg",
-    plot_dpi = 500
-)
-```
-
----
-
-### Load data
-
-#### Parameters
-
-- **file_path**: In which the data you want to input. **.csv format is mandatory**. 
-
-- **y**: The target you want to predict. A `str` object represented column name or a `int` object represented the column index are both acceptable.
-
-- **x_list**: A `list` object (or a `tuple` object) of the independent variables. Each element in `list` (or `tuple`) must be a `str` object represented column name or a `int` object represented the column index.
-
-- **index_col**: An `int` object or `str` object representing the index column. (Default is `None`)
-
-    > It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values. Also, it's acceptable to provide a `list` object (or a `tuple` object) for representing multiple index columns. 
-
-- **test_ratio**: The proportion of test data. (Default is 0.3)
-
-- **inspect**: Whether to display the y column or the independent variables you chose in the terminal. (Default is `True`)
-
-#### Example
-
-```python
-mymodel.load(
-    file_path = "data/titanic.csv",
-    y = "Survived",
-    x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-    index_col = ["PassengerId", "Name"],
-    test_ratio = 0.3,
-    inspect = False
-)
-```
-
----
-
-### Execute the optimization
-
-#### Parameters
-
-- **model_name**: the model you want to use. In this example, `xgbc` represented XGBoost classifier, other model name like `catr` means CatBoost regressor. A full list of model names representing different models and tasks can be found at the end.
-
-- **cat_features**: A `list` (or a `tuple`) of categorical features to specify for model. A `list` (or a `tuple`) of `str` representing the column names or `int` representing the index of column are both acceptable. (Default is `None`)
-
-- **encode_method**: A `str` object representing the encode method, or a `list` (or a `tuple`) of encode methods are both acceptable. (Default is `None`)
-
-  If a single encode method is presented (like below, only `onehot` encode method is presented), it will be implemented to all categorical features (as listed in `encode_method`).
-
-  If a `list` (or a `tuple`) of encode methods is presented, i.e. `["onehot", "binary", "target"]`, they will be implemented to the three categorical features respectively. Hence, the length of `encode_method` must be the same as the length of `cat_features`.
-
-  > A full list of supported encode methods can be found at the end.
-
-
-- **cv**: Cross-validation in the tuning process. (Default is 5)
-
-- **trials**: How many trials in the Bayesian tuning process (Based on [Optuna](https://optuna.org/)). (Default is 50)
-
-- **n_jobs**: How many cores will be used in the cross-validation process. It's recommended to use the same value as `cv`. (Default is 5)
-
-- **optimize_history**: Whether to save the optimization history. (Default is `True`)
-
-- **save_optimal_params**: Whether to save the best parameters. (Default is `True`)
-
-- **save_optimal_model**: Whether to save the optimal model. (Default is `True`)
-
-> Attention: When using the `catc` model for classification tasks, or `catr` model for regression tasks, the `encode_method` must be `None`. Users are responsible for ensuring proper configuration of model parameters.
-
-#### Output
-
-Several files will be output in the results directory:
-
-- `params.yml` will document the best parameters.
-
-- `mapping.json` will document the mapping relationship between the categorical features and the encoded features.
-
-- `optimal-model.joblib` will save the optimal model from sklearn.
-
-- `optimal-model.cbm` will save the optimal model from CatBoost.
-
-- `optimal-model.txt` will save the optimal model from LightGBM.
-
-- `optimal-model.json` will save the optimal model from XGBoost.
-
-- `optimal-model.pkl` will save all types of optimal model for compatibility.
-
-#### Example
-
-```python
-mymodel.optimize(
-    model_name = "xgbc",
-    cat_features = ["Pclass", "Sex", "Embarked"],
-    encode_method = "onehot",
-    cv = 5,
-    trials = 10,
-    n_jobs = 5,
-    optimize_history = True,
-    save_optimal_params = True,
-    save_optimal_model = True
-)
-```
-
----
-
-### Evaluate the model's accuracy
-
-#### Parameters
-
-- **save_raw_data**: Whether to save the raw prediction data. Default is `True`.
-
-#### Output
-
-The accuracy results will be output to the directory you defined above:
-
-- A `.yml` file named `accuracy` will document the results of model's accuracy.
-
-- A figure named `roc_curve_plot` document the classification accuracy.
-
-- Or a figure named `accuracy_plot` (it is a scatter plot) for regression task.
-
-#### Example
-```python
-mymodel.evaluate(save_raw_data = True)
-```
-
----
-
-### Explain the model using SHAP (SHapley Additive exPlanations)
-
-#### Parameters
-
-- **select_background_data**: The data used for **background value calculation**. (Default is `"train"`)
-
-    Default is `"train"`, meaning that all data in the training set will be used. `"test"` means that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. 
-
-- **select_shap_data**: The data used for **calculating SHAP values**. Default is `"test"`, meaning that all data in the test set will be used. `"all"` means that all data in the training and test set will be used. (Default is `"test"`)
-
-- **sample_background_data_k**: Sampling the samples in the training set for **background value calculation**. (Default is `None`)
-    
-    Default `None`, meaning that all data in the training set will be used. An integer value means an actual number of data, while a float (i.e., 0.5) means the proportion in the training set for it. 
-
-- **sample_shap_data_k**: Similar meaning to the `sample_background_data_k`. The test set will be implemented for **SHAP value calculation**. (Default is `None`)
-
-- **output_raw_data**: Whether to save the raw data. Default is `False`.
-
-> SHAP currently doesn't support multi-class classification tasks when using **GBDT** models. This limitation may affect the interpretability results and users should verify compatibility with their use case.
-
-#### Output
-
-The figures (Summary plot, Dependence plots) will be output to the directory you defined above.
-
-#### Example
-
-```python
-mymodel.explain(
-    select_background_data = "train",
-    select_shap_data = "test",
-    sample_background_data_k = 50,
-    sample_shap_data_k = 50,
-    output_raw_data = True
-)
-```
-
----
-
-
-### Full Code
-
-```python
-from mymodels.pipeline import MyPipeline
-
-
-def main():
-    mymodel = MyPipeline(
-        results_dir = "results/titanic",
-        random_state = 0,
-        show = False,
-        plot_format = "jpg",
-        plot_dpi = 500
-    )
-    mymodel.load(
-        file_path = "data/titanic.csv",
-        y = "Survived",
-        x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-        index_col = ["PassengerId", "Name"],
-        test_ratio = 0.3,
-        inspect = False
-    )
-    mymodel.optimize(
-        model_name = "rfc",
-        cat_features = ["Pclass", "Sex", "Embarked"],
-        encode_method = "onehot",
-        cv = 5,
-        trials = 10,
-        n_jobs = 5,
-        optimize_history = True,
-        save_optimal_params = True,
-        save_optimal_model = True
-    )
-    mymodel.evaluate(save_raw_data = True)
-    mymodel.explain(
-        select_background_data = "train",
-        select_shap_data = "test",
-        sample_background_data_k = 50,
-        sample_shap_data_k = 50,
-        output_raw_data = True
-    )
-
-    return None
-
-
-if __name__ == "__main__":
-    main()
-```
-
-### Run the code
-
-Tap `F5` to run in Debug mode in VSCode.
-
-Or run the following command in terminal:
-
-```bash
-python run_titanic.py
-```
-
-
-
-## 🎯 Try These Examples
-
-- `run_housing.py`: Regression task  
   Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
 
-- `run_obesity.py`: Multi-class classification  
-  Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
+- Multi-class classification: [run_obesity.ipynb](run_obesity.ipynb)
 
-- `run_titanic.py`: Binary classification  
-  Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
+  Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
 
 
 ## 📚 Supplementary Information
@@ -451,11 +186,11 @@ The following packages are required:
 
 ### 🛠️ Supported Encoding Methods
 
-| `encode_method` | Description |
-|------------|------------------|
-| onehot   | One-hot encoding   |
-| binary   | Binary encoding    |
-| target   | Target encoding    |
-| ordinal  | Ordinal encoding   |
-| label    | Label encoding     |
-| frequency| Frequency encoding |
+| `encode_method` | Description   |
+|------------|--------------------|
+| onehot     | One-hot encoding   |
+| binary     | Binary encoding    |
+| target     | Target encoding    |
+| ordinal    | Ordinal encoding   |
+| label      | Label encoding     |
+| frequency  | Frequency encoding |
