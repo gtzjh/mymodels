@@ -1,3 +1,4 @@
+from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
@@ -52,6 +53,7 @@ class MyClassifiers:
         _get_method = self.MODEL_MAP[self.model_name][0]
         _param_space, _static_params = _get_method()
         return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
+    
 
 
     def _SVC(self):
@@ -267,6 +269,7 @@ class MyRegressors:
         """
 
         _model_map = {
+            "lr": (self._LR, LinearRegression),
             "svr": (self._SVR, SVR),
             "knr": (self._KNR, KNeighborsRegressor),
             "mlpr": (self._MLPR, MLPRegressor),
@@ -298,7 +301,14 @@ class MyRegressors:
         _get_method = self.MODEL_MAP[self.model_name][0]
         _param_space, _static_params = _get_method()
         return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
+    
 
+    def _LR(self):
+        """https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html"""
+        param_space = {}
+        static_params = {}
+        return param_space, static_params
+    
 
     def _SVR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html"""

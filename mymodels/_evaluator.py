@@ -96,7 +96,7 @@ class MyEvaluator:
         self.save_raw_data = save_raw_data
 
 
-        if self.model_name in ["svr", "knr", "mlpr", "adar", \
+        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", \
                                "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
             self._get_accuracy_4_regression_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
@@ -182,7 +182,8 @@ class MyEvaluator:
                   json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
-        if self.model_name in ["svr", "knr", "mlpr", "adar", \
+        # Regression case
+        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", \
                                "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
             self._plot_regression_results(
                 self.accuracy_dict["test_r2"],
@@ -191,6 +192,7 @@ class MyEvaluator:
                 self.y_test,
                 self.y_test_pred
             )
+        # Classification case
         else:
             self._plot_classification_results(
                 self.y_test,

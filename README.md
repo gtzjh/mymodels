@@ -95,9 +95,27 @@ Run the following command in terminal:
 conda env create -f requirement.yml -n mymodels -y
 ```
 
-> You can also create the environment manually using `pip` according to the `requirement.yml` file:
-
----
+The following packages are required:
+  - catboost=1.2.7
+  - ipython=8.30.0
+  - lightgbm=4.5.0
+  - matplotlib-base=3.9.3
+  - numba=0.60.0
+  - numpy=1.26.4
+  - optuna=4.1.0
+  - pandas=2.2.3
+  - pip=24.3.1
+  - plotly=5.24.1
+  - py-xgboost=2.1.4
+  - python-graphviz=0.20.3
+  - python=3.10.16
+  - scikit-learn=1.5.2
+  - scipy=1.14.1
+  - setuptools=75.6.0
+  - shap=0.46.0
+  - tqdm=4.67.1
+  - wheel=0.45.1
+  - category_encoders=2.6.3
 
 ### Activate environment
 
@@ -123,31 +141,6 @@ conda activate mymodels
 
 
 ## 📚 Supplementary Information
-
-### 🛠️ Required Packages
-
-The following packages are required:
-  - catboost=1.2.7
-  - ipython=8.30.0
-  - lightgbm=4.5.0
-  - matplotlib-base=3.9.3
-  - numba=0.60.0
-  - numpy=1.26.4
-  - optuna=4.1.0
-  - pandas=2.2.3
-  - pip=24.3.1
-  - plotly=5.24.1
-  - py-xgboost=2.1.4
-  - python-graphviz=0.20.3
-  - python=3.10.16
-  - scikit-learn=1.5.2
-  - scipy=1.14.1
-  - setuptools=75.6.0
-  - shap=0.46.0
-  - tqdm=4.67.1
-  - wheel=0.45.1
-  - category_encoders=2.6.3
-
 
 ### 🛠️ Supported Models
 

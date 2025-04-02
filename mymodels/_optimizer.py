@@ -178,7 +178,7 @@ class MyOptimizer:
         Raises:
             ValueError: If the model name is not recognized.
         """
-        if _model_name in ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
+        if _model_name in ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
             _task_type = "regression"
         elif _model_name in ["catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"]:
             _task_type = "classification"
@@ -213,6 +213,7 @@ Consider using classifiers INSTEAD.
             tuple: Contains (model_object, parameter_space, static_parameters).
         """
 
+        ###########################################################################################
         # If CatBoost is selected, info the user that:
         # the Encoder of categorical features is not needed in the data_engineer_pipeline
         if self.model_name in ["catr", "catc"]:
@@ -222,7 +223,7 @@ Consider using classifiers INSTEAD.
                 # Check if any step name in the pipeline starts with "encode_"
                 if any(step_name.startswith("encoder") for step_name, _ in self.data_engineer_pipeline.steps):
                     logging.warning("""The Encoder of categorical features is not needed for CatBoost.""")
-        if self.model_name in ["svr", "svc", "knr", "knc", "mlpr", "mlpc"]:
+        if self.model_name in ["svr", "svc", "knr", "knc", "mlpr", "mlpc", "lr"]:
             if self.data_engineer_pipeline is not None:
                 if not any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
                     logging.warning("""The Scaler is recommended for SVR, SVC, KNR, KNC, MLPRegressor, MLPClassifier.""")
@@ -231,6 +232,7 @@ Consider using classifiers INSTEAD.
             if self.data_engineer_pipeline is not None:
                 if any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
                     logging.warning("""The Scaler is NOT recommended for tree-based models.""")
+        ###########################################################################################
 
         if _task_type == "regression":
             _model_obj, param_space, static_params = MyRegressors(
@@ -244,6 +246,11 @@ Consider using classifiers INSTEAD.
                 random_state = self.random_state,
                 cat_features = _cat_features
             ).get()
+
+        logging.debug(f"Selected model: {self.model_name}")
+        logging.debug(f"Model object: {_model_obj}")
+        logging.debug(f"Parameter space: {param_space}")
+        logging.debug(f"Static parameters: {static_params}")
         return _model_obj, param_space, static_params
 
 

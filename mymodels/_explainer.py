@@ -143,7 +143,7 @@ class MyExplainer:
         ###########################################################################################
         # Set the explainer
         # Here we do not use shap.Explainer, because for xgboost and random forest, it does not choose TreeExplainer by default
-        if self.model_name in ["svr", "knr", "mlpr", "adar"]:
+        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar"]:
             _explainer = shap.KernelExplainer(self.model_obj.predict, self.background_data)
         elif self.model_name in ["svc", "adac"]:
             # Meaning of `decision_function`:
@@ -213,7 +213,7 @@ class MyExplainer:
             is supported for regression task only.
             is not supported for categorical features.
             """
-            if self.model_name in ["svr", "knr", "mlpr", "adar", "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
+            if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
                 self._plot_partial_dependence(
                     save_dir = self.results_dir.joinpath("partial_dependence_plots/")
                 )
