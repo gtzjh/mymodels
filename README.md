@@ -11,35 +11,10 @@
 
 Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
 
+<div style="border: 2px solid #cc0000; padding: 10px; background-color: rgba(255, 204, 204, 0.6); border-radius: 5px;">
+    <p style="color: #333333;">⚠️ <strong>Note:</strong> Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is currently unavailable. However, these features are under active development, with an updated version expected to be released within the next month. In the meantime, users can implement their own custom data engineering pipelines to incorporate these encoding methods.</p>
+</div>
 
-## ⚠️ **STATEMENTS**
-
-Project `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
-
-It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
-
-The developer will try to meet the common needs of the target users to the best extent, but several statements should be clarified:
-
-- This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
-
-- Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
-
-- Third-party dependencies are used as-is. The project does not guarantee the security, reliability, or compatibility of any third-party libraries.
-
-- This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
-
-
-## ⚠️ The Users Should Know
-
-- This project **is not suitable** for time-series tasks.
-
-- In this project, the `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
-
-- The explanation in this project is currently based on [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html), Other explanation methods are coming soon. 
-
-- Note that explanations may not always be meaningful for real-world tasks, especially after data engineering. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. **It's strongly recommended to compare the explanation results before and after data engineering**.
-
-- The Partial Dependence Plot (PDP) is not supported for classification tasks currently.
 
 
 ## 🤔 Why `mymodels`?
@@ -149,6 +124,7 @@ conda activate mymodels
 #### For Regression Tasks
 | `model_name` | Models|
 |------------|-------|
+| lr         | [Linear Regression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html) |
 | svr        | [Support Vector Regression](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html) |
 | knr        | [K-Nearest Neighbors Regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html) |
 | mlpr       | [Multi-Layer Perceptron Regressor](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html) |
@@ -164,6 +140,7 @@ conda activate mymodels
 
 | `model_name` | Models|
 |------------|-------|
+| lc         | [Logistic Regression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) |
 | svc        | [Support Vector Classification](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) |
 | knc        | [K-Nearest Neighbors Classification](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html) |
 | mlpc       | [Multi-Layer Perceptron Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html) |
@@ -183,7 +160,39 @@ conda activate mymodels
 |------------|--------------------|
 | onehot     | One-hot encoding   |
 | binary     | Binary encoding    |
-| target     | Target encoding    |
 | ordinal    | Ordinal encoding   |
-| label      | Label encoding     |
-| frequency  | Frequency encoding |
+| label (coming soon)      | Label encoding     |
+| frequency (coming soon)  | Frequency encoding |
+| target (coming soon)     | Target encoding    |
+
+
+## ⚠️ **STATEMENTS**
+
+Project `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
+
+It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
+
+The developer will try to meet the common needs of the target users to the best extent, but several statements should be clarified:
+
+- This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+
+- Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
+
+- Third-party dependencies are used as-is. The project does not guarantee the security, reliability, or compatibility of any third-party libraries.
+
+- This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
+
+
+## ⚠️ The Users Should Know
+
+- The project **is not suitable** for time-series tasks.
+
+- The hyperparameters shown in `models.py` are only for demonstration purposes. Users should try different hyperparameters in their actual applications to ensure the robustness of their results.
+
+- The `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
+
+- The explanation in this project is currently based on [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html), Other explanation methods are coming soon. 
+
+- Note that explanations may not always be meaningful for real-world tasks, especially after data engineering. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. **It's strongly recommended to compare the explanation results before and after data engineering**.
+
+- The Partial Dependence Plot (PDP) is not supported for classification tasks currently.

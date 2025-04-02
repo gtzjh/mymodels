@@ -21,7 +21,7 @@ class MyExplainer:
             background_data: pd.DataFrame,
             shap_data: pd.DataFrame,
             sample_background_data_k: int | float | None = None,
-            sample_shap_data_k:  int | float | None = None,       
+            sample_shap_data_k:  int | float | None = None,
         ):
         """Initialize the MyExplainer with model and data.
 
@@ -139,25 +139,28 @@ class MyExplainer:
                                              self.sample_shap_data_k)
         ###########################################################################################
 
+        """
+        # Print all methods and attributes of self.model_obj
+        logging.debug("\nMethods and attributes of the model object:")
+        # Get all attributes and methods
+        model_attributes = dir(self.model_obj)
+        # Print them in a more readable format
+        for attr in sorted(model_attributes):
+            # Skip private attributes (those starting with '_')
+            if not attr.startswith('_'):
+                attr_type = type(getattr(self.model_obj, attr))
+                if callable(getattr(self.model_obj, attr)):
+                    logging.debug(f"  Method: {attr}()")
+                else:
+                    logging.debug(f"  Attribute: {attr} - {attr_type}")
+        """
 
         ###########################################################################################
         # Set the explainer
         # Here we do not use shap.Explainer, because for xgboost and random forest, it does not choose TreeExplainer by default
         if self.model_name in ["lr", "svr", "knr", "mlpr", "adar"]:
             _explainer = shap.KernelExplainer(self.model_obj.predict, self.background_data)
-        elif self.model_name in ["svc", "adac"]:
-            # Meaning of `decision_function`:
-            # Returns the signed distance (or decision score) of samples to the decision boundary
-            # In binary classification tasks:
-            # Positive values: model tends to classify the sample as positive class (class 1)
-            # Negative values: model tends to classify the sample as negative class (class 0)
-            # Magnitude: measure of the model's confidence
-            # The output shap_values dimensions are (n_samples, n_features), where values represent contributions to the positive class
-            _explainer = shap.KernelExplainer(self.model_obj.decision_function, self.background_data)
-        elif self.model_name in ["knc", "mlpc"]:
-            # For sklearn's knc and mlpc, since their internal decision mechanisms are probability-based
-            # when using KernelExplainer to explain them, the output shap_values are probability values
-            # Also note that the dimensions of the output shap_values are (n_samples, n_features, n_targets)
+        elif self.model_name in ["lc", "svc", "knc", "mlpc", "adac"]:
             _explainer = shap.KernelExplainer(self.model_obj.predict_proba, self.background_data)
         elif self.model_name in ["dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr",
                                  "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:

@@ -108,11 +108,11 @@ class MyOptimizer:
             x_train: Training features data.
             y_train: Training target data.
             x_test: Test features data.
-            model_name: Model selection. For regression, should be one of 
-                ["catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", 
-                "svr", "knr", "mlpr"]. For classification, should be one of
-                ["catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", 
-                "svc", "knc", "mlpc"].
+            model_name: Model selection. 
+                For regression, should be one of 
+                    ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]. 
+                For classification, should be one of
+                    ["lc", "catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"].
             data_engineer_pipeline: A pipeline for data engineering,
                                     the pipeline should be a `sklearn.pipeline.Pipeline` object.
             cv: Number of folds for cross-validation.
@@ -154,7 +154,6 @@ class MyOptimizer:
             self.final_x_train = final_data_engineer_pipeline.fit_transform(self.final_x_train)
             self.final_x_test = final_data_engineer_pipeline.transform(self.final_x_test)
         
-
         # Fit on the whole training and validation set
         self.optimal_model.fit(self.final_x_train, self.y_train)
 
@@ -180,7 +179,7 @@ class MyOptimizer:
         """
         if _model_name in ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
             _task_type = "regression"
-        elif _model_name in ["catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"]:
+        elif _model_name in ["lc", "catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"]:
             _task_type = "classification"
         else:
             raise ValueError(f"Invalid model name: {_model_name}")
@@ -223,11 +222,20 @@ Consider using classifiers INSTEAD.
                 # Check if any step name in the pipeline starts with "encode_"
                 if any(step_name.startswith("encoder") for step_name, _ in self.data_engineer_pipeline.steps):
                     logging.warning("""The Encoder of categorical features is not needed for CatBoost.""")
-        if self.model_name in ["svr", "svc", "knr", "knc", "mlpr", "mlpc", "lr"]:
+        if self.model_name in ["svr", "svc", "knr", "knc", "mlpr", "mlpc", "lr", "lc"]:
             if self.data_engineer_pipeline is not None:
                 if not any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
-                    logging.warning("""The Scaler is recommended for SVR, SVC, KNR, KNC, MLPRegressor, MLPClassifier.""")
-
+                    logging.warning(f"""
+The Scaler is recommended for:
+    - LinearRegression
+    - LogisticRegression
+    - SVR
+    - SVC
+    - KNR
+    - KNC
+    - MLPRegressor
+    - MLPClassifier
+""")
         if self.model_name in ["dtr", "dtc", "rfc", "rfr", "lgbc", "lgbr", "gbdtc", "gbdtr", "xgbc", "xgbr", "catr", "catc"]:
             if self.data_engineer_pipeline is not None:
                 if any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):

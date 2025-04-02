@@ -2,7 +2,7 @@ import pandas as pd
 import logging, pathlib
 
 
-from ._vis_data import _vis_data_distribution, _vis_correlation
+from ._vis_data import _vis_data_distribution, _vis_correlation, _vis_category
 
 
 
@@ -54,7 +54,7 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
 
         return None
     
-    
+
 
     def _describe_data(self):
         """Describe the data
@@ -94,10 +94,23 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         """
         _categorical_features = []
         for col, dtype in self.x_data.dtypes.items():
-            if pd.api.types.is_categorical_dtype(dtype):
+            if pd.api.types.is_categorical_dtype(dtype) or pd.api.types.is_object_dtype(dtype):
                 _categorical_features.append(col)
         
-        print(f"\nCategorical features: {_categorical_features}")
+        logging.info(f"\nCategorical features: {_categorical_features}")
+        if _categorical_features:
+            for _cat_col in _categorical_features:
+                _vis_category(
+                    data=self.x_data[_cat_col],
+                    name=_cat_col,
+                    save_dir=self.results_dir / "data_categorical",
+                    plot_format=self.plot_format,
+                    plot_dpi=self.plot_dpi,
+                    show=self.show
+                )
+            logging.info(f"\nCategorical features visualization saved to: {self.results_dir / 'data_categorical'}")
+
+
         return None
     
 
@@ -122,7 +135,7 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
             if pd.api.types.is_numeric_dtype(dtype):
                 _numeric_features.append(col)
         
-        print(f"\nNumerical features: {_numeric_features}")
+        logging.info(f"\nNumerical features: {_numeric_features}")
         
         # Create subdirectories for visualizations
         dist_dir = self.results_dir / "data_distribution"
@@ -130,7 +143,6 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         
         # Visualize the distribution of each numerical feature
         if _numeric_features:
-            print("\nCreating distribution plots for numerical features...")
             for col in _numeric_features:
                 _vis_data_distribution(
                     data=self.x_data[col],
@@ -142,7 +154,6 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
                 )
             
             # Visualize correlations between numerical features
-            print("\nCreating correlation plots for numerical features...")
             _vis_correlation(
                 data=self.x_data[_numeric_features],
                 name="numerical_features",
@@ -152,10 +163,10 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
                 show=self.show
             )
             
-            print(f"\nDistribution plots saved to: {dist_dir}")
-            print(f"Correlation plots saved to: {corr_dir}")
+            logging.info(f"\nDistribution plots saved to: {dist_dir}")
+            logging.info(f"Correlation plots saved to: {corr_dir}")
         else:
-            print("\nNo numerical features found for visualization.")
+            logging.info("\nNo numerical features found for visualization.")
 
         return None
 

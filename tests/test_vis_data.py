@@ -7,7 +7,7 @@ import pathlib
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mymodels._vis_data import _vis_data_distribution, _vis_correlation
+from mymodels._vis_data import _vis_data_distribution, _vis_correlation, _vis_category
 
 
 logging.basicConfig(
@@ -339,10 +339,134 @@ def test_vis_correlation():
     return None
 
 
+def test_vis_category():
+    """Test categorical data visualization function
+    
+    Test items:
+    1. Basic functionality test - visualize categorical data with a few categories
+    2. Many categories test - test handling of more than 10 categories
+    3. Error handling test - test assertion error for floating point data
+    4. Error handling test - test assertion error for 2D matrix input
+    """
+    print("Testing categorical data visualization...")
+    
+    # Create test directory if it doesn't exist
+    results_dir = pathlib.Path("./results/test_vis")
+    results_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Test 1: Basic functionality with a few categories
+    print("Test 1: Basic categorical data visualization")
+    basic_categories = np.array(['A', 'B', 'C', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'A', 'C', 'B', 'A', 'C'])
+    
+    try:
+        _vis_category(
+            data=basic_categories,
+            name="Basic Categories",
+            save_dir=results_dir,
+            show=True
+        )
+        print("✓ Basic categorical visualization successful")
+    except Exception as e:
+        print(f"✗ Basic visualization failed: {e}")
+    
+    # Test 2: More than 10 categories (should limit display to 10 and log warning)
+    print("\nTest 2: Many categories test (>10 categories)")
+    # Create dataset with 20 categories, with varying frequencies
+    category_names = [f'Category_{chr(65+i)}' for i in range(20)]  # Category_A through Category_T
+    
+    # Create uneven distribution of categories (some frequent, some rare)
+    frequencies = np.array([100, 90, 80, 70, 60, 50, 40, 30, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
+    many_categories = np.concatenate([np.repeat(category_names[i], frequencies[i]) for i in range(20)])
+    np.random.shuffle(many_categories)  # Shuffle the data
+    
+    try:
+        _vis_category(
+            data=many_categories,
+            name="Many Categories",
+            save_dir=results_dir,
+            show=True
+        )
+        print("✓ Many categories visualization successful (check for warning in logs)")
+    except Exception as e:
+        print(f"✗ Many categories visualization failed: {e}")
+    
+    # Test 3: Floating point data (should raise assertion error)
+    print("\nTest 3: Floating point data test (should raise assertion error)")
+    float_data = np.array([1.1, 2.2, 3.3, 1.1, 2.2, 3.3, 4.4, 1.1, 2.2])
+    
+    try:
+        _vis_category(
+            data=float_data,
+            name="Float Data",
+            save_dir=results_dir,
+            show=True
+        )
+        print("✗ Float data test failed: Should have raised an assertion error")
+    except AssertionError as e:
+        print(f"✓ Float data correctly raised assertion error: {e}")
+    except Exception as e:
+        print(f"✗ Float data test failed with unexpected error: {e}")
+    
+    # Test 4: 2D matrix input (should raise assertion error)
+    print("\nTest 4: 2D matrix input test (should raise assertion error)")
+    matrix_data = np.array([
+        ['A', 'B', 'C'],
+        ['D', 'E', 'F'],
+        ['G', 'H', 'I']
+    ])
+    
+    try:
+        _vis_category(
+            data=matrix_data,
+            name="Matrix Data",
+            save_dir=results_dir,
+            show=True
+        )
+        print("✗ 2D matrix test failed: Should have raised an assertion error")
+    except AssertionError as e:
+        print(f"✓ 2D matrix correctly raised assertion error: {e}")
+    except Exception as e:
+        print(f"✗ 2D matrix test failed with unexpected error: {e}")
+    
+    # Additional test: Mixed data types (integers and strings)
+    print("\nAdditional test: Mixed data types (integers and strings)")
+    mixed_data = np.array([1, 2, 3, 'A', 'B', 'C', 1, 2, 'A', 'B', 3, 'C'])
+    
+    try:
+        _vis_category(
+            data=mixed_data,
+            name="Mixed Data Types",
+            save_dir=results_dir,
+            show=True
+        )
+        print("✓ Mixed data types visualization successful")
+    except Exception as e:
+        print(f"✗ Mixed data types visualization failed: {e}")
+    
+    # Additional test: Data as pandas Series
+    print("\nAdditional test: Data as pandas Series")
+    series_data = pd.Series(['Red', 'Blue', 'Green', 'Red', 'Blue', 'Red', 'Yellow', 'Red'], 
+                           name='Colors')
+    
+    try:
+        _vis_category(
+            data=series_data,
+            save_dir=results_dir,
+            show=True
+        )
+        print("✓ Pandas Series visualization successful")
+    except Exception as e:
+        print(f"✗ Pandas Series visualization failed: {e}")
+    
+    print(f"\nCategory visualizations saved to {results_dir.absolute()}")
+    return None
+
+
 if __name__ == "__main__":
     results_dir = pathlib.Path("./results/test_vis")
     
-    test_vis_data_distribution()
-    test_vis_correlation()
+    # test_vis_category()
+    # test_vis_data_distribution()
+    # test_vis_correlation()
 
-    
+    test_vis_category()

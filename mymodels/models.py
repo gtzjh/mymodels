@@ -1,4 +1,4 @@
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
@@ -23,6 +23,7 @@ class MyClassifiers:
         """
 
         _model_map = {
+            "lc": (self._LC, LogisticRegression),
             "svc": (self._SVC, SVC),
             "knc": (self._KNC, KNeighborsClassifier),
             "mlpc": (self._MLPC, MLPClassifier),
@@ -55,17 +56,36 @@ class MyClassifiers:
         return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
     
 
+    def _LC(self):
+        """https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html"""
+        param_space = {
+            "solver": lambda t: t.suggest_categorical("solver", ["lbfgs", "saga"]),
+            "penalty": lambda t: t.suggest_categorical("penalty", ["l2", None]),
+            "C": lambda t: t.suggest_float("C", 0.01, 10.0, log=True),
+            "max_iter": lambda t: t.suggest_int("max_iter", 100, 1000, step=100),
+        }
+        static_params = {
+            # "multi_class": "multinomial",
+            "class_weight": "balanced",
+            "tol": 1e-4,
+            "fit_intercept": True,
+            "random_state": self.random_state,
+            "n_jobs": -1,
+            "verbose": 0,
+            "warm_start": False,
+        }
+        return param_space, static_params
+    
 
     def _SVC(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html"""
         param_space = {
             "kernel": lambda t: t.suggest_categorical("kernel", ["linear", "rbf", "poly", "sigmoid"]),
             "C": lambda t: t.suggest_float("C", 0.1, 200, log=True),
-            # "gamma": lambda t: t.suggest_categorical("gamma", ["scale", "auto"]),
             "degree": lambda t: t.suggest_int("degree", 2, 5),  # For poly kernel
-            # "class_weight": lambda t: t.suggest_categorical("class_weight", ["balanced", None]),
         }
         static_params = {
+            "class_weight": "balanced",
             "probability": True,  # Required for some methods like predict_proba
             "random_state": self.random_state,
             "verbose": 0,

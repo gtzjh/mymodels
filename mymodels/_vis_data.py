@@ -5,7 +5,169 @@ import seaborn as sns
 import scipy
 import logging
 from joblib import Parallel, delayed
-import pathlib
+
+
+def _vis_category(
+        data,
+        name=None,
+        save_dir=None,
+        plot_format="jpg",
+        plot_dpi=500,
+        show=False
+    ):
+    """Visualize categorical data with a bar chart showing frequency distribution
+    
+    Args:
+        data: A 1D ndarray-like object with categorical data
+        name: Optional name for the data (used for plot title and filename)
+        save_dir: Directory to save the plot (pathlib.Path object)
+        plot_format: Format of the saved plot (default: jpg)
+        plot_dpi: DPI of the saved plot (default: 500)
+        show: Whether to show the plot (default: False)
+    
+    Returns:
+        str: Path to the saved plot file if save_dir is provided, None otherwise
+    """
+    # Validate input is 1D ndarray-like
+    assert hasattr(data, 'shape') and len(data.shape) == 1, "Data must be a 1D array-like object"
+    
+    # Convert to numpy array for easier handling
+    data_array = np.array(data)
+    
+    # Instead of asserting, check and warn if there are floating point values
+    if np.issubdtype(data_array.dtype, np.floating):
+        logging.warning("Categorical data contains floating point numbers. Converting all values to strings for visualization.")
+    
+    # Handle NaN values specially before converting to strings
+    if np.issubdtype(data_array.dtype, np.number):
+        # Replace NaN values with "Missing" for better visualization
+        data_array = np.array(["Missing" if pd.isna(x) else x for x in data_array])
+    
+    # Convert all values to strings to avoid comparison between different types
+    data_array = np.array([str(x) for x in data_array])
+    
+    # Calculate unique values and their counts
+    unique_values, counts = np.unique(data_array, return_counts=True)
+    
+    # Get total number of categories
+    total_categories = len(unique_values)
+    
+    # Sort categories by count (descending)
+    sorted_indices = np.argsort(-counts)
+    sorted_values = unique_values[sorted_indices]
+    sorted_counts = counts[sorted_indices]
+    
+    # Calculate total count for percentage calculations
+    total_count = np.sum(counts)
+    
+    # Limit to 10 categories for visualization
+    if total_categories > 10:
+        display_values = sorted_values[:10]
+        display_counts = sorted_counts[:10]
+        
+        # Calculate statistics for remaining categories
+        remaining_categories = total_categories - 10
+        remaining_count = np.sum(sorted_counts[10:])
+        remaining_percentage = (remaining_count / total_count) * 100
+        
+        # Log warning about hidden categories
+        logging.warning(f"Showing only top 10 categories out of {total_categories}.")
+        logging.warning(f"The remaining {remaining_categories} categories represent {remaining_percentage:.2f}% of the data.")
+    else:
+        display_values = sorted_values
+        display_counts = sorted_counts
+        remaining_categories = 0
+        remaining_percentage = 0
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Create bar chart with dark blue borders and light blue fill with 40% transparency
+    bars = ax.bar(
+        range(len(display_values)), 
+        display_counts, 
+        color='#4682B4',  # Light blue
+        alpha=0.4,        # 40% transparency
+        edgecolor='#00008B',  # Dark blue
+        linewidth=1.5     # Border width
+    )
+    
+    # Set x-tick labels to category names (limiting length if too long)
+    display_labels = [str(val)[:15] + '...' if len(str(val)) > 15 else str(val) for val in display_values]
+    ax.set_xticks(range(len(display_values)))
+    ax.set_xticklabels(display_labels, rotation=45, ha='right')
+    
+    # Add value annotations on top of each bar (count and percentage)
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        percentage = (display_counts[i] / total_count) * 100
+        
+        # Format the annotation with count and percentage
+        annotation = f'{height:,} ({percentage:.1f}%)'
+        
+        ax.text(
+            bar.get_x() + bar.get_width()/2., 
+            height + (total_count * 0.01),  # Position slightly above bar
+            annotation, 
+            ha='center', 
+            va='bottom',
+            fontsize=9,
+            fontweight='bold'
+        )
+    
+    # Remove top and right spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Set labels and title
+    title = "Category Distribution"
+    if name:
+        title = f"Distribution of {name}"
+        ax.set_ylabel("Count")
+    else:
+        ax.set_ylabel("Count")
+    
+    ax.set_xlabel("Categories")
+    fig.suptitle(title, fontsize=16)
+    
+    # Add note about hidden categories if any
+    if remaining_categories > 0:
+        plt.figtext(
+            0.5, 0.01, 
+            f"Note: {remaining_categories} additional categories not shown ({remaining_percentage:.2f}% of data)", 
+            ha='center', 
+            fontsize=10, 
+            bbox=dict(boxstyle='round', facecolor='#F5F5F5', alpha=0.5)
+        )
+    
+    # Adjust layout
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15 if remaining_categories > 0 else 0.1)
+    
+    # Save the plot if save_dir is provided
+    if save_dir:
+        # Set filename
+        filename = f"category_{name if name else 'data'}.{plot_format}"
+        filepath = save_dir / filename
+        
+        # Ensure the directory exists
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save the plot
+        plt.savefig(filepath, dpi=plot_dpi)
+        
+        result = str(filepath)
+    else:
+        result = None
+    
+    # Show the plot if required
+    if show:
+        plt.show()
+    
+    plt.close()
+    
+    return result
+
 
 
 def _vis_data_distribution(

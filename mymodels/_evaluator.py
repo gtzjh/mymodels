@@ -25,8 +25,8 @@ class MyEvaluator:
         
         Args:
             model_name (str): Name of the model to evaluate. Must be one of the supported model types:
-                - Regression models: 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr'
-                - Classification models: 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc'
+                - Regression models: 'lr', 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr'
+                - Classification models: 'lc', 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc'
             optimal_model_object (from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin):
                 The optimal model object.
         """
@@ -101,10 +101,13 @@ class MyEvaluator:
             self._get_accuracy_4_regression_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
-        else:
+        elif self.model_name in ["lc", "svc", "knc", "mlpc", "adac", \
+                                 "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
             self._get_accuracy_4_classification_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
+        else:
+            raise ValueError(f"Invalid model input: {self.model_name}")
 
         # Save results
         self._output()
