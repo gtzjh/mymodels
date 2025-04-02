@@ -1,8 +1,8 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import logging, pathlib
+
+
+from ._vis_data import _vis_data_distribution, _vis_correlation
 
 
 
@@ -41,7 +41,6 @@ class MyDataDiagnoser:
 Data diagnosis should be performed on TRAINING DATA ONLY.
 =========================================================
 """)
-
         return None
     
 
@@ -50,13 +49,22 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         """Diagnose the data"""
         self._describe_data()
         self._diagnose_missing_values()
+        self._diagnose_categorical_features()
+        self._diagnose_numerical_features()
+
         return None
+    
     
 
     def _describe_data(self):
         """Describe the data
             - Shape of dataframe       
         """
+        print("==========================================")
+        print("DATA DESCRIPTION")
+        print(f"\nX_train shape: {self.x_data.shape}")
+        print(f"\nY_train shape: {self.y_data.shape}")
+        print("==========================================")
         return None
     
 
@@ -69,10 +77,10 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         """
         print("==========================================")
         print("MISSING VALUES DIAGNOSIS")
-        print(f"X_train info:")
+        print(f"\nX_train info:")
         print(self.x_data.info())
 
-        print(f"Y_train info:")
+        print(f"\nY_train info:")
         print(self.y_data.info())
         print("==========================================")
 
@@ -84,34 +92,70 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         """Diagnose the categorical features
             - Count unique values
         """
+        _categorical_features = []
+        for col, dtype in self.x_data.dtypes.items():
+            if pd.api.types.is_categorical_dtype(dtype):
+                _categorical_features.append(col)
+        
+        print(f"\nCategorical features: {_categorical_features}")
         return None
     
 
     def _diagnose_numerical_features(self):
-        """Diagnose the numerical features"""
+        """Diagnose the numerical features
+        
+        This method analyzes and visualizes the numerical features in the dataset:
+        1. Identifies all numerical features in the dataset
+        2. Creates distribution plots for each numerical feature using _vis_data_distribution
+           - Each plot shows the distribution pattern, outliers, and central tendency
+           - Plots are saved to results_dir/data_distribution/
+        3. Generates correlation heatmaps (Pearson and Spearman) using _vis_correlation
+           - Shows relationships and dependency between numerical features
+           - Highlights potentially problematic high correlations
+           - Maps are saved to results_dir/data_correlation/
+           
+        All visualizations use the format and DPI settings specified during initialization.
+        Interactive display of plots depends on the 'show' parameter setting.
+        """
         _numeric_features = []
         for col, dtype in self.x_data.dtypes.items():
             if pd.api.types.is_numeric_dtype(dtype):
                 _numeric_features.append(col)
         
-        return None
-    
-
-    def _vis_violin(self):
-        """Visualize the violin plot"""
-        return None
-
-
-
-    """A WARNING should occur if some features are highly correlated 
-    'cause that may influence the model's interpretability."""
-    def _vis_correlation(self):
-        """Visualize the correlation
-            - Heatmap of correlation matrix
-            - Spearman and Pearson correlation coefficients are both shown by default
+        print(f"\nNumerical features: {_numeric_features}")
+        
+        # Create subdirectories for visualizations
+        dist_dir = self.results_dir / "data_distribution"
+        corr_dir = self.results_dir / "data_correlation"
+        
+        # Visualize the distribution of each numerical feature
+        if _numeric_features:
+            print("\nCreating distribution plots for numerical features...")
+            for col in _numeric_features:
+                _vis_data_distribution(
+                    data=self.x_data[col],
+                    name=col,
+                    save_dir=dist_dir,
+                    plot_format=self.plot_format,
+                    plot_dpi=self.plot_dpi,
+                    show=self.show
+                )
             
-        """
-
-
+            # Visualize correlations between numerical features
+            print("\nCreating correlation plots for numerical features...")
+            _vis_correlation(
+                data=self.x_data[_numeric_features],
+                name="numerical_features",
+                save_dir=corr_dir,
+                plot_format=self.plot_format,
+                plot_dpi=self.plot_dpi,
+                show=self.show
+            )
+            
+            print(f"\nDistribution plots saved to: {dist_dir}")
+            print(f"Correlation plots saved to: {corr_dir}")
+        else:
+            print("\nNo numerical features found for visualization.")
 
         return None
+
