@@ -1,10 +1,15 @@
 import pathlib
 import pandas as pd
+from sklearn.pipeline import Pipeline
+import logging
+
+
 
 from ._data_loader import data_loader
 from ._optimizer import MyOptimizer
-from ._evaluator import Evaluator
+from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
+
 
 
 class MyPipeline:
@@ -32,18 +37,8 @@ class MyPipeline:
         self._x_test = None
         self._y_train = None
         self._y_test = None
-
-        # In engineering()
-        self.missing_values_cols = None
-        self.impute_method = None
-        self.cat_features = None
-        self.encode_method = None
-        self.scale_cols = None
-        self.scale_method = None
-
         # In optimize()
         self.model_name = None
-
         # After optimization
         self._optimal_model = None
         self._used_X_train = None
@@ -115,68 +110,47 @@ class MyPipeline:
         return None
     
 
-    def engineering(
-        self,
-        missing_values_cols: list[str] | tuple[str] | None = None,
-        impute_method: list[str] | tuple[str] | None = None,
-        cat_features: list[str] | tuple[str] | None = None,
-        encode_method: list[str] | tuple[str] | None = None,
-        scale_cols: list[str] | tuple[str] | None = None,
-        scale_method: list[str] | tuple[str] | None = None,
-    ):
-        """Data engineering for the training and test set.
-        
-        Step:
-        1. Imputation of missing values
-        2. Removal of outliers
-        3. Encoding of categorical features
-        4. Data standardization or normalization
-        """
-        self.missing_values_cols = missing_values_cols
-        self.impute_method = impute_method
-        self.cat_features = cat_features
-        self.encode_method = encode_method
-        self.scale_cols = scale_cols
-        self.scale_method = scale_method
-
-        return None
-
-
-
     def optimize(
         self,
         model_name: str,
+        data_engineer_pipeline: Pipeline | None = None,
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = 5,
+        cat_features: list[str] | tuple[str] | None = None,
         optimize_history: bool = True,
         save_optimal_params: bool = True,
         save_optimal_model: bool = True,
     ):
         """Optimize using Optuna"""
         
-        # Check model_name validity
+
+        ###########################################################################################
+        # Input validation
         assert model_name in \
             ["svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr",
              "svc", "knc", "mlpc", "dtc", "rfc", "gbdtc", "adac", "xgbc", "lgbc", "catc"], \
             "model_name is invalid"
         self.model_name = model_name
 
+        # Check data_engineer_pipeline validity
+        if data_engineer_pipeline is not None:
+            assert isinstance(data_engineer_pipeline, Pipeline), \
+                "data_engineer_pipeline must be a `sklearn.pipeline.Pipeline` object"
+        else:
+            logging.warning("No data engineering will be implemented, the raw data will be used.")
+
+        # Check if `cat_features` is explicitly provided for the CatBoost model
+        if cat_features is not None:
+            assert self.model_name in ["catr", "catc"], \
+                "`cat_features` is only supported for CatBoost"
+        
+        ###########################################################################################
         
         # Initialize optimizer
         optimizer = MyOptimizer(
             random_state=self.random_state,
             results_dir=self.results_dir,
-        )
-
-        # Data engineering
-        optimizer.engineering(
-            missing_values_cols = self.missing_values_cols,
-            impute_method = self.impute_method,
-            cat_features = self.cat_features,
-            encode_method = self.encode_method,
-            scale_cols = self.scale_cols,
-            scale_method = self.scale_method,
         )
 
         # Fit the optimizer
@@ -185,9 +159,11 @@ class MyPipeline:
             y_train=self._y_train,
             x_test=self._x_test,
             model_name=self.model_name,
+            data_engineer_pipeline=data_engineer_pipeline,
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,
+            cat_features = cat_features
         )
 
         # Output the optimization history, optimal model and parameters
@@ -213,21 +189,22 @@ class MyPipeline:
     
 
 
-    def evaluate(
-            self,
-            save_raw_data: bool = True
-        ):
+    def evaluate(self, save_raw_data: bool = True):
         """Evaluate the model
 
         Args:
             save_raw_data (bool): Whether to save the raw prediction data. Default is True.
         """
-        evaluator = Evaluator(model_name=self.model_name)
+        evaluator = MyEvaluator(
+            model_name=self.model_name,
+            optimal_model_object=self._optimal_model
+            )
         evaluator.evaluate(
             y_test = self._y_test,
             y_test_pred = self._y_test_pred,
             y_train = self._y_train,
             y_train_pred = self._y_train_pred,
+            X_test = self._used_X_test,
             results_dir = self.results_dir,
             show = self.show,
             plot_format = self.plot_format,
@@ -291,14 +268,12 @@ class MyPipeline:
             sample_shap_data_k = sample_shap_data_k,
         )
 
-        # Output the explanation results
-        """Input the numeric features for Partial Dependence Plot
-        I known this is very ugly, but it's the only way to make the Partial Dependence Plot (PDP) work correctly.
-        If you have any better idea, please let me know [zhongjh86@outlook.com].
-        """
-        _numeric_features = self._x_train.columns.tolist()
-        if self.cat_features:
-            _numeric_features = [x for x in _numeric_features if x not in self.cat_features]
+        # Identify numeric features by excluding category and object dtypes
+        _numeric_features = []
+        for col, dtype in self._x_train.dtypes.items():
+            if pd.api.types.is_numeric_dtype(dtype):
+                _numeric_features.append(col)
+                
         explainer.explain(
             numeric_features = _numeric_features,
             plot = True,

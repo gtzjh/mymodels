@@ -12,9 +12,17 @@
 Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
 
 
-## **STATEMENTS**
+## ⚠️ **STATEMENTS**
 
-- The **open-source** project is under **very active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+Project `mymodels`, **IS NOT, and WILL NEVER BE**, a comprehensive framework including all the models and methods about interpretable machine learning. 
+
+It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
+
+The developer will try to meet the common needs of the target users to the best extent.
+
+But several statements should be clarified:
+
+- This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
 
 - Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
 
@@ -22,20 +30,18 @@ Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
 
 - This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
 
-- In this project, the `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
+
+## ⚠️ The Users Should Know
 
 - This project **is not suitable** for time-series tasks.
 
-- The explanation of this project is based on the [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html) framework. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. Other explanation methods are comming soon.
+- In this project, the `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
 
+- The explanation in this project is currently based on [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html), Other explanation methods are coming soon. 
 
+- Note that explanations may not always be meaningful for real-world tasks, especially after data engineering. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. **It's strongly recommended to compare the explanation results before and after data engineering**.
 
-
-## 🎯 Who is `mymodels` for?
-
-Scientific researchers or (master/PhD) students seeking to implement interpretable machine learning in their work, but requiring minimal time investment in coding infrastructure. (e.g., the medical students who have to spend most of their time on clinical work).
-
-The ideal solution for those who want to focus on domain-specific insights rather than practical implementation details.
+- The Partial Dependence Plot (PDP) is not supported for classification tasks currently.
 
 
 ## 🤔 Why `mymodels`?
@@ -310,17 +316,6 @@ mymodel.explain(
 
 ---
 
-### Run the code
-
-Tap `F5` to run in Debug mode in VSCode.
-
-Or run the following command in terminal:
-
-```bash
-python run_titanic.py
-```
-
----
 
 ### Full Code
 
@@ -370,6 +365,17 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+### Run the code
+
+Tap `F5` to run in Debug mode in VSCode.
+
+Or run the following command in terminal:
+
+```bash
+python run_titanic.py
+```
+
 
 
 ## 🎯 Try These Examples

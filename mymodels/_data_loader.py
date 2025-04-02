@@ -3,9 +3,8 @@ import pandas as pd
 import pathlib
 import logging
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
-
-from ._encoder import Encoder
 
 
 def data_loader(
@@ -33,19 +32,6 @@ def data_loader(
             - y_train: Training target Series
             - y_test: Testing target Series
     """
-
-    print("""
-================================================================================
-This project is distributed under the MIT License.
-Source code are available at: https://github.com/gtzjh/mymodels
-
-DISCLAIMER:
-- The author provides no warranties or guarantees regarding the accuracy, 
-reliability, or suitability of computational results.
-- Users assume all risks associated with the application of this software.
-- Commercial implementations require independent validation.
-================================================================================
-""")
     # Check if index_col is provided
     if index_col is None:
         logging.warning("index_col is unpresented. It's STRONGLY RECOMMENDED to set the index column if you want to output the raw data and the shap values.")
@@ -82,29 +68,18 @@ reliability, or suitability of computational results.
     # print(x_data.head(30))
     # print(y_data.head(30))
 
-    # Clean data by dropping rows with missing values
-    _data = pd.concat([x_data, y_data], axis = 1, join = "inner", verify_integrity = True)
-    
-    # Drop empty rows
-    # _data = _data.dropna()
-    # _data = _data.reset_index(drop = True)
-    x_data = _data.iloc[:, :-1]
-    y_data = _data.iloc[:, -1]
-
 
     # Transform non-numeric target to label encoding
     if pd.api.types.is_numeric_dtype(y_data.dtype) != True:
-        encoder = Encoder(
-            method = "label"
-        )
-        encoder.fit(
-            X = y_data.to_frame(),
-            cat_cols = str(y_data.name),
-        )
-        y_data = encoder.transform(y_data.to_frame())
-        y_data = y_data.iloc[:, 0]  # Extract to pd.Series
-        mapping_dict = encoder.get_mapping()
-        print(mapping_dict)
+        label_encoder = LabelEncoder()
+        y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
+        
+        # Output the mapping from original categories to encoded integers
+        mapping = {original: encoded for original, encoded in 
+                  zip(label_encoder.classes_, range(len(label_encoder.classes_)))}
+        print("Label Encoding Mapping:")
+        for original, encoded in mapping.items():
+            print(f"  {original} -> {encoded}")
 
     # print(x_data.head(30))
 

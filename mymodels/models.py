@@ -18,7 +18,7 @@ class MyClassifiers:
         Parameters:
             model_name (str): The name of the model to use.
             random_state (int): The random state to use for the model.
-            cat_features (list[str] | None): The categorical features to use for the model.
+            cat_features (list[str] | None): The categorical features to use for the CatBoost ONLY.
         """
 
         _model_map = {
@@ -263,7 +263,7 @@ class MyRegressors:
         Parameters:
             model_name (str): The name of the model to use.
             random_state (int): The random state to use for the model.
-            cat_features (list[str] | None): The categorical features to use for the model.
+            cat_features (list[str] | None): The categorical features to use for the CatBoost ONLY.
         """
 
         _model_map = {

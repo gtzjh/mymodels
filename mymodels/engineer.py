@@ -10,13 +10,6 @@ import category_encoders as ce
 
 
 
-logging.basicConfig(
-    level = logging.DEBUG,
-    format = "%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
-
 class MyEngineer:
     """Data engineering for the training validation and test set.
     
@@ -38,7 +31,6 @@ class MyEngineer:
         encode_method: str | list[str] | tuple[str] | None = None,
         scale_cols: list[str] | tuple[str] | None = None,
         scale_method: str | list[str] | tuple[str] | None = None,
-        random_state: int = 0,
         n_jobs: int = 1,
         verbose: bool = False,
     ):
@@ -72,23 +64,42 @@ class MyEngineer:
         if isinstance(scale_method, str):
             scale_method = [scale_method] * len(scale_cols)
         
-        # Check the input
-        if missing_values_cols is not None:
-            assert len(missing_values_cols) == len(impute_method)
-        if cat_features is not None:
-            assert len(cat_features) == len(encode_method)
-        if scale_cols is not None:
-            assert len(scale_cols) == len(scale_method)
 
-        if missing_values_cols is not None:
+        # Check if one variable is None, the other should also be None
+        # For missing values and imputation
+        if (missing_values_cols is None and impute_method is not None) or \
+           (missing_values_cols is not None and impute_method is None):
+            raise ValueError("If missing_values_cols is None, impute_method must also be None, and vice versa.")
+        
+        # For categorical features and encoding
+        if (cat_features is None and encode_method is not None) or \
+           (cat_features is not None and encode_method is None):
+            raise ValueError("If cat_features is None, encode_method must also be None, and vice versa.")
+        
+        # For scaling columns and methods
+        if (scale_cols is None and scale_method is not None) or \
+           (scale_cols is not None and scale_method is None):
+            raise ValueError("If scale_cols is None, scale_method must also be None, and vice versa.")
+
+        # Check the length of the input
+        if missing_values_cols:
+            assert len(missing_values_cols) == len(impute_method)
+        if cat_features:
+            assert len(cat_features) == len(encode_method)
+        if scale_cols:
+            assert len(scale_cols) == len(scale_method)
+        
+        # Check if elements in impute_method, encode_method, scale_method are valid
+        if missing_values_cols:
             assert all(s in self.VALID_IMPUTE_METHOD.keys() for s in impute_method), \
                 f"impute_method must be one of {list(self.VALID_IMPUTE_METHOD.keys())}"
-        if cat_features is not None:
+        if cat_features:
             assert all(s in self.VALID_ENCODE_METHOD.keys() for s in encode_method), \
                 f"encode_method must be one of {list(self.VALID_ENCODE_METHOD.keys())}"
-        if scale_cols is not None:
+        if scale_cols:
             assert all(s in self.VALID_SCALE_METHOD.keys() for s in scale_method), \
                 f"scale_method must be one of {list(self.VALID_SCALE_METHOD.keys())}"
+        
         
         self.outlier_cols = outlier_cols
         self.missing_values_cols = missing_values_cols
@@ -97,12 +108,10 @@ class MyEngineer:
         self.encode_method = encode_method
         self.scale_cols = scale_cols
         self.scale_method = scale_method
-        self.random_state = random_state
         self.n_jobs = n_jobs
         self.verbose = verbose
 
 
-    
 
     def construct(self):
         """Construct the data engineering pipeline.
@@ -121,6 +130,7 @@ class MyEngineer:
             "encoder": encoder_column_transformer,
             "scaler": scaler_column_transformer
         }
+
         if self.outlier_cols is not None:
             _PIPELINE_DICT["outlier_cleaner"] = self._outlier_cleaner()
 
@@ -227,67 +237,92 @@ class MyEngineer:
     
 
 
+def data_engineer(
+    outlier_cols: list[str] | tuple[str] | None = None,
+    missing_values_cols: list[str] | tuple[str] | None = None,
+    impute_method: str | list[str] | tuple[str] | None = None,
+    cat_features: list[str] | tuple[str] | None = None,
+    encode_method: str | list[str] | tuple[str] | None = None,
+    scale_cols: list[str] | tuple[str] | None = None,
+    scale_method: str | list[str] | tuple[str] | None = None,
+    n_jobs: int = 1,
+    verbose: bool = False,
+):
+    Engineer = MyEngineer(
+        outlier_cols=outlier_cols,
+        missing_values_cols=missing_values_cols,
+        impute_method=impute_method,
+        cat_features=cat_features,
+        encode_method=encode_method,
+        scale_cols=scale_cols,
+        scale_method=scale_method,
+        n_jobs=n_jobs,
+        verbose=verbose,
+    )
+
+    # If all data engineering steps are None, return None
+    if (outlier_cols is None and missing_values_cols is None and cat_features is None and scale_cols is None):
+        return None
+    else:   
+        return Engineer.construct()
+
+
+    
+
 if __name__ == "__main__":
     # obesity demo
-    data = pd.read_csv("data/obesity.csv", index_col=["id"], na_values=np.nan, encoding="utf-8")
-    # logging.debug(f"data.head(10):\n{data.head(10)}")
-    # logging.debug(f"data.info():\n{data.info()}")
-    # logging.debug(f"data.describe():\n{data.describe()}")
+    obesity_data = pd.read_csv("data/obesity.csv",
+                               index_col=["id"], 
+                               na_values=np.nan,
+                               encoding="utf-8")
 
-    # Create a sample DataFrame
-    Engineer = MyEngineer(
+    obesity_data_engineer_pipeline = data_engineer(
+        outlier_cols=None,
         missing_values_cols=None,
         impute_method=None,
         cat_features=["Gender", "CAEC", "CALC", "MTRANS"],
         encode_method="binary",
-        outlier_cols=None,
         scale_cols=None,
         scale_method=None,
-        random_state=0,
         n_jobs=1,
         verbose=False
     )
-    eng_pipeline = Engineer.construct()
 
     # Fit the pipeline
-    eng_pipeline.fit(data)
+    obesity_data_engineer_pipeline.fit(obesity_data)
 
     # Transform the data
-    transformed_data = eng_pipeline.transform(data)
-    logging.debug(f"transformed_data:\n{transformed_data.info()}")
+    transformed_obesity_data = obesity_data_engineer_pipeline.transform(obesity_data)
+    # logging.debug(f"transformed_obesity_data:\n{transformed_obesity_data.head(20)}")
+    
 
 
-    # housing demo
-    """
-    data = pd.read_csv("data/housing.csv", index_col=["ID"], na_values=np.nan, encoding="utf-8")
-    logging.debug(f"data.head(10):\n{data.head(10)}")
-    logging.debug(f"data.info():\n{data.info()}")
-    logging.debug(f"data.describe():\n{data.describe()}")
+    # titanic demo
+    titanic_data = pd.read_csv("data/titanic.csv",
+                               index_col=["PassengerId"], 
+                               na_values=np.nan, 
+                               encoding="utf-8")
 
-    # Create a sample DataFrame
-    Engineer = MyEngineer(
-        missing_values_cols=["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
-        impute_method=["median", "median", "median", "median", "median", "median"],
-        cat_features=None,
-        encode_method=None,
-        outlier_cols=None,
-        scale_cols=["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
-        scale_method=["standard", "standard", "standard", "minmax", "minmax", "minmax"],
-        random_state=0,
-        n_jobs=1,
-        verbose=False
+    # Select the columns for the titanic demo
+    titanic_data = titanic_data[["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"]]
+    # logging.debug(f"titanic_data:\n{titanic_data.info()}")
+
+    titanic_data_engineer_pipeline = data_engineer(
+        outlier_cols = None,
+        # missing_values_cols = ["Age", "Embarked"],
+        # impute_method = ["mean", "most_frequent"],
+        # cat_features = ["Pclass", "Sex", "Embarked"],
+        # encode_method = ["onehot", "onehot", "onehot"],
+        # scale_cols = ["Fare"],
+        # scale_method = ["standard"],
+        n_jobs = 5,
+        verbose = False
     )
-    eng_pipeline = Engineer.construct()
+
 
     # Fit the pipeline
-    eng_pipeline.fit(data)
-
-    # Transform the data
-    transformed_data = eng_pipeline.transform(data)
-    logging.debug(f"transformed_data.describe():\n{transformed_data.describe().round(4)}")
-
-    """
-    
-    
-
-
+    if titanic_data_engineer_pipeline is not None:
+        titanic_data_engineer_pipeline.fit(titanic_data)
+        # Transform the data
+        transformed_titanic_data = titanic_data_engineer_pipeline.transform(titanic_data)
+        logging.debug(f"transformed_titanic_data:\n{transformed_titanic_data.info()}")

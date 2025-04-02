@@ -9,7 +9,7 @@ import yaml, pathlib, json
 
 
 
-class Evaluator:
+class MyEvaluator:
     """A class for evaluating machine learning regression models.
     
     This class handles the evaluation of machine learning models, computing various 
@@ -19,6 +19,7 @@ class Evaluator:
     def __init__(
             self,
             model_name,
+            optimal_model_object
         ):
         """Initialize the Evaluator with model name.
         
@@ -26,8 +27,11 @@ class Evaluator:
             model_name (str): Name of the model to evaluate. Must be one of the supported model types:
                 - Regression models: 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr'
                 - Classification models: 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc'
+            optimal_model_object (from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin):
+                The optimal model object.
         """
         self.model_name = model_name
+        self.optimal_model_object = optimal_model_object
 
         # Global variables statement
         # Will change in runtime
@@ -35,10 +39,8 @@ class Evaluator:
         self.y_test_pred = None
         self.y_train = None
         self.y_train_pred = None
-
         # Store the accuracy metrics
         self.accuracy_dict = None
-
         # Auxiliary variables
         self.results_dir = None
         self.show = None
@@ -56,13 +58,14 @@ class Evaluator:
             y_test_pred,
             y_train,
             y_train_pred,
+            X_test,
             results_dir: str | pathlib.Path,
             show: bool,
             plot_format: str,
             plot_dpi: int,
             print_results: bool,
             save_results: bool,
-            save_raw_data: bool
+            save_raw_data: bool,
         ):
 
         """Evaluate the model on test and training data.
@@ -76,12 +79,14 @@ class Evaluator:
             y_test_pred: Predicted test target values
             y_train: Actual training target values
             y_train_pred: Predicted training target values
+            X_test: Test feature data, needed for classification models' predict_proba method
         """
 
         self.y_test = y_test
         self.y_test_pred = y_test_pred
         self.y_train = y_train
         self.y_train_pred = y_train_pred
+        self.X_test = X_test
         self.results_dir = pathlib.Path(results_dir)
         self.show = show
         self.plot_format = plot_format
@@ -189,9 +194,8 @@ class Evaluator:
         else:
             self._plot_classification_results(
                 self.y_test,
-                self.y_test_pred,
-                self.y_train,
-                self.y_train_pred
+                self.X_test,
+                self.optimal_model_object
             )
 
         # Output train and test results
@@ -217,7 +221,7 @@ class Evaluator:
 
 
     
-    def _plot_classification_results(self, y_test, y_test_pred, y_train, y_train_pred):
+    def _plot_classification_results(self, y_test, X_test, optimal_model_object):
         """Creates ROC curve plots for classification model evaluation.
         
         For binary classification, plots a single ROC curve.
@@ -225,24 +229,34 @@ class Evaluator:
         
         Args:
             y_test: Actual test target values.
-            y_test_pred: Predicted test target values (probabilities for each class if available, otherwise labels).
-            y_train: Actual training target values (not used in this implementation).
-            y_train_pred: Predicted training target values (not used in this implementation).
-            
-        Returns:
-            None: The function saves the plot to disk and does not return a value.
+            X_test: Test feature data, needed for classification models' predict_proba method
+            optimal_model_object: The optimal model object used to get probability estimates.
         """
-        plt.figure()
 
+        # Check if the optimal model object has the predict_proba method
+        if not hasattr(optimal_model_object, "predict_proba"):
+            raise ValueError("The optimal model object does not have the predict_proba method.")
+
+        # Get probability estimates
+        y_prob = optimal_model_object.predict_proba(X=X_test)
         # Get unique classes
         classes = np.unique(y_test)
         n_classes = len(classes)
     
+        plt.figure()
         ###########################################################################################
         # Binary classification case
         if n_classes == 2:            
+            # For binary classification, use probability of positive class
+            if y_prob.shape[1] == 2:  # If there are probabilities for both classes
+                # Get probability of positive class (index 1)
+                pos_prob = y_prob[:, 1]
+            else:
+                # If only one probability returned (some models do this for binary)
+                pos_prob = y_prob.ravel()
+                
             # Compute ROC curve and ROC area
-            fpr, tpr, _ = roc_curve(y_test, y_test_pred)
+            fpr, tpr, _ = roc_curve(y_test, pos_prob)
             roc_auc = auc(fpr, tpr)
             
             # Plot ROC curve
@@ -253,8 +267,6 @@ class Evaluator:
         else:
             # Convert y_test to binary format (one-hot encoding)
             y_test_bin = label_binarize(y_test, classes=classes)
-            # If only labels available, create a simple one-hot encoding
-            y_score = label_binarize(y_test_pred, classes=classes)
             
             # Compute ROC curve and ROC area for each class
             fpr = dict()
@@ -262,10 +274,17 @@ class Evaluator:
             roc_auc = dict()
             
             for i in range(n_classes):
-                fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+                # For each class, plot one-vs-rest ROC curve
+                fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_prob[:, i])
                 roc_auc[i] = auc(fpr[i], tpr[i])
                 plt.plot(fpr[i], tpr[i], lw=2, 
                          label=f'ROC curve of class {classes[i]} (AUC = {roc_auc[i]:.3f})')
+                
+            # Calculate and display macro-average ROC AUC
+            macro_roc_auc = np.mean([roc_auc[i] for i in range(n_classes)])
+            plt.plot([0, 1], [0, 1], 'k--', lw=2)
+            plt.text(0.5, 0.3, f'Macro-average AUC = {macro_roc_auc:.3f}', 
+                    bbox=dict(facecolor='white', alpha=0.8), fontsize=12)
         ###########################################################################################
         
         # Plotting

@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import optuna
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
+from sklearn.pipeline import Pipeline
 from joblib import Parallel, delayed
 from functools import partial
-import json, pickle, yaml, pathlib, logging
+import pickle, yaml, pathlib, logging
 from types import MappingProxyType
 
 
-from ._data_engineer import MyEngineer
-from ._encoder import fit_transform_multi_features, transform_multi_features
+
 from .models import MyRegressors, MyClassifiers
 
 
@@ -40,6 +40,8 @@ class MyOptimizer:
         |   +-- _optimizer() # Run Optuna optimization
         |      |
         |      +-- _objective() # Optimization objective function with CV
+        |         |
+        |         +-- _single_fold() # Single fold execution
         |
         +-- output() # Process results
             |
@@ -58,14 +60,12 @@ class MyOptimizer:
         self.results_dir = results_dir
 
         # Global variables statement
-        # Input engineering()
-        self.cat_features = None
-        self.encode_method = None
         # Input fit()
         self.x_train = None
         self.y_train = None
         self.x_test = None
         self.model_name = None
+        self.data_engineer_pipeline = None
         self.cv = None
         self.trials = None
         self.n_jobs = None
@@ -85,13 +85,6 @@ class MyOptimizer:
         self.plot_dpi = None
 
     
-    def engineering(self):
-        """Engineer the data.
-        Plant to use the MyEngineer class to engineer the data instead.
-        """
-        pass
-
-    
 
     def fit(
         self,
@@ -99,18 +92,17 @@ class MyOptimizer:
         y_train: pd.Series,
         x_test: pd.DataFrame,
         model_name: str,
+        data_engineer_pipeline: Pipeline | None = None,
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = -1,
+        cat_features: list[str] | tuple[str] | None = None,
     ):
-        """Train and optimize a machine learning model.
-        
-        This method handles the entire process of model training and optimization:
-        1. Determines if it's a regression or classification task
-        2. Selects the appropriate model and parameter space
-        3. Optimizes hyperparameters using Optuna
-        4. Processes categorical features if needed
-        5. Fits the final model and makes predictions
+        """This method handles the entire process of model training and optimization:
+            1. Determines if it's a regression or classification task
+            2. Selects the appropriate model and parameter space
+            3. Optimizes hyperparameters using Optuna
+            4. Fits the final model and makes predictions
         
         Args:
             x_train: Training features data.
@@ -121,32 +113,33 @@ class MyOptimizer:
                 "svr", "knr", "mlpr"]. For classification, should be one of
                 ["catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", 
                 "svc", "knc", "mlpc"].
-            cat_features: List of categorical feature names, if any.
-            encode_method: Method(s) for encoding categorical variables.
+            data_engineer_pipeline: A pipeline for data engineering,
+                                    the pipeline should be a `sklearn.pipeline.Pipeline` object.
             cv: Number of folds for cross-validation.
             trials: Number of trials to execute in Optuna optimization.
             n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
                 (use all available processors).
-        
-        Returns:
-            None. Results are stored in instance attributes.
+            cat_features: List of categorical feature names, FOR CatBoost ONLY.
         """
 
         self.x_train = x_train.copy()
         self.y_train = y_train.copy()
         self.x_test = x_test.copy()
         self.model_name = model_name
+        self.data_engineer_pipeline = data_engineer_pipeline
         self.cv = cv
         self.trials = trials
         self.n_jobs = n_jobs
 
-        self.final_x_train = self.x_train  # The training set which is for final prediction after encoding
-        self.final_x_test = self.x_test    # The test set which is for final prediction after encoding
+        # The training set which is for final prediction after encoding
+        self.final_x_train = self.x_train
+        # The test set which is for final prediction after encoding
+        self.final_x_test = self.x_test
 
         # Check the task type, regression or classification
         # Select model and load parameter space and static parameters
         self._task_type = self._check_task_type(self.model_name)
-        self._model_obj, _param_space, _static_params = self._select_model(self._task_type)
+        self._model_obj, _param_space, _static_params = self._select_model(self._task_type, cat_features)
 
         # Execute the optimization
         self.optuna_study = self._optimizer(_param_space, _static_params)
@@ -155,47 +148,12 @@ class MyOptimizer:
         self.optimal_params = {**_static_params, **self.optuna_study.best_trial.params}
         self.optimal_model = self._model_obj(**self.optimal_params)
 
-
-        """        
         # Data engineering
-        _final_column_transformer = self.column_transformer
-        _transformed_x_train_matrix = _final_column_transformer.fit_transform(self.x_train)
-        _transformed_x_test_matrix = _final_column_transformer.transform(self.x_test)
-
-        """
-
-
-        #######################################################################
-        # If there are categorical features and the model is not CatBoost
-        # then encode the training and test set
-        if (self.cat_features is not None) and (self.model_name not in ["catr", "catc"]):
-            # Transform train set
-            _transformed_X_train, _encoder_dict, _mapping_dict = fit_transform_multi_features(
-                self.x_train.loc[:, self.cat_features],
-                self.encode_method,
-                self.y_train,
-            )
-            self.final_x_train = self.final_x_train.drop(columns = self.cat_features)
-            self.final_x_train = pd.concat([self.final_x_train, _transformed_X_train],
-                                           axis = 1,
-                                           join="inner",
-                                           verify_integrity=True)
-
-            # Transform test set
-            _transformed_X_test = transform_multi_features(
-                self.x_test.loc[:, self.cat_features],
-                _encoder_dict
-            )
-            self.final_x_test = self.final_x_test.drop(columns = self.cat_features)
-            self.final_x_test = pd.concat([self.final_x_test, _transformed_X_test],
-                                          axis = 1,
-                                          join="inner",
-                                          verify_integrity=True)
-
-            # Save mapping dictionary
-            with open(self.results_dir.joinpath("mapping.json"), 'w', encoding='utf-8') as f:
-                json.dump(_mapping_dict, f, ensure_ascii=False, indent=4)
-        #######################################################################
+        if self.data_engineer_pipeline is not None:
+            final_data_engineer_pipeline = self.data_engineer_pipeline
+            self.final_x_train = final_data_engineer_pipeline.fit_transform(self.final_x_train)
+            self.final_x_test = final_data_engineer_pipeline.transform(self.final_x_test)
+        
 
         # Fit on the whole training and validation set
         self.optimal_model.fit(self.final_x_train, self.y_train)
@@ -238,14 +196,14 @@ Please check the configuration CAREFULLY!
             logging.warning(f"""
 The target variable has only {self.y_train.nunique()} unique values, 
 which might not be suitable for regression tasks. 
-Consider using classification instead.
+Consider using classifiers INSTEAD.
 """)
         
         return _task_type
         
 
 
-    def _select_model(self, _task_type):
+    def _select_model(self, _task_type, _cat_features = None):
         """Select the appropriate model and get its parameter space.
         
         Args:
@@ -254,17 +212,37 @@ Consider using classification instead.
         Returns:
             tuple: Contains (model_object, parameter_space, static_parameters).
         """
+
+        # If CatBoost is selected, info the user that:
+        # the Encoder of categorical features is not needed in the data_engineer_pipeline
+        if self.model_name in ["catr", "catc"]:
+            # If the default data_engineer_pipeline includes the Encoder of categorical features,
+            # info the user that the Encoder is not needed in the data_engineer_pipeline
+            if self.data_engineer_pipeline is not None:
+                # Check if any step name in the pipeline starts with "encode_"
+                if any(step_name.startswith("encoder") for step_name, _ in self.data_engineer_pipeline.steps):
+                    logging.warning("""The Encoder of categorical features is not needed for CatBoost.""")
+        if self.model_name in ["svr", "svc", "knr", "knc", "mlpr", "mlpc"]:
+            if self.data_engineer_pipeline is not None:
+                if not any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
+                    logging.warning("""The Scaler is recommended for SVR, SVC, KNR, KNC, MLPRegressor, MLPClassifier.""")
+
+        if self.model_name in ["dtr", "dtc", "rfc", "rfr", "lgbc", "lgbr", "gbdtc", "gbdtr", "xgbc", "xgbr", "catr", "catc"]:
+            if self.data_engineer_pipeline is not None:
+                if any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
+                    logging.warning("""The Scaler is NOT recommended for tree-based models.""")
+
         if _task_type == "regression":
             _model_obj, param_space, static_params = MyRegressors(
                 model_name = self.model_name,
                 random_state = self.random_state,
-                cat_features = self.cat_features
+                cat_features = _cat_features
             ).get()
         else:
             _model_obj, param_space, static_params = MyClassifiers(
                 model_name = self.model_name,
                 random_state = self.random_state,
-                cat_features = self.cat_features
+                cat_features = _cat_features
             ).get()
         return _model_obj, param_space, static_params
 
@@ -327,69 +305,49 @@ Consider using classification instead.
         
         # Single fold execution
         def _single_fold(train_idx, val_idx, param) -> float:
+            """Single fold execution.
+                - All models inherit from `sklearn.base.RegressorMixin` or `sklearn.base.ClassifierMixin`
+                - and therefore have a `score` method.
+                - Return R2 for regression task
+                - Return the overall accuracy for classification task
+            
+            Args:
+                train_idx: The training index.
+                val_idx: The validation index.
+                param: The parameters for the model.
+            """
+
+            # Create a validator
+            _validator = self._model_obj(**param)
+
+            # Get the training and validation data
             X_fold_train = self.x_train.iloc[train_idx]
             y_fold_train = self.y_train.iloc[train_idx]
             X_fold_val = self.x_train.iloc[val_idx]
             y_fold_val = self.y_train.iloc[val_idx]
 
 
-            """
-            # Data engineering
-            _train_row_index = X_fold_train.index
-            _val_row_index = X_fold_val.index
+            if self.data_engineer_pipeline is not None:
+                # `_k_fold_data_engineer_pipeline` is a private variable of _single_fold() function
+                # It will be cleaned up after the function is finished
+                # I know it's so fundamental, but I just want to make it clear so I write it down
+                _k_fold_data_engineer_pipeline = self.data_engineer_pipeline
+                _transformed_X_fold_train = _k_fold_data_engineer_pipeline.fit_transform(X_fold_train)
+                _transformed_X_fold_val = _k_fold_data_engineer_pipeline.transform(X_fold_val)
 
-            k_fold_column_transformer = self.column_transformer
-            X_fold_train = k_fold_column_transformer.fit_transform(X_fold_train)
-            X_fold_val = k_fold_column_transformer.transform(X_fold_val)
-            _column_names = k_fold_column_transformer.get_feature_names_out()
-            
-            X_fold_train = pd.DataFrame(X_fold_train, index = _train_row_index, columns = _column_names)
-            X_fold_val = pd.DataFrame(X_fold_val, index = _val_row_index, columns = _column_names)
-            """
-            
-            #######################################################################
-            # If categorical features exist and model is not CatBoost, encode the input features
-            if self.cat_features is not None:
-                if self.model_name != "catr" and self.model_name != "catc":
-                    _transformed_fold_train, _encoder_dict, _ = fit_transform_multi_features(
-                        X_fold_train.loc[:, self.cat_features],
-                        self.encode_method,
-                        y_fold_train,
-                    )
-                    X_fold_train = X_fold_train.drop(columns = self.cat_features)
-                    X_fold_train = pd.concat([X_fold_train, _transformed_fold_train],
-                                             axis = 1, 
-                                             join="inner", 
-                                             verify_integrity=True)
-                    
-                    # Encode validation set
-                    transformed_fold_val = transform_multi_features(
-                        X_fold_val.loc[:, self.cat_features],
-                        _encoder_dict
-                    )                    
-                    X_fold_val = X_fold_val.drop(columns = self.cat_features)
-                    X_fold_val = pd.concat([X_fold_val, transformed_fold_val],
-                                           axis = 1, 
-                                           join="inner", 
-                                           verify_integrity=True)
-            #######################################################################
+                # Fit in a single fold
+                _validator.fit(_transformed_X_fold_train, y_fold_train)
+                return _validator.score(_transformed_X_fold_val, y_fold_val)
 
-            # Create and train the model
-            _validator = self._model_obj(**param)
-            _validator.fit(X_fold_train, y_fold_train)
-
-            # All models inherit from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin
-            # and therefore have a score method
-            # Return R2 for regression task
-            if self._task_type == "regression":
-                return _validator.score(X_fold_val, y_fold_val)
-            # Return the overall accuracy for classification task
             else:
+                # Fit in a single fold
+                _validator.fit(X_fold_train, y_fold_train)
                 return _validator.score(X_fold_val, y_fold_val)
 
-
+            
         # Parallel processing for validation. Initialize KFold cross validator
         kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+        
         
         """
         # Use the for-in loop for debugging
@@ -397,12 +355,12 @@ Consider using classification instead.
         for train_idx, val_idx in kf.split(self.x_train):
             cv_scores.append(_single_fold(train_idx, val_idx, param))
         """
-
+        
         cv_scores = Parallel(n_jobs=self.n_jobs)(
             delayed(_single_fold)(train_idx, val_idx, param)
             for train_idx, val_idx in kf.split(self.x_train)
         )
-    
+        
         # Adjust CV results by subtracting 0.5*std for more stable results
         return np.mean(cv_scores) - 0.5 * np.std(cv_scores)
 
