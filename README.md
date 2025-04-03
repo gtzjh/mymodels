@@ -9,7 +9,7 @@
 
 <img src="docs/qrcode.jpg" alt="mymodels" width="130">
 
-Feel free to contact me: [zhongjh86@outlook.com](mailto:zhongjh86@outlook.com)
+Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
 <div style="border: 2px solid #cc0000; padding: 10px; background-color: rgba(255, 204, 204, 0.6); border-radius: 5px;">
     <p style="color: #333333;">⚠️ <strong>Note:</strong> Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is currently unavailable. However, these features are under active development, with an updated version expected to be released within the next month. In the meantime, users can implement their own custom data engineering pipelines to incorporate these encoding methods.</p>
