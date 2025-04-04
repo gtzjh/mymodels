@@ -4,14 +4,11 @@
 
 </div>
 
-**USERS MUST THOROUGHLY REVIEW THIS DOCUMENTATION BEFORE IMPLEMENTING THE PROJECT.**
-
 Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
-<div style="border: 2px solid #cc0000; padding: 10px; background-color: rgba(255, 204, 204, 0.6); border-radius: 5px;">
-    <p style="color: #333333;">⚠️ <strong>Note:</strong> Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is currently unavailable. However, these features are under active development, with an updated version expected to be released within the next month. In the meantime, users can implement their own custom data engineering pipelines to incorporate these encoding methods.</p>
-</div>
+⚠️ **USERS MUST THOROUGHLY REVIEW THIS DOCUMENTATION BEFORE IMPLEMENTING THE PROJECT.**
 
+⚠️ **4/2/2025 update: Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is currently unavailable.**
 
 
 ## 🤔 Why `mymodels`?
@@ -61,37 +58,13 @@ Supported platforms:
 - Python 3.10.X
 - 1.75 GB available disk space
 
-Run the following command in terminal:
+Create an environment
 
 ```bash
 conda env create -f requirement.yml -n mymodels -y
 ```
 
-The following packages are required:
-  - catboost=1.2.7
-  - ipython=8.30.0
-  - lightgbm=4.5.0
-  - matplotlib-base=3.9.3
-  - numba=0.60.0
-  - numpy=1.26.4
-  - optuna=4.1.0
-  - pandas=2.2.3
-  - pip=24.3.1
-  - plotly=5.24.1
-  - py-xgboost=2.1.4
-  - python-graphviz=0.20.3
-  - python=3.10.16
-  - scikit-learn=1.5.2
-  - scipy=1.14.1
-  - setuptools=75.6.0
-  - shap=0.46.0
-  - tqdm=4.67.1
-  - wheel=0.45.1
-  - category_encoders=2.6.3
-
-### Activate environment
-
-Run the following command in terminal:
+Activate environment
 
 ```bash
 conda activate mymodels
@@ -115,8 +88,6 @@ conda activate mymodels
 ## 📚 Supplementary Information
 
 ### 🛠️ Supported Models
-
-*Click the following links in the second column to see the official documentation.*
 
 #### For Regression Tasks
 | `model_name` | Models|
@@ -165,7 +136,7 @@ conda activate mymodels
 
 ## ⚠️ **STATEMENTS**
 
-Project `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
+Projec `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
 
 It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
 
