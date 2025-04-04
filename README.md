@@ -4,7 +4,7 @@
 
 </div>
 
-**Users must thoroughly review this README documentation before implementing the project.**
+**USERS MUST THOROUGHLY REVIEW THIS DOCUMENTATION BEFORE IMPLEMENTING THE PROJECT.**
 
 
 **关注公众号：👉GT地学志👈 获取项目更新。**
