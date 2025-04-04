@@ -4,6 +4,8 @@
 
 </div>
 
+**Users must thoroughly review this README documentation before implementing the project.**
+
 
 **关注公众号：👉GT地学志👈 获取项目更新。**
 
