@@ -6,11 +6,6 @@
 
 **USERS MUST THOROUGHLY REVIEW THIS DOCUMENTATION BEFORE IMPLEMENTING THE PROJECT.**
 
-
-**关注公众号：👉GT地学志👈 获取项目更新。**
-
-<img src="docs/qrcode.jpg" alt="mymodels" width="130">
-
 Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
 <div style="border: 2px solid #cc0000; padding: 10px; background-color: rgba(255, 204, 204, 0.6); border-radius: 5px;">
