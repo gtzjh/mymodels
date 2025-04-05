@@ -141,13 +141,4 @@ conda activate mymodels
 | frequency (coming soon)  | Frequency encoding |
 | target (coming soon)     | Target encoding    |
 
-
-## ⚠️ **STATEMENTS**
-
-- This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
-
-- Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
-
-- Third-party dependencies are used as-is. The project does not guarantee the security, reliability, or compatibility of any third-party libraries.
-
-- This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
+**This project is intended solely for scientific reference. It may contain calculation errors or logical inaccuracies. Users are responsible for verifying the accuracy of the results independently, and the author shall not be held liable for any consequences arising from the use of this code.**
