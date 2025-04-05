@@ -1,93 +1,102 @@
 <div style="text-align: center;">
 
-<h1 align="center">🚀 mymodels 🚀 : Construct Efficient Interpretable Machine Learning Workflow</h1>
+<h1 align="center">🚀 mymodels : Build an efficient interpretable machine learning workflow</h1>
 
 </div>
 
 Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
-⚠️ **USERS MUST THOROUGHLY REVIEW THIS DOCUMENTATION BEFORE IMPLEMENTING THE PROJECT.**
-
-⚠️ **4/2/2025 update: Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is currently unavailable.**
+**4/2/2025: Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is under developing.**
 
 
 ## 🤔 Why `mymodels`?
 
-Interpretable machine learning has gained significant prominence across various fields including geography, remote sensing, and urban planning. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks based on game theory—such as SHapley Additive exPlanations (SHAP)—provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors. 
+Interpretable machine learning has gained significant prominence across various fields. Machine learning models are valued for their robust capability to capture complex relationships within data through sophisticated fitting algorithms. Complementing these models, interpretability frameworks provide essential tools for revealing such "black-box" models. These interpretable approaches deliver critical insights by ranking feature importance, identifying nonlinear response thresholds, and analyzing interaction relationships between factors. 
 
-Despite these advantages, implementing interpretable machine learning workflows remains a complex and time-intensive process, particularly for those new to the field. There exists a notable gap in comprehensive, user-friendly tooling for executing these workflows efficiently.
+Project `mymodels`, is targeting on building a **tiny, user-friendly, and efficient** workflow, for the scientific researchers and students who are seeking to implement interpretable machine learning in their their research works.
 
 ## 👨‍🎓 Prerequisites for Beginners
 
-1. 💡 **Python Proficiency**
-
-    Recommended resource:
+1. **Python Proficiency**
 
     - [Python tutorial on W3SCHOOL](https://www.w3schools.com/python/default.asp)
     
     - [Liao Xuefeng's Python Tutorial](https://liaoxuefeng.com/books/python/introduction/index.html)
-
-    Essential contents:
-    - Basic
-    - Object-oriented Development (OOP)
-    - Some commonly used Python built-in modules
     
     > **DO REMEMBER**: Make a practical demo project after you finish the above learning to enhance what you have learned (i.e., a tiny web crawler). [Here is one of my practice projects](https://github.com/gtzjh/WundergroundSpider)
 
-2. 💡 **Machine Learning Fundamentals**
+2. **Machine Learning Fundamentals**
 
-    [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theoretical foundations.
+    - [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theoretical foundations.
 
-3. 💡 **Technical Skills**
+3. **Technical Skills**
 
     - Environment management with conda/pip
     - Terminal/Command Line proficiency
-    - Version control with Git ([My note of learning Git](https://github.com/gtzjh/learngit))
+    - Version control with Git ([My note about Git](https://github.com/gtzjh/learngit))
+  
+> The above recommended tutorials are selected based solely on personal experience.
 
 ## 🛠️ Environment Setup
 
-Supported platforms:
+**Supported platforms**:
 
-- Windows (X86) [Tested on Windows 10/11]
-- Linux (X86) [Tested on WSL2.0 (Ubuntu)]
-- macOS (ARM) [Tested on Apple Silicon (M1)]
-
-### Create environment
+- Windows (X86) - Tested on Windows 10/11
+- Linux (X86) - Tested on WSL2.0 (Ubuntu)
+- macOS (ARM) - Tested on Apple Silicon (M1)
 
 **Requirements**:
 - Python 3.10.X
 - 1.75 GB available disk space
 
-Create an environment
+**Create environment**
 
 ```bash
 conda env create -f requirement.yml -n mymodels -y
 ```
 
-Activate environment
+**Activate**
 
 ```bash
 conda activate mymodels
 ```
 
-### Try These Notebooks
+## :point_right: Try
+
+**Try the Titanic demon first**
 
 - Binary classification: [run_titanic.ipynb](run_titanic.ipynb)
 
-  Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
+  > Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
 
-- Regression task: [run_housing.ipynb](run_housing.ipynb)
-
-  Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
+**And try other demons**
 
 - Multi-class classification: [run_obesity.ipynb](run_obesity.ipynb)
 
-  Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
+  > Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
+
+- Regression task: [run_housing.ipynb](run_housing.ipynb)
+
+  > Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
+
+## ⚠️ The Users Should Know
+
+- The project **is not suitable** for time-series tasks.
+
+- The hyperparameters shown in `models.py` are only for demonstration purposes. Users should try different hyperparameters in their actual applications to ensure the robustness of their results.
+
+- The `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
+
+- The explanation in this project is currently based on [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html), Other explanation methods are coming soon. 
+
+- Note that explanations may not always be meaningful for real-world tasks, especially after data engineering. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. **It's strongly recommended to compare the explanation results before and after data engineering**.
+
+- The Partial Dependence Plot (PDP) is not supported for classification tasks currently.
 
 
 ## 📚 Supplementary Information
 
-### 🛠️ Supported Models
+### Supported Models
 
 #### For Regression Tasks
 | `model_name` | Models|
@@ -121,8 +130,7 @@ conda activate mymodels
 | catc       | [CatBoost Classifier](https://catboost.ai/en/docs/concepts/python-reference_catboostclassifier) |
 
 
-
-### 🛠️ Supported Encoding Methods
+### Supported Encoding Methods
 
 | `encode_method` | Description   |
 |------------|--------------------|
@@ -136,12 +144,6 @@ conda activate mymodels
 
 ## ⚠️ **STATEMENTS**
 
-Projec `mymodels`, **IS NOT, and WILL NEVER BE**, a framework including all the models and methods about interpretable machine learning. 
-
-It's targeting on building a **tiny, user-friendly, and efficient toolkit**, for the scientific researchers or (master/PhD) students who are seeking to implement interpretable machine learning in their work efficiently.
-
-The developer will try to meet the common needs of the target users to the best extent, but several statements should be clarified:
-
 - This **open-source** project is in **active** development, and is not yet ready for production use. The software is provided without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
 
 - Users must independently verify the suitability and safety of the software for their specific use case. Any application of the software in safety-critical systems is expressly prohibited.
@@ -149,18 +151,3 @@ The developer will try to meet the common needs of the target users to the best 
 - Third-party dependencies are used as-is. The project does not guarantee the security, reliability, or compatibility of any third-party libraries.
 
 - This software is subject to export control laws and regulations. Users are responsible for compliance with all applicable export and import regulations.
-
-
-## ⚠️ The Users Should Know
-
-- The project **is not suitable** for time-series tasks.
-
-- The hyperparameters shown in `models.py` are only for demonstration purposes. Users should try different hyperparameters in their actual applications to ensure the robustness of their results.
-
-- The `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
-
-- The explanation in this project is currently based on [SHapley Additive exPlanations (SHAP)](https://shap.readthedocs.io/en/latest/index.html), Other explanation methods are coming soon. 
-
-- Note that explanations may not always be meaningful for real-world tasks, especially after data engineering. Users are solely responsible for validating the appropriateness of explanation methods for their specific use cases. **It's strongly recommended to compare the explanation results before and after data engineering**.
-
-- The Partial Dependence Plot (PDP) is not supported for classification tasks currently.
