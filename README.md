@@ -63,13 +63,13 @@ conda activate mymodels
 
 ## :point_right: Try
 
-**Try the Titanic demon first**
+**Try the Titanic demo first**
 
 - Binary classification: [run_titanic.ipynb](run_titanic.ipynb)
 
   > Dataset source: [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic/data)
 
-**And try other demons**
+**And then try other demos**
 
 - Multi-class classification: [run_obesity.ipynb](run_obesity.ipynb)
 
