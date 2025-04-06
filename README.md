@@ -27,7 +27,7 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 
 2. **Machine Learning Fundamentals**
 
-    - [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theoretical foundations.
+    - [Stanford CS229](https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU) provides essential theory.
 
 3. **Technical Skills**
 
