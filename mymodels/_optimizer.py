@@ -5,6 +5,7 @@ import optuna
 from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 from sklearn.pipeline import Pipeline
+from sklearn.base import clone
 from joblib import Parallel, delayed, dump
 from functools import partial
 import pickle, yaml, pathlib, logging
@@ -135,7 +136,7 @@ class MyOptimizer:
         self.final_x_train = self.x_train
         # The test set which is for final prediction after encoding
         self.final_x_test = self.x_test
-
+        
         # Check the task type, regression or classification
         # Select model and load parameter space and static parameters
         self._task_type = self._check_task_type(self.model_name)
@@ -146,11 +147,13 @@ class MyOptimizer:
         
         # Save optimal parameters and model
         self.optimal_params = {**_static_params, **self.optuna_study.best_trial.params}
-        self.optimal_model = self._model_obj(**self.optimal_params)
+        # Use deep clone to make sure the seperate operation
+        self.optimal_model = clone(self._model_obj(**self.optimal_params))
 
         # Data engineering
         if self.data_engineer_pipeline is not None:
-            final_data_engineer_pipeline = self.data_engineer_pipeline
+            # Use the deep clone to make sure the seperate operation
+            final_data_engineer_pipeline = clone(self.data_engineer_pipeline)
             self.final_x_train = final_data_engineer_pipeline.fit_transform(self.final_x_train)
             self.final_x_test = final_data_engineer_pipeline.transform(self.final_x_test)
         
@@ -333,20 +336,18 @@ The Scaler is recommended for:
             """
 
             # Create a validator
-            _validator = self._model_obj(**param)
+            _validator = clone(self._model_obj(**param))
 
             # Get the training and validation data
-            X_fold_train = self.x_train.iloc[train_idx]
-            y_fold_train = self.y_train.iloc[train_idx]
-            X_fold_val = self.x_train.iloc[val_idx]
-            y_fold_val = self.y_train.iloc[val_idx]
+            X_fold_train = self.x_train.iloc[train_idx].copy(deep=True)
+            y_fold_train = self.y_train.iloc[train_idx].copy(deep=True)
+            X_fold_val = self.x_train.iloc[val_idx].copy(deep=True)
+            y_fold_val = self.y_train.iloc[val_idx].copy(deep=True)
 
 
             if self.data_engineer_pipeline is not None:
-                # `_k_fold_data_engineer_pipeline` is a private variable of _single_fold() function
-                # It will be cleaned up after the function is finished
-                # I know it's so fundamental, but I just want to make it clear so I write it down
-                _k_fold_data_engineer_pipeline = self.data_engineer_pipeline
+                # Use the deep clone to make sure the seperate operation
+                _k_fold_data_engineer_pipeline = clone(self.data_engineer_pipeline)
                 _transformed_X_fold_train = _k_fold_data_engineer_pipeline.fit_transform(X_fold_train)
                 _transformed_X_fold_val = _k_fold_data_engineer_pipeline.transform(X_fold_val)
 
