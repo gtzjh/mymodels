@@ -79,19 +79,17 @@ class MyPipeline:
 
     def load(
         self,
-        file_path: str | pathlib.Path,
+        input_data: pd.DataFrame,
         y: str | int, 
         x_list: list[str | int],
-        index_col: str | int | list[str | int] | tuple[str | int] | None = None,
         test_ratio: float = 0.3,
         inspect: bool = True
     ):
         """Prepare training and test data"""
         self._x_train, self._x_test, self._y_train, self._y_test = data_loader(
-            file_path=file_path,
+            input_data=input_data,
             y=y,
             x_list=x_list,
-            index_col=index_col,
             test_ratio=test_ratio,
             random_state=self.random_state
         )
