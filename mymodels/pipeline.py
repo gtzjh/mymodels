@@ -3,7 +3,6 @@ from sklearn.pipeline import Pipeline
 import logging, pathlib
 
 
-
 from ._data_loader import data_loader
 from ._data_diagnoser import MyDataDiagnoser
 from ._optimizer import MyOptimizer
@@ -37,14 +36,13 @@ class MyPipeline:
         self._x_test = None
         self._y_train = None
         self._y_test = None
+
         # In optimize()
         self.model_name = None
+        
         # After optimization
         self._optimal_model = None
-        self._used_X_train = None
-        self._used_X_test = None
-        self._y_train_pred = None
-        self._y_test_pred = None
+        self.data_engineer_pipeline = None
 
         self._check_init_input()
 
@@ -115,15 +113,12 @@ class MyPipeline:
         diagnose_x_data = self._x_train.copy()
         diagnose_y_data = self._y_train.copy()
 
-        logging.debug(f"Diagnose data have shapes X_train | Y_train: {diagnose_x_data.shape} {diagnose_y_data.shape}")
-
         # Sample diagnosis data
         assert sample_k is None or isinstance(sample_k, int) or isinstance(sample_k, float), \
             "sample_k must be an integer or float or None"
         if sample_k is not None:
             if isinstance(sample_k, float):
                 sample_k = int(sample_k * len(self._x_train))
-                logging.debug(f"Sample {sample_k} samples from {len(self._x_train)}")
 
             diagnose_data = diagnose_x_data.merge(diagnose_y_data,
                                                   left_index=True,
@@ -192,7 +187,6 @@ class MyPipeline:
         optimizer.fit(
             x_train=self._x_train,
             y_train=self._y_train,
-            x_test=self._x_test,
             model_name=self.model_name,
             data_engineer_pipeline=data_engineer_pipeline,
             cv = cv,
@@ -210,33 +204,39 @@ class MyPipeline:
             plot_format = self.plot_format,
             plot_dpi = self.plot_dpi
         )
-        
-        # Output data for evaluate()
-        self._y_train_pred = optimizer.y_train_pred
-        self._y_test_pred = optimizer.y_test_pred
 
-        # Output data for explain()
+        # Output data for evaluate() and explain()
         self._optimal_model = optimizer.optimal_model
-        self._used_X_train = optimizer.final_x_train
-        self._used_X_test = optimizer.final_x_test
+        self.data_engineer_pipeline = optimizer.data_engineer_pipeline
 
         return None
     
 
 
-    def evaluate(self, save_raw_data: bool = True):
+    def evaluate(
+            self,
+            dummy: bool = True,
+            save_raw_data: bool = True
+        ):
         """Evaluate the model
 
         Args:
+            dummy (bool): Whether to use a dummy estimator for comparison. Default is True.
             save_raw_data (bool): Whether to save the raw prediction data. Default is True.
         """
-        evaluator = MyEvaluator(optimal_model_object=self._optimal_model)
+        assert isinstance(dummy, bool), "dummy must be a boolean"
+        assert isinstance(save_raw_data, bool), "save_raw_data must be a boolean"
+
+        evaluator = MyEvaluator()
         evaluator.evaluate(
+            x_test = self._x_test,
+            x_train = self._x_train,
             y_test = self._y_test,
-            y_test_pred = self._y_test_pred,
             y_train = self._y_train,
-            y_train_pred = self._y_train_pred,
-            X_test = self._used_X_test,
+            optimal_model_object = self._optimal_model,
+            data_engineer_pipeline = self.data_engineer_pipeline,
+            dummy = dummy,
+            # Output options
             results_dir = self.results_dir,
             show = self.show,
             plot_format = self.plot_format,
@@ -272,26 +272,34 @@ class MyPipeline:
         assert isinstance(sample_shap_data_k, (int, float)) or sample_shap_data_k is None, \
             "sample_shap_data_k must be an integer or float or None, 100 is recommended for explaining non-tree model."
         
+
+        # Transform X data
+        if self.data_engineer_pipeline:
+            _used_x_train = self.data_engineer_pipeline.transform(self._x_train)
+            _used_x_test = self.data_engineer_pipeline.transform(self._x_test)
+        else:
+            _used_x_train = self._x_train
+            _used_x_test = self._x_test
+        
         # Background data for building the explainer
         if select_background_data == "train":
-            _background_data = self._used_X_train
+            _background_data = _used_x_train
         elif select_background_data == "test":
-            _background_data = self._used_X_test
+            _background_data = _used_x_test
         elif select_background_data == "all":
-            _background_data = pd.concat([self._used_X_train, self._used_X_test]).sort_index()
+            _background_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
 
         # SHAP data for calculating SHAP values
         if select_shap_data == "train":
-            _shap_data = self._used_X_train
+            _shap_data = _used_x_train
         elif select_shap_data == "test":
-            _shap_data = self._used_X_test
+            _shap_data = _used_x_test
         elif select_shap_data == "all":
-            _shap_data = pd.concat([self._used_X_train, self._used_X_test]).sort_index()
+            _shap_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
 
 
         # Explain the model
         explainer = MyExplainer(
-            results_dir = self.results_dir,
             model_object = self._optimal_model,
             model_name = self.model_name,
             background_data = _background_data,
@@ -307,6 +315,7 @@ class MyPipeline:
                 _numeric_features.append(col)
                 
         explainer.explain(
+            results_dir = self.results_dir,
             numeric_features = _numeric_features,
             plot = True,
             show = self.show,

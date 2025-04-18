@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.base import is_classifier, is_regressor
+from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score
 from sklearn.metrics import roc_curve, auc, roc_auc_score
@@ -17,27 +18,23 @@ class MyEvaluator:
     accuracy metrics (R², RMSE, MAE), visualizing actual vs predicted values, 
     and saving/printing results.
     """
-    def __init__(
-            self,
-            optimal_model_object
-        ):
-        """Initialize the Evaluator with model name.
-        
-        Args:
-            optimal_model_object (from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin):
-                The optimal model object.
-        """
-        self.optimal_model_object = optimal_model_object
-
+    def __init__(self):
+        """Initialize the Evaluator with model name."""
         # Global variables statement
         # Will change in runtime
+        self.x_test = None
+        self.x_train = None
         self.y_test = None
-        self.y_test_pred = None
         self.y_train = None
+        self.optimal_model_object = None
+        self.dummy = None
+        # After predictions
+        self.y_test_pred = None
         self.y_train_pred = None
-        # Store the accuracy metrics
+        # Save the accuracy metrics
         self.accuracy_dict = None
-        # Auxiliary variables
+        self.dummy_accuracy_dict = None
+        # Output options
         self.results_dir = None
         self.show = None
         self.plot_format = None
@@ -48,13 +45,15 @@ class MyEvaluator:
 
 
     
-    def evaluate(
-            self,
+    def evaluate(self,
+            x_test,
+            x_train,
             y_test,
-            y_test_pred,
             y_train,
-            y_train_pred,
-            X_test,
+            optimal_model_object,
+            data_engineer_pipeline,
+            dummy: bool,
+            # Output options
             results_dir: str | pathlib.Path,
             show: bool,
             plot_format: str,
@@ -71,18 +70,21 @@ class MyEvaluator:
         2. Processing output options (saving results to files, printing to console, plotting visualizations)
         
         Args:
+            x_test: Test feature data, needed for classification models' predict_proba method
+            x_train: Training feature data
             y_test: Actual test target values
-            y_test_pred: Predicted test target values
             y_train: Actual training target values
-            y_train_pred: Predicted training target values
-            X_test: Test feature data, needed for classification models' predict_proba method
+            data_engineer_pipeline: Data engineering pipeline
         """
+        self.x_test = x_test.copy(deep=True)
+        self.x_train = x_train.copy(deep=True)
+        self.y_test = y_test.copy(deep=True)
+        self.y_train = y_train.copy(deep=True)
 
-        self.y_test = y_test
-        self.y_test_pred = y_test_pred
-        self.y_train = y_train
-        self.y_train_pred = y_train_pred
-        self.X_test = X_test
+        self.optimal_model_object = optimal_model_object
+        self.dummy = dummy
+
+        # Output options
         self.results_dir = pathlib.Path(results_dir)
         self.show = show
         self.plot_format = plot_format
@@ -91,21 +93,62 @@ class MyEvaluator:
         self.save_results = save_results
         self.save_raw_data = save_raw_data
 
+        # Transform X data
+        if data_engineer_pipeline:
+            self.x_test = data_engineer_pipeline.transform(self.x_test)
+            self.x_train = data_engineer_pipeline.transform(self.x_train)
+        
+        # Infer
+        self.y_test_pred = self.optimal_model_object.predict(self.x_test)
+        self.y_train_pred = self.optimal_model_object.predict(self.x_train)
 
+        # Calculate accuracy metrics
         if is_regressor(self.optimal_model_object):
-            self._get_accuracy_4_regression_task(
+            self.accuracy_dict = self._get_accuracy_4_regression_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
         elif is_classifier(self.optimal_model_object):
-            self._get_accuracy_4_classification_task(
+            self.accuracy_dict = self._get_accuracy_4_classification_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
 
-        # Save results
+        # Dummy evaluation
+        if self.dummy:
+            self._dummy_evaluate()
+
+        # Save all results
         self._output()
 
         return None
+    
 
+
+    def _dummy_evaluate(self):
+        """Evaluate the model using a dummy estimator.
+        
+        This method creates a dummy estimator and evaluates its performance against the optimal model.
+        It compares the accuracy metrics of the optimal model with those of the dummy estimator.
+
+        For regression tasks, the dummy estimator is the mean of the training data.
+        For classification tasks, the dummy estimator is the majority class of the training data.
+        """
+        _dummy_estimator = DummyRegressor() if is_regressor(self.optimal_model_object) else DummyClassifier()
+        _dummy_estimator.fit(self.x_train, self.y_train)
+        _dummy_y_test = _dummy_estimator.predict(self.x_test)
+        _dummy_y_train = _dummy_estimator.predict(self.x_train)
+
+
+        if is_regressor(self.optimal_model_object):
+            self.dummy_accuracy_dict = self._get_accuracy_4_regression_task(
+                self.y_test, _dummy_y_test, self.y_train, _dummy_y_train
+            )
+        elif is_classifier(self.optimal_model_object):
+            self.dummy_accuracy_dict = self._get_accuracy_4_classification_task(
+                self.y_test, _dummy_y_test, self.y_train, _dummy_y_train
+            )
+
+        return None
+            
 
 
     def _get_accuracy_4_regression_task(self, y_test, y_test_pred, y_train, y_train_pred):
@@ -120,7 +163,7 @@ class MyEvaluator:
             y_train: Actual training target values.
             y_train_pred: Predicted training target values.
         """
-        self.accuracy_dict = dict({
+        accuracy_dict = dict({
             "test_r2": float(r2_score(y_test, y_test_pred)),
             "test_rmse": float(root_mean_squared_error(y_test, y_test_pred)),
             "test_mae": float(mean_absolute_error(y_test, y_test_pred)),
@@ -128,7 +171,7 @@ class MyEvaluator:
             "train_rmse": float(root_mean_squared_error(y_train, y_train_pred)),
             "train_mae": float(mean_absolute_error(y_train, y_train_pred))
         })
-        return None
+        return accuracy_dict
     
 
 
@@ -144,7 +187,7 @@ class MyEvaluator:
             y_train: Actual training target values.
             y_train_pred: Predicted training target values.
         """
-        self.accuracy_dict = dict({
+        accuracy_dict = dict({
             "test_accuracy": float(accuracy_score(y_test, y_test_pred)),
             "test_precision": float(precision_score(y_test, y_test_pred, average = "weighted")),
             "test_recall": float(recall_score(y_test, y_test_pred, average = "weighted")),
@@ -156,7 +199,7 @@ class MyEvaluator:
             "train_f1": float(f1_score(y_train, y_train_pred, average = "weighted")),
             "train_kappa": float(cohen_kappa_score(y_train, y_train_pred))
         })
-        return None
+        return accuracy_dict
 
 
 
@@ -175,6 +218,10 @@ class MyEvaluator:
         if self.print_results:
             print(f"Accuracy: \n", \
                   json.dumps(self.accuracy_dict, indent=4))
+        
+        if self.dummy:
+            print(f"Dummy Accuracy: \n", \
+                  json.dumps(self.dummy_accuracy_dict, indent=4))
 
         # Plot
         # Regression case
@@ -190,7 +237,7 @@ class MyEvaluator:
         elif is_classifier(self.optimal_model_object):
             self._plot_classification_results(
                 self.y_test,
-                self.X_test,
+                self.x_test,
                 self.optimal_model_object
             )
 
@@ -217,7 +264,7 @@ class MyEvaluator:
 
 
     
-    def _plot_classification_results(self, y_test, X_test, optimal_model_object):
+    def _plot_classification_results(self, y_test, x_test, optimal_model_object):
         """Creates ROC curve plots for classification model evaluation.
         
         For binary classification, plots a single ROC curve.
@@ -225,7 +272,7 @@ class MyEvaluator:
         
         Args:
             y_test: Actual test target values.
-            X_test: Test feature data, needed for classification models' predict_proba method
+            x_test: Test feature data, needed for classification models' predict_proba method
             optimal_model_object: The optimal model object used to get probability estimates.
         """
 
@@ -234,7 +281,7 @@ class MyEvaluator:
             raise ValueError("The optimal model object does not have the predict_proba method.")
 
         # Get probability estimates
-        y_prob = optimal_model_object.predict_proba(X=X_test)
+        y_prob = optimal_model_object.predict_proba(X=x_test)
         # Get unique classes
         classes = np.unique(y_test)
         n_classes = len(classes)

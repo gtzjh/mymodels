@@ -34,8 +34,6 @@ class MyOptimizer:
         |
         +-- fit()
         |   |
-        |   +-- _check_task_type() # Determine regression or classification
-        |   |
         |   +-- _select_model() # Select model and parameter space
         |   |
         |   +-- _optimizer() # Run Optuna optimization
@@ -64,22 +62,18 @@ class MyOptimizer:
         # Input fit()
         self.x_train = None
         self.y_train = None
-        self.x_test = None
         self.model_name = None
         self.data_engineer_pipeline = None
+
         self.cv = None
         self.trials = None
         self.n_jobs = None
         # Inside fit()
-        self.final_x_train = None
-        self.final_x_test = None
         self._model_obj = None
         # Inside output()
         self.optuna_study = None
         self.optimal_params = None
         self.optimal_model = None
-        self.y_train_pred = None
-        self.y_test_pred = None
         self.show = None
         self.plot_format = None
         self.plot_dpi = None
@@ -90,7 +84,6 @@ class MyOptimizer:
         self,
         x_train: pd.DataFrame,
         y_train: pd.Series,
-        x_test: pd.DataFrame,
         model_name: str,
         data_engineer_pipeline: Pipeline | None = None,
         cv: int = 5,
@@ -107,7 +100,6 @@ class MyOptimizer:
         Args:
             x_train: Training features data.
             y_train: Training target data.
-            x_test: Test features data.
             model_name: Model selection. 
                 For regression, should be one of 
                     ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]. 
@@ -124,17 +116,11 @@ class MyOptimizer:
 
         self.x_train = x_train.copy()
         self.y_train = y_train.copy()
-        self.x_test = x_test.copy()
         self.model_name = model_name
         self.data_engineer_pipeline = data_engineer_pipeline
         self.cv = cv
         self.trials = trials
         self.n_jobs = n_jobs
-
-        # The training set which is for final prediction after encoding
-        self.final_x_train = self.x_train
-        # The test set which is for final prediction after encoding
-        self.final_x_test = self.x_test
 
         # Select model and load parameter space and static parameters
         self._model_obj, _param_space, _static_params = self._select_model(cat_features)
@@ -149,26 +135,19 @@ class MyOptimizer:
 
         # Data engineering
         if self.data_engineer_pipeline is not None:
-            # Use the deep clone to make sure the seperate operation
-            final_data_engineer_pipeline = clone(self.data_engineer_pipeline)
-            self.final_x_train = final_data_engineer_pipeline.fit_transform(self.final_x_train)
-            self.final_x_test = final_data_engineer_pipeline.transform(self.final_x_test)
+            self.x_train = self.data_engineer_pipeline.fit_transform(self.x_train)
         
         # Fit on the whole training and validation set
-        self.optimal_model.fit(self.final_x_train, self.y_train)
-
-        # Infer
-        self.y_train_pred = self.optimal_model.predict(self.final_x_train)
-        self.y_test_pred = self.optimal_model.predict(self.final_x_test)
+        self.optimal_model.fit(self.x_train, self.y_train)
 
         return None
 
 
-    def _select_model(self, _cat_features=None):
+    def _select_model(self, cat_features = None):
         """Select the appropriate model and get its parameter space.
         
         Args:
-            _cat_features: List of categorical feature names, FOR CatBoost ONLY.
+            cat_features: List of categorical feature names, FOR CatBoost ONLY.
             
         Returns:
             tuple: Contains (model_object, parameter_space, static_parameters).
@@ -207,7 +186,7 @@ The Scaler is recommended for:
         _model_obj, param_space, static_params = MyModels(
             model_name = self.model_name,
             random_state = self.random_state,
-            cat_features = _cat_features
+            cat_features = cat_features
         ).get()
 
         return _model_obj, param_space, static_params
@@ -325,8 +304,7 @@ The Scaler is recommended for:
             for train_idx, val_idx in kf.split(self.x_train)
         )
         
-        # Adjust CV results by subtracting 0.5*std for more stable results
-        return np.mean(cv_scores) - 0.5 * np.std(cv_scores)
+        return np.mean(cv_scores)
 
 
 

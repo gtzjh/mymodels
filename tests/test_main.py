@@ -7,7 +7,8 @@ logging.basicConfig(
 )
 """
 
-
+import numpy as np
+import pandas as pd
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -15,7 +16,7 @@ from mymodels.data_engineer import data_engineer
 from mymodels.pipeline import MyPipeline
 
 
-def test_linear_regression():
+def test_regression():
     mymodel = MyPipeline(
         results_dir = "results/test_xgbr_regression",
         random_state = 0,
@@ -24,12 +25,13 @@ def test_linear_regression():
         plot_dpi = 300
     )
 
+    data = pd.read_csv("data/housing.csv", encoding = "utf-8", 
+                       na_values = np.nan, index_col = ["ID"])
     mymodel.load(
-        file_path = "data/housing.csv",
+        input_data = data,
         y = "MEDV",
         x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", \
                     "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
-        index_col = ["ID"],
         test_ratio = 0.3,
         inspect = False
     )
@@ -75,7 +77,7 @@ def test_linear_regression():
 
 
 
-def test_logistic_binary():
+def test_binary():
     mymodel = MyPipeline(
         results_dir = "results/test_xgb_binary",
         random_state = 0,
@@ -84,11 +86,12 @@ def test_logistic_binary():
         plot_dpi = 300
     )
 
+    data = pd.read_csv("data/titanic.csv", encoding="utf-8",
+                       na_values=np.nan, index_col=["PassengerId"])
     mymodel.load(
-        file_path = "data/titanic.csv",
+        input_data = data,
         y = "Survived",
         x_list = ["Pclass", "Sex", "Embarked", "Age", "SibSp", "Parch", "Fare"],
-        index_col = ["PassengerId"],
         test_ratio = 0.3,
         inspect = False
     )
@@ -135,7 +138,7 @@ def test_logistic_binary():
 
 
 
-def test_logistic_multiclass():
+def test_multiclass():
     mymodel = MyPipeline(
         results_dir = "results/test_xgb_multiclass",
         random_state = 0,
@@ -144,14 +147,15 @@ def test_logistic_multiclass():
         plot_dpi = 300
     )
 
+    data = pd.read_csv("data/obesity.csv", encoding="utf-8",
+                       na_values=np.nan, index_col=["id"])
     mymodel.load(
-        file_path = "data/obesity.csv",
+        input_data = data,
         y = "0be1dad",
         x_list = ["Gender","Age","Height","Weight",\
-                    "family_history_with_overweight",\
-                    "FAVC","FCVC","NCP","CAEC","SMOKE",\
-                    "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
-        index_col = "id",
+                "family_history_with_overweight",\
+                "FAVC","FCVC","NCP","CAEC","SMOKE",\
+                "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
         test_ratio = 0.3,
         inspect = False
     )
@@ -197,8 +201,7 @@ def test_logistic_multiclass():
 
 
 
-
 if __name__ == "__main__":
-    # test_linear_regression()
-    test_logistic_binary()
-    # test_logistic_multiclass()
+    # test_regression()
+    test_binary()
+    test_multiclass()

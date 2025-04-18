@@ -15,7 +15,6 @@ matplotlib.use('Agg')
 class MyExplainer:
     def __init__(
             self,
-            results_dir: str | pathlib.Path,
             model_object,
             model_name: str,
             background_data: pd.DataFrame,
@@ -26,7 +25,6 @@ class MyExplainer:
         """Initialize the MyExplainer with model and data.
 
         Args:
-            results_dir (str|pathlib.Path): Directory to save explanation results.
             model_object: Trained model object to be explained.
             model_name (str): Identifier for the model type (e.g., 'rfr', 'xgbc').
             background_data (pd.DataFrame): Reference data for SHAP explainer.
@@ -36,7 +34,7 @@ class MyExplainer:
             sample_shap_data_k (int|float|None): If int, the number of samples to explain;
                 if float, the fraction of data to explain; if None, explain all data.
         """
-        self.results_dir = pathlib.Path(results_dir)
+        
         self.model_obj = model_object
         self.model_name = model_name
         self.background_data = background_data
@@ -47,6 +45,7 @@ class MyExplainer:
         # After checking input
         self.classes_ = None
         # After explain()
+        self.results_dir = None
         self.shap_values = None
         self.shap_base_values = None
         self.feature_names = None
@@ -61,11 +60,6 @@ class MyExplainer:
 
     
     def _check_input(self):
-        # Validate input paths and directories
-        assert isinstance(self.results_dir, pathlib.Path), "results_dir must be a Path object"
-        if not self.results_dir.exists():
-            self.results_dir.mkdir(parents=True)
-
         # Validate dataframes
         assert isinstance(self.background_data, pd.DataFrame), "background_data must be a pandas DataFrame"
         assert isinstance(self.shap_data, pd.DataFrame), "shap_data must be a pandas DataFrame"
@@ -90,8 +84,8 @@ class MyExplainer:
 
     
 
-    def explain(
-            self,
+    def explain(self,
+            results_dir: str | pathlib.Path,
             numeric_features: list[str] | tuple[str],
             plot: bool = True,
             show: bool = False,
@@ -110,6 +104,7 @@ class MyExplainer:
             output_raw_data: Export raw SHAP values to CSV when True
         """
         # Convert to list if input is tuple
+        self.results_dir = pathlib.Path(results_dir)
         self.numeric_features = list(numeric_features) if isinstance(numeric_features, tuple) else numeric_features
         self.show = show
         self.plot_format = plot_format
