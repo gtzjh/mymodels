@@ -30,6 +30,7 @@ class MyPipeline:
         self.plot_format = plot_format
         self.plot_dpi = plot_dpi
 
+
         # Global variables statement
         # In load()
         self._x_train = None
@@ -146,6 +147,7 @@ class MyPipeline:
         self,
         model_name: str,
         data_engineer_pipeline: Pipeline | None = None,
+        strategy = "tpe",
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = 5,
@@ -171,6 +173,9 @@ class MyPipeline:
         else:
             logging.warning("No data engineering will be implemented, the raw data will be used.")
 
+        assert strategy in ["tpe", "random"], \
+            "strategy must be one of the following: tpe, random"
+        
         # Check if `cat_features` is explicitly provided for the CatBoost model
         if cat_features is not None:
             assert self.model_name in ["catr", "catc"], \
@@ -189,6 +194,7 @@ class MyPipeline:
             y_train=self._y_train,
             model_name=self.model_name,
             data_engineer_pipeline=data_engineer_pipeline,
+            strategy = strategy,
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,

@@ -48,16 +48,17 @@ def test_regression():
         encode_method = None,
         # scale_cols = ["CRIM", "ZN"],
         # scale_method = ["standard", "minmax"],
-        n_jobs = 5,
+        n_jobs = -1,
         verbose = False
     )
 
     mymodel.optimize(
         model_name = "xgbr",
         data_engineer_pipeline = data_engineer_pipeline,
+        strategy = "random",
         cv = 5,
         trials = 10,
-        n_jobs = 5,
+        n_jobs = -1,
         # cat_features = None,
         optimize_history = True,
         save_optimal_params = True,
@@ -106,7 +107,7 @@ def test_binary():
         encode_method = ["onehot", "onehot"],
         # scale_cols = ["Fare"],
         # scale_method = ["standard"],
-        n_jobs = 5,
+        n_jobs = -1,
         verbose = False
     )
 
@@ -115,9 +116,10 @@ def test_binary():
     mymodel.optimize(
         model_name = "xgbc",
         data_engineer_pipeline = data_engineer_pipeline,
+        strategy = "random",
         cv = 5,
         trials = 10,
-        n_jobs = 5,
+        n_jobs = -1,
         # cat_features = None,  # For CatBoost ONLY
         optimize_history = True,
         save_optimal_params = True,
@@ -169,7 +171,7 @@ def test_multiclass():
         encode_method = ["onehot", "ordinal", "ordinal", "ordinal"],
         # scale_cols = ["Age", "Height", "Weight"],
         # scale_method = ["standard", "standard", "standard"],
-        n_jobs = 5,
+        n_jobs = -1,
         verbose = False
     )
 
@@ -178,9 +180,10 @@ def test_multiclass():
     mymodel.optimize(
         model_name = "xgbc",
         data_engineer_pipeline = data_engineer_pipeline,
+        strategy = "random",
         cv = 5,
         trials = 10,
-        n_jobs = 5,
+        n_jobs = -1,
         # cat_features = ["Gender", "CAEC", "CALC", "MTRANS"],  # For CatBoost ONLY
         optimize_history = True,
         save_optimal_params = True,
@@ -203,5 +206,5 @@ def test_multiclass():
 
 if __name__ == "__main__":
     # test_regression()
-    test_binary()
+    # test_binary()
     test_multiclass()

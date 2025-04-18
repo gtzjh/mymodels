@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import optuna
-from optuna.samplers import TPESampler
+from optuna.samplers import TPESampler, RandomSampler, GridSampler
 from sklearn.model_selection import KFold
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
@@ -86,6 +86,7 @@ class MyOptimizer:
         y_train: pd.Series,
         model_name: str,
         data_engineer_pipeline: Pipeline | None = None,
+        strategy = "tpe",
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = -1,
@@ -107,6 +108,10 @@ class MyOptimizer:
                     ["lc", "catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"].
             data_engineer_pipeline: A pipeline for data engineering,
                                     the pipeline should be a `sklearn.pipeline.Pipeline` object.
+            strategy: 
+                - "tpe": Tree-structured Parzen Estimator algorithm implemented (Default)
+                - "random": Random search
+                - "grid": Grid search
             cv: Number of folds for cross-validation.
             trials: Number of trials to execute in Optuna optimization.
             n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
@@ -121,6 +126,8 @@ class MyOptimizer:
         self.cv = cv
         self.trials = trials
         self.n_jobs = n_jobs
+        self.strategy = strategy
+
 
         # Select model and load parameter space and static parameters
         self._model_obj, _param_space, _static_params = self._select_model(cat_features)
@@ -167,15 +174,7 @@ class MyOptimizer:
             if self.data_engineer_pipeline is not None:
                 if not any(step_name.startswith("scaler") for step_name, _ in self.data_engineer_pipeline.steps):
                     logging.warning(f"""
-The Scaler is recommended for:
-    - LinearRegression
-    - LogisticRegression
-    - SVR
-    - SVC
-    - KNR
-    - KNC
-    - MLPRegressor
-    - MLPClassifier
+The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, KNR, KNC, MLPRegressor, MLPClassifier
 """)
         if self.model_name in ["dtr", "dtc", "rfc", "rfr", "lgbc", "lgbr", "gbdtc", "gbdtr", "xgbc", "xgbr", "catr", "catc"]:
             if self.data_engineer_pipeline is not None:
@@ -205,10 +204,15 @@ The Scaler is recommended for:
         """
         # Set log level to WARNING to avoid excessive output
         optuna.logging.set_verbosity(optuna.logging.WARNING)
-
+        
+        # Choose the sampler
+        _strategy_dict = {
+            "tpe": TPESampler,
+            "random": RandomSampler,
+        }
         _study = optuna.create_study(
             direction = "maximize",
-            sampler = TPESampler(seed=self.random_state),
+            sampler = _strategy_dict[self.strategy](seed=self.random_state),
         )
 
         # Execute the optimization
@@ -229,7 +233,7 @@ The Scaler is recommended for:
         It performs the following steps:
         1. Creates model parameters by combining static and trial parameters
         2. Performs k-fold cross-validation in parallel
-        3. Returns a score (mean CV score - 0.5*std) to optimize
+        3. Returns the mean CV score to optimize
         
         Args:
             trial: Optuna trial object.
