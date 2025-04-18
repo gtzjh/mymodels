@@ -12,9 +12,9 @@ from types import MappingProxyType
 
 
 
-class MyClassifiers:
+class MyModels:
     def __init__(self, model_name: str, random_state: int, cat_features: list[str] | None = None):
-        """Initialize the Classifiers class.
+        """Initialize the Models class.
         
         Parameters:
             model_name (str): The name of the model to use.
@@ -23,6 +23,7 @@ class MyClassifiers:
         """
 
         _model_map = {
+            # Classifier
             "lc": (self._LC, LogisticRegression),
             "svc": (self._SVC, SVC),
             "knc": (self._KNC, KNeighborsClassifier),
@@ -33,9 +34,21 @@ class MyClassifiers:
             "adac": (self._ADAC, AdaBoostClassifier),
             "xgbc": (self._XGBC, XGBClassifier),
             "lgbc": (self._LGBC, LGBMClassifier),
-            "catc": (self._CATC, CatBoostClassifier)
+            "catc": (self._CATC, CatBoostClassifier),
+            # Regressor
+            "lr": (self._LR, LinearRegression),
+            "svr": (self._SVR, SVR),
+            "knr": (self._KNR, KNeighborsRegressor),
+            "mlpr": (self._MLPR, MLPRegressor),
+            "dtr": (self._DTR, DecisionTreeRegressor),
+            "rfr": (self._RFR, RandomForestRegressor),
+            "gbdtr": (self._GBDTR, GradientBoostingRegressor),
+            "adar": (self._ADAR, AdaBoostRegressor),
+            "xgbr": (self._XGBR, XGBRegressor),
+            "lgbr": (self._LGBR, LGBMRegressor),
+            "catr": (self._CATR, CatBoostRegressor)
         }
-        self.MODEL_MAP = MappingProxyType(_model_map)  # 创建不可变视图
+        self.MODEL_MAP = MappingProxyType(_model_map)  # Create an unchangeable view
         self.model_name = model_name
         self.random_state = random_state
         self.cat_features = cat_features
@@ -44,9 +57,9 @@ class MyClassifiers:
             f"Invalid model name: {model_name}, \
               it must be one of {list(self.MODEL_MAP.keys())}"
     
+
     def get(self):
-        """
-        Get the model object, parameter space, and static parameters.
+        """Get the model object, parameter space, and static parameters.
         Returns:
             tuple: (model_object, param_space, static_params)
         """
@@ -56,6 +69,7 @@ class MyClassifiers:
         return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
     
 
+    # Classifier
     def _LC(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html"""
         param_space = {
@@ -277,52 +291,7 @@ class MyClassifiers:
         return param_space, static_params
 
 
-
-class MyRegressors:
-    def __init__(self, model_name: str, random_state: int, cat_features: list[str] | None = None):
-        """Initialize the Regrs class.
-        
-        Parameters:
-            model_name (str): The name of the model to use.
-            random_state (int): The random state to use for the model.
-            cat_features (list[str] | None): The categorical features to use for the CatBoost ONLY.
-        """
-
-        _model_map = {
-            "lr": (self._LR, LinearRegression),
-            "svr": (self._SVR, SVR),
-            "knr": (self._KNR, KNeighborsRegressor),
-            "mlpr": (self._MLPR, MLPRegressor),
-            "dtr": (self._DTR, DecisionTreeRegressor),
-            "rfr": (self._RFR, RandomForestRegressor),
-            "gbdtr": (self._GBDTR, GradientBoostingRegressor),
-            "adar": (self._ADAR, AdaBoostRegressor),
-            "xgbr": (self._XGBR, XGBRegressor),
-            "lgbr": (self._LGBR, LGBMRegressor),
-            "catr": (self._CATR, CatBoostRegressor)
-        }
-        self.MODEL_MAP = MappingProxyType(_model_map)  # 创建不可变视图
-        self.model_name = model_name
-        self.random_state = random_state
-        self.cat_features = cat_features
-
-        assert model_name in self.MODEL_MAP, \
-            f"Invalid model name: {model_name}, \
-              it must be one of {list(self.MODEL_MAP.keys())}"
-    
-
-    def get(self):
-        """Get the model object, parameter space, and static parameters.
-        
-        Returns:
-            tuple: (model_object, param_space, static_params)
-        """
-        _model_object = self.MODEL_MAP[self.model_name][1]
-        _get_method = self.MODEL_MAP[self.model_name][0]
-        _param_space, _static_params = _get_method()
-        return _model_object, MappingProxyType(_param_space), MappingProxyType(_static_params)
-    
-
+    # Regressor
     def _LR(self):
         """https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html"""
         param_space = {}

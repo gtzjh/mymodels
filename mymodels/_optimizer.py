@@ -13,7 +13,7 @@ from types import MappingProxyType
 
 
 
-from .models import MyRegressors, MyClassifiers
+from .models import MyModels
 
 
 
@@ -74,7 +74,6 @@ class MyOptimizer:
         self.final_x_train = None
         self.final_x_test = None
         self._model_obj = None
-        self._task_type = None
         # Inside output()
         self.optuna_study = None
         self.optimal_params = None
@@ -136,13 +135,11 @@ class MyOptimizer:
         self.final_x_train = self.x_train
         # The test set which is for final prediction after encoding
         self.final_x_test = self.x_test
-        
-        # Check the task type, regression or classification
-        # Select model and load parameter space and static parameters
-        self._task_type = self._check_task_type(self.model_name)
-        self._model_obj, _param_space, _static_params = self._select_model(self._task_type, cat_features)
 
-        # Execute the optimization
+        # Select model and load parameter space and static parameters
+        self._model_obj, _param_space, _static_params = self._select_model(cat_features)
+
+        # Optimizing
         self.optuna_study = self._optimizer(_param_space, _static_params)
         
         # Save optimal parameters and model
@@ -167,49 +164,11 @@ class MyOptimizer:
         return None
 
 
-
-    def _check_task_type(self, _model_name):
-        """Determine if the task is regression or classification based on model name.
-        
-        Args:
-            _model_name: The name of the model to check.
-            
-        Returns:
-            str: Either "regression" or "classification".
-            
-        Raises:
-            ValueError: If the model name is not recognized.
-        """
-        if _model_name in ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
-            _task_type = "regression"
-        elif _model_name in ["lc", "catc", "rfc", "dtc", "lgbc", "gbdtc", "xgbc", "adac", "svc", "knc", "mlpc"]:
-            _task_type = "classification"
-        else:
-            raise ValueError(f"Invalid model name: {_model_name}")
-
-        # Check if the target variable is suitable for the task type
-        if _task_type == "classification" and pd.api.types.is_float_dtype(self.y_train):
-            logging.warning(f"""
-The target variable is a float type, 
-which is not suitable for classification tasks. 
-Please check the configuration CAREFULLY!
-""")
-        if _task_type == "regression" and self.y_train.nunique() <= 3:
-            logging.warning(f"""
-The target variable has only {self.y_train.nunique()} unique values, 
-which might not be suitable for regression tasks. 
-Consider using classifiers INSTEAD.
-""")
-        
-        return _task_type
-        
-
-
-    def _select_model(self, _task_type, _cat_features = None):
+    def _select_model(self, _cat_features=None):
         """Select the appropriate model and get its parameter space.
         
         Args:
-            _task_type: Either "regression" or "classification".
+            _cat_features: List of categorical feature names, FOR CatBoost ONLY.
             
         Returns:
             tuple: Contains (model_object, parameter_space, static_parameters).
@@ -245,23 +204,12 @@ The Scaler is recommended for:
                     logging.warning("""The Scaler is NOT recommended for tree-based models.""")
         ###########################################################################################
 
-        if _task_type == "regression":
-            _model_obj, param_space, static_params = MyRegressors(
-                model_name = self.model_name,
-                random_state = self.random_state,
-                cat_features = _cat_features
-            ).get()
-        else:
-            _model_obj, param_space, static_params = MyClassifiers(
-                model_name = self.model_name,
-                random_state = self.random_state,
-                cat_features = _cat_features
-            ).get()
+        _model_obj, param_space, static_params = MyModels(
+            model_name = self.model_name,
+            random_state = self.random_state,
+            cat_features = _cat_features
+        ).get()
 
-        logging.debug(f"Selected model: {self.model_name}")
-        logging.debug(f"Model object: {_model_obj}")
-        logging.debug(f"Parameter space: {param_space}")
-        logging.debug(f"Static parameters: {static_params}")
         return _model_obj, param_space, static_params
 
 

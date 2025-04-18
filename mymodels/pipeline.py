@@ -230,10 +230,7 @@ class MyPipeline:
         Args:
             save_raw_data (bool): Whether to save the raw prediction data. Default is True.
         """
-        evaluator = MyEvaluator(
-            model_name=self.model_name,
-            optimal_model_object=self._optimal_model
-            )
+        evaluator = MyEvaluator(optimal_model_object=self._optimal_model)
         evaluator.evaluate(
             y_test = self._y_test,
             y_test_pred = self._y_test_pred,

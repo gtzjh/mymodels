@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.base import is_classifier, is_regressor
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score
 from sklearn.metrics import roc_curve, auc, roc_auc_score
@@ -18,19 +19,14 @@ class MyEvaluator:
     """
     def __init__(
             self,
-            model_name,
             optimal_model_object
         ):
         """Initialize the Evaluator with model name.
         
         Args:
-            model_name (str): Name of the model to evaluate. Must be one of the supported model types:
-                - Regression models: 'lr', 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr'
-                - Classification models: 'lc', 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc'
             optimal_model_object (from sklearn.base.RegressorMixin or sklearn.base.ClassifierMixin):
                 The optimal model object.
         """
-        self.model_name = model_name
         self.optimal_model_object = optimal_model_object
 
         # Global variables statement
@@ -96,18 +92,14 @@ class MyEvaluator:
         self.save_raw_data = save_raw_data
 
 
-        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", \
-                               "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
+        if is_regressor(self.optimal_model_object):
             self._get_accuracy_4_regression_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
-        elif self.model_name in ["lc", "svc", "knc", "mlpc", "adac", \
-                                 "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
+        elif is_classifier(self.optimal_model_object):
             self._get_accuracy_4_classification_task(
                 self.y_test, self.y_test_pred, self.y_train, self.y_train_pred
             )
-        else:
-            raise ValueError(f"Invalid model input: {self.model_name}")
 
         # Save results
         self._output()
@@ -181,13 +173,12 @@ class MyEvaluator:
         
         # Print results to the console
         if self.print_results:
-            print(f"Accuracy of {self.model_name}: \n", \
+            print(f"Accuracy: \n", \
                   json.dumps(self.accuracy_dict, indent=4))
 
         # Plot
         # Regression case
-        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", \
-                               "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
+        if is_regressor(self.optimal_model_object):
             self._plot_regression_results(
                 self.accuracy_dict["test_r2"],
                 self.accuracy_dict["test_rmse"],
@@ -196,7 +187,7 @@ class MyEvaluator:
                 self.y_test_pred
             )
         # Classification case
-        else:
+        elif is_classifier(self.optimal_model_object):
             self._plot_classification_results(
                 self.y_test,
                 self.X_test,
