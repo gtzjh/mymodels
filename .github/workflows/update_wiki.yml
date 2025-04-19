@@ -29,6 +29,7 @@ jobs:
           
       - name: Copy Wiki Content
         run: |
+          rm -rf wiki-repo/*
           cp -r wiki/* wiki-repo/
           
       - name: Push to Wiki
