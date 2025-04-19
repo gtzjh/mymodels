@@ -2,6 +2,8 @@ name: Update GitHub Wiki
 run-name: ${{ github.actor }} is updating the GitHub Wiki
 on:
   push:
+    paths:
+      - 'wiki/**'
 jobs:
   update-wiki:
     runs-on: ubuntu-latest

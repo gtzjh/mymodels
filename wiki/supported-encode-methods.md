@@ -1,3 +1,0 @@
-- Onehot
-- Ordinal
-- Label
