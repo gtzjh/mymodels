@@ -16,7 +16,7 @@ jobs:
           
       - name: Clone Wiki
         run: |
-          git clone https://github.com/${{ github.repository }}.wiki.git wiki-repo
+          git clone https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
           
       - name: Copy Wiki Content
         run: |
