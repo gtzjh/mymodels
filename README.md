@@ -6,8 +6,6 @@
 
 Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
-[The detail documentation can be found here](./wiki/appendix.md)
-
 **4/2/2025: Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is under developing.**
 
 
