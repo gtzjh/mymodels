@@ -79,3 +79,12 @@ conda activate mymodels
 - Regression task: [run_housing.ipynb](run_housing.ipynb)
 
   > Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
+
+
+## 🤔 Something You May Interested In
+
+[Supported encode methods](https://github.com/gtzjh/mymodels/wiki#supported-encode-methods)
+
+[Supported models](https://github.com/gtzjh/mymodels/wiki#supported-models)
+
+[Some thing you should know before implementation](https://github.com/gtzjh/mymodels/wiki#the-users-should-know)
