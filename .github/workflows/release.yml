@@ -1,0 +1,42 @@
+name: Push Tags and Create Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  push_tags_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # This ensures all tags are fetched
+
+      - name: Push tags
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git push origin --tags
+
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.latest_tag.outputs.tag }}
+          release_name: Release ${{ steps.latest_tag.outputs.tag }}
+          body: |
+            Changes in this Release:
+            ${{ steps.latest_tag.outputs.commit_message }}
+          draft: false
+          prerelease: false

@@ -62,7 +62,7 @@ conda env create -f requirement.yml -n mymodels -y
 conda activate mymodels
 ```
 
-## :point_right: Try
+## 👉 Try
 
 **Try the Titanic demo first**
 
