@@ -18,7 +18,7 @@ jobs:
           
       - name: Clone Wiki
         run: |
-          git clone https://github.com/${{ github.repository }}.wiki.git wiki-repo
+          git clone https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
           
       - name: Copy Wiki Content
         run: |
@@ -29,4 +29,4 @@ jobs:
         run: |
           git add .
           git diff --quiet && git diff --staged --quiet || git commit -m "Update wiki content from wiki directory"
-          git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git master
+          git push https://${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.wiki.git master
