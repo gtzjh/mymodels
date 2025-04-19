@@ -34,11 +34,12 @@ jobs:
       - name: Check if release exists
         id: check_release
         run: |
-          RELEASE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+          RELEASE_INFO=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/${{ steps.latest_tag.outputs.tag }}")
-          if [[ "$RELEASE_EXISTS" == "200" ]]; then
+          RELEASE_ID=$(echo "$RELEASE_INFO" | jq -r '.id // "null"')
+          if [ "$RELEASE_ID" != "null" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
@@ -56,3 +57,25 @@ jobs:
             ${{ steps.latest_tag.outputs.commit_message }}
           draft: false
           prerelease: false
+          
+      - name: Update Existing Release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          PREVIOUS_BODY=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/${{ steps.check_release.outputs.release_id }}" | jq -r '.body')
+          
+          NEW_BODY=$(cat <<EOF
+          $PREVIOUS_BODY
+          
+          Update from commit on $(date +"%Y-%m-%d %H:%M:%S"):
+          ${{ steps.latest_tag.outputs.commit_message }}
+          EOF
+          )
+          
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": $(echo "$NEW_BODY" | jq -s -R .)}" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/${{ steps.check_release.outputs.release_id }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
