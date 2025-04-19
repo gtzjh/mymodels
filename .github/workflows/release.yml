@@ -31,7 +31,20 @@ jobs:
           COMMIT_MESSAGE=$(git log -1 --pretty=%B)
           echo "commit_message=$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
 
+      - name: Check if release exists
+        id: check_release
+        run: |
+          RELEASE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/${{ steps.latest_tag.outputs.tag }}")
+          if [[ "$RELEASE_EXISTS" == "200" ]]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create Release
+        if: steps.check_release.outputs.exists == 'false'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
