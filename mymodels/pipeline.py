@@ -20,12 +20,14 @@ class MyPipeline:
             self,
             results_dir: str | pathlib.Path,
             random_state: int = 0,
+            stratify: bool = True,
             show: bool = False,
             plot_format: str = "jpg",
             plot_dpi: int = 500
         ):
         self.results_dir = results_dir
         self.random_state = random_state
+        self.stratify = stratify
         self.show = show
         self.plot_format = plot_format
         self.plot_dpi = plot_dpi
@@ -67,6 +69,7 @@ class MyPipeline:
         self.results_dir.mkdir(parents = True, exist_ok = True)
         assert isinstance(self.random_state, int), "random_state must be an integer"
         assert isinstance(self.show, bool), "show must be a boolean"
+        assert isinstance(self.stratify, bool), "stratify must be a boolean"
         assert isinstance(self.plot_format, str), "plot_format must be a string"
         assert self.plot_format in ["jpg", "png", "jpeg", "tiff", "pdf", "svg", "eps"], \
             "plot_format must be one of the following: jpg, png, jpeg, tiff, pdf, svg, eps"
@@ -90,7 +93,8 @@ class MyPipeline:
             y=y,
             x_list=x_list,
             test_ratio=test_ratio,
-            random_state=self.random_state
+            random_state=self.random_state,
+            stratify=self.stratify
         )
         if inspect:
             print(f"\nTotal samples: {len(self._x_train) + len(self._x_test)}")
@@ -186,6 +190,7 @@ class MyPipeline:
         optimizer = MyOptimizer(
             random_state=self.random_state,
             results_dir=self.results_dir,
+            stratify = self.stratify
         )
 
         # Fit the optimizer

@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import optuna
-from optuna.samplers import TPESampler, RandomSampler, GridSampler
-from sklearn.model_selection import KFold
+from optuna.samplers import TPESampler, RandomSampler
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone
 from joblib import Parallel, delayed, dump
@@ -22,6 +22,7 @@ class MyOptimizer:
             self, 
             random_state: int, 
             results_dir: pathlib.Path, 
+            stratify: bool = False
         ):
         """A class for training and optimizing various machine learning models.
         
@@ -57,6 +58,7 @@ class MyOptimizer:
         
         self.random_state = random_state
         self.results_dir = results_dir
+        self.stratify = stratify
 
         # Global variables statement
         # Input fit()
@@ -293,20 +295,19 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
 
             
         # Parallel processing for validation. Initialize KFold cross validator
-        kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
-        
-        
-        """
-        # Use the for-in loop for debugging
-        cv_scores = list()
-        for train_idx, val_idx in kf.split(self.x_train):
-            cv_scores.append(_single_fold(train_idx, val_idx, param))
-        """
-        
-        cv_scores = Parallel(n_jobs=self.n_jobs)(
-            delayed(_single_fold)(train_idx, val_idx, param)
-            for train_idx, val_idx in kf.split(self.x_train)
-        )
+        # StratifiedKFold is recommended for classification tasks especially when the class is imbalanced
+        if self.stratify:
+            kf = StratifiedKFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+            cv_scores = Parallel(n_jobs=self.n_jobs)(
+                delayed(_single_fold)(train_idx, val_idx, param)
+                for train_idx, val_idx in kf.split(X = self.x_train, y = self.y_train)
+            )
+        else:
+            kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+            cv_scores = Parallel(n_jobs=self.n_jobs)(
+                delayed(_single_fold)(train_idx, val_idx, param)
+                for train_idx, val_idx in kf.split(self.x_train)
+            )
         
         return np.mean(cv_scores)
 

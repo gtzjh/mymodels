@@ -9,7 +9,8 @@ def data_loader(
         y,
         x_list,
         test_ratio,
-        random_state
+        random_state,
+        stratify
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     """Load and preprocess data from a CSV file.
     
@@ -20,6 +21,7 @@ def data_loader(
         index_col (str or int or list or tuple or None): The column name or index of the index column.
         test_ratio (float): The ratio of the test set.
         random_state (int): The random state for the train_test_split.
+        stratify (bool): Whether to stratify the data.
     
     Returns:
         tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]: A tuple containing:
@@ -77,5 +79,6 @@ def data_loader(
         x_data, y_data, 
         test_size = test_ratio,
         random_state = random_state,
-        shuffle = True
+        shuffle = True,  # Default is True
+        stratify = y_data if stratify else None
     )
