@@ -81,7 +81,7 @@ conda activate mymodels
   > Dataset source: [Kaggle Housing Data](https://www.kaggle.com/datasets/jamalshah811/housingdata)
 
 
-## 🤔 Something You May Interested In
+## 🤔 Something You may Interested in
 
 [Supported encode methods](https://github.com/gtzjh/mymodels/wiki#supported-encode-methods)
 
