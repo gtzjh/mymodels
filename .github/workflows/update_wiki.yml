@@ -16,7 +16,16 @@ jobs:
           
       - name: Clone Wiki
         run: |
-          git clone https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo
+          git clone https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki-repo || mkdir -p wiki-repo
+          
+      - name: Setup Wiki if not exists
+        working-directory: wiki-repo
+        run: |
+          if [ ! -d .git ]; then
+            git init
+            git config --global init.defaultBranch master
+            git remote add origin https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
+          fi
           
       - name: Copy Wiki Content
         run: |
