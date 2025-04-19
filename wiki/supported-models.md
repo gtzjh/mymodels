@@ -1,5 +1,3 @@
-# Supported Models
-
 <table>
   <thead>
     <tr>

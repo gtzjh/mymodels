@@ -1,5 +1,3 @@
-# The Users Should Know
-
 - This project is intended solely for scientific reference. It may contain calculation errors or logical inaccuracies. Users are responsible for verifying the accuracy of the results independently, and the author shall not be held liable for any consequences arising from the use of this code.
 
 - Due to the developer's limited personal capabilities and time constraints, the project may inevitably have shortcomings. We sincerely welcome fellow professionals to provide critiques and suggestions for improvement.
