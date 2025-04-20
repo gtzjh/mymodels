@@ -5,7 +5,8 @@ import optuna
 from optuna.samplers import TPESampler, RandomSampler
 from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier, is_regressor
+from sklearn.metrics import accuracy_score, r2_score
 from joblib import Parallel, delayed, dump
 from functools import partial
 import pickle, yaml, pathlib, logging
@@ -20,7 +21,7 @@ class MyOptimizer:
     def __init__(
             self, 
             random_state: int, 
-            results_dir: pathlib.Path, 
+            results_dir: pathlib.Path,
             stratify: bool = False
         ):
         """A class for training and optimizing various machine learning models.
@@ -65,7 +66,9 @@ class MyOptimizer:
         self.y_train = None
         self.model_name = None
         self.data_engineer_pipeline = None
-
+        self.strategy = None
+        self.direction = None
+        # self.eval_metric = None
         self.cv = None
         self.trials = None
         self.n_jobs = None
@@ -92,6 +95,8 @@ class MyOptimizer:
         trials: int = 100,
         n_jobs: int = -1,
         cat_features: list[str] | tuple[str] | None = None,
+        direction = "maximize",
+        eval_function = None,
     ):
         """This method handles the entire process of model training and optimization:
             1. Determines if it's a regression or classification task
@@ -118,17 +123,27 @@ class MyOptimizer:
             n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
                 (use all available processors).
             cat_features: List of categorical feature names, FOR CatBoost ONLY.
+            direction:
+                - "maximize": Maximize the objective function
+                - "minimize": Minimize the objective function
+            eval_function:
+                - A user-defined function that takes in y_true and y_pred and returns a float
         """
 
-        self.x_train = x_train.copy()
-        self.y_train = y_train.copy()
+        self.x_train = x_train.copy(deep=True)
+        self.y_train = y_train.copy(deep=True)
         self.model_name = model_name
         self.data_engineer_pipeline = data_engineer_pipeline
+        self.strategy = strategy
         self.cv = cv
         self.trials = trials
         self.n_jobs = n_jobs
-        self.strategy = strategy
-
+        self.direction = direction
+        self.eval_function = eval_function
+        
+        # Check if eval_function is callable
+        if self.eval_function is not None and not callable(self.eval_function):
+            raise TypeError("eval_function must be callable")
 
         # Select model and load parameter space and static parameters
         self._model_obj, _param_space, _static_params = self._select_model(cat_features)
@@ -212,16 +227,16 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
             "random": RandomSampler,
         }
         _study = optuna.create_study(
-            direction = "maximize",
+            direction = self.direction,
             sampler = _strategy_dict[self.strategy](seed=self.random_state),
         )
 
         # Execute the optimization
         _study.optimize(
             partial(self._objective, _param_space=_param_space, _static_params=_static_params),
-            n_trials=self.trials,
-            n_jobs=1,  # It is not recommended to use n_jobs > 1 in Optuna
-            show_progress_bar=True
+            n_trials = self.trials,
+            n_jobs = 1,  # It is not recommended to use n_jobs > 1 in Optuna
+            show_progress_bar = True
         )
         
         return _study
@@ -277,7 +292,7 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
             y_fold_val = self.y_train.iloc[val_idx].copy(deep=True)
 
 
-            if self.data_engineer_pipeline is not None:
+            if self.data_engineer_pipeline:
                 # Use the deep clone to make sure the seperate operation
                 _k_fold_data_engineer_pipeline = clone(self.data_engineer_pipeline)
                 _transformed_X_fold_train = _k_fold_data_engineer_pipeline.fit_transform(X_fold_train)
@@ -285,12 +300,25 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
 
                 # Fit in a single fold
                 _validator.fit(_transformed_X_fold_train, y_fold_train)
-                return _validator.score(_transformed_X_fold_val, y_fold_val)
+                _predicted_values = _validator.predict(_transformed_X_fold_val)
 
             else:
                 # Fit in a single fold
                 _validator.fit(X_fold_train, y_fold_train)
-                return _validator.score(X_fold_val, y_fold_val)
+                _predicted_values = _validator.predict(X_fold_val)
+            
+
+            if self.eval_function is not None:
+                eval_value = self.eval_function(y_fold_val, _predicted_values)
+            else:
+                if is_classifier(_validator):
+                    # Use the overall accuracy score for classification task
+                    eval_value = accuracy_score(y_fold_val, _predicted_values)
+                elif is_regressor(_validator):
+                    # Use R2 score for regression task
+                    eval_value = r2_score(y_fold_val, _predicted_values)
+            
+            return eval_value
 
             
         # Parallel processing for validation. Initialize KFold cross validator

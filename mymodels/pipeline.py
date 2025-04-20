@@ -20,7 +20,7 @@ class MyPipeline:
             self,
             results_dir: str | pathlib.Path,
             random_state: int = 0,
-            stratify: bool = True,
+            stratify: bool = False,
             show: bool = False,
             plot_format: str = "jpg",
             plot_dpi: int = 500
@@ -156,6 +156,8 @@ class MyPipeline:
         trials: int = 50,
         n_jobs: int = 5,
         cat_features: list[str] | tuple[str] | None = None,
+        direction: str = "maximize",
+        eval_function: None = None,
         optimize_history: bool = True,
         save_optimal_params: bool = True,
         save_optimal_model: bool = True,
@@ -184,6 +186,10 @@ class MyPipeline:
         if cat_features is not None:
             assert self.model_name in ["catr", "catc"], \
                 "`cat_features` is only supported for CatBoost"
+        assert direction in ["maximize", "minimize"], \
+            "direction must be one of the following: maximize, minimize"
+        assert eval_function is None or callable(eval_function), \
+            "eval_function must be a callable function"
         ###########################################################################################
         
         # Initialize optimizer
@@ -203,7 +209,9 @@ class MyPipeline:
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,
-            cat_features = cat_features
+            cat_features = cat_features,
+            direction = direction,
+            eval_function = eval_function
         )
 
         # Output the optimization history, optimal model and parameters

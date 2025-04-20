@@ -1,27 +1,30 @@
-# For debugging
-"""
-import logging
-logging.basicConfig(
-    level = logging.WARNING,
-    format = "%(asctime)s - %(levelname)s - %(message)s"
-)
-"""
-
 import numpy as np
 import pandas as pd
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+
+from sklearn.metrics import cohen_kappa_score
+
+
 from mymodels.data_engineer import data_engineer
 from mymodels.pipeline import MyPipeline
 
 
 
 def test_regression():
-    for i in ["lr", "catr", "rfr", "dtr", "lgbr", "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"]:
+    for i in [
+        # "lr", "catr", 
+        "rfr", 
+        # "dtr", 
+        # "lgbr",
+        # "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"
+    ]:
         mymodel = MyPipeline(
             results_dir = f"results/test_{i}_regression",
             random_state = 0,
+            stratify = False,
             show = False,
             plot_format = "jpg",
             plot_dpi = 300
@@ -57,11 +60,13 @@ def test_regression():
         mymodel.optimize(
             model_name = i,
             data_engineer_pipeline = data_engineer_pipeline,
-            strategy = "random",
+            strategy = "tpe",
             cv = 5,
-            trials = 30,
+            trials = 100,
             n_jobs = -1,
             # cat_features = None,
+            direction = "maximize",
+            eval_function = None,
             optimize_history = True,
             save_optimal_params = True,
             save_optimal_model = True
@@ -85,6 +90,7 @@ def test_binary():
         mymodel = MyPipeline(
             results_dir = f"results/test_{i}_binary",
             random_state = 0,
+            stratify = True,
             show = False,
             plot_format = "jpg",
             plot_dpi = 300
@@ -119,11 +125,13 @@ def test_binary():
         mymodel.optimize(
             model_name = i,
             data_engineer_pipeline = data_engineer_pipeline,
-            strategy = "random",
+            strategy = "tpe",
             cv = 5,
             trials = 30,
             n_jobs = -1,
             # cat_features = None,  # For CatBoost ONLY
+            direction = "maximize",
+            eval_function = None,
             optimize_history = True,
             save_optimal_params = True,
             save_optimal_model = True
@@ -144,10 +152,17 @@ def test_binary():
 
 
 def test_multiclass():
-    for i in ["lc", "catc", "rfc", "dtc", "lgbc", "xgbc", "adac", "svc", "knc", "mlpc"]:
+    for i in [
+        # "lc", "catc", 
+        # "rfc", 
+        # "dtc", 
+        "lgbc", 
+        # "xgbc", "adac", "svc", "knc", "mlpc"
+    ]:
         mymodel = MyPipeline(
             results_dir = f"results/test_{i}_multiclass",
             random_state = 0,
+            stratify = True,
             show = False,
             plot_format = "jpg",
             plot_dpi = 300
@@ -184,11 +199,13 @@ def test_multiclass():
         mymodel.optimize(
             model_name = i,
             data_engineer_pipeline = data_engineer_pipeline,
-            strategy = "random",
+            strategy = "tpe",
             cv = 5,
-            trials = 30,
+            trials = 100,
             n_jobs = -1,
             # cat_features = ["Gender", "CAEC", "CALC", "MTRANS"],  # For CatBoost ONLY
+            direction = "maximize",
+            eval_function = cohen_kappa_score,
             optimize_history = True,
             save_optimal_params = True,
             save_optimal_model = True
@@ -209,6 +226,6 @@ def test_multiclass():
 
 
 if __name__ == "__main__":
-    test_regression()
-    test_binary()
+    # test_regression()
+    # test_binary()
     test_multiclass()
