@@ -4,6 +4,7 @@ channels:
 dependencies:
   - catboost=1.2.7
   - category_encoders=2.6.3
+  - imbalanced-learn=0.13.0
   - ipykernel=6.29.5
   - ipython=8.30.0
   - lightgbm=4.5.0

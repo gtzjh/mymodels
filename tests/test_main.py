@@ -5,8 +5,6 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
-from sklearn.metrics import cohen_kappa_score
-
 
 from mymodels.data_engineer import data_engineer
 from mymodels.pipeline import MyPipeline
@@ -31,12 +29,12 @@ def test_regression():
         )
 
         data = pd.read_csv("data/housing.csv", encoding = "utf-8", 
-                        na_values = np.nan, index_col = ["ID"])
+                           na_values = np.nan, index_col = ["ID"])
         mymodel.load(
             input_data = data,
             y = "MEDV",
             x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", \
-                        "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
+                      "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
             test_ratio = 0.3,
             inspect = False
         )
@@ -71,7 +69,12 @@ def test_regression():
             save_optimal_params = True,
             save_optimal_model = True
         )
-        mymodel.evaluate(save_raw_data = True)
+        mymodel.evaluate(
+            show_train = True,
+            dummy = True,
+            save_raw_data = True,
+            eval_metric = None
+        )
 
         mymodel.explain(
             select_background_data = "train",
@@ -97,7 +100,7 @@ def test_binary():
         )
 
         data = pd.read_csv("data/titanic.csv", encoding="utf-8",
-                        na_values=np.nan, index_col=["PassengerId"])
+                           na_values=np.nan, index_col=["PassengerId"])
         mymodel.load(
             input_data = data,
             y = "Survived",
@@ -106,7 +109,7 @@ def test_binary():
             inspect = False
         )
 
-        # mymodel.diagnose(sample_k=None)
+        mymodel.diagnose(sample_k=None)
 
         data_engineer_pipeline = data_engineer(
             outlier_cols = None,
@@ -119,8 +122,6 @@ def test_binary():
             n_jobs = -1,
             verbose = False
         )
-
-        mymodel.diagnose(sample_k=None)
 
         mymodel.optimize(
             model_name = i,
@@ -137,7 +138,12 @@ def test_binary():
             save_optimal_model = True
         )
 
-        mymodel.evaluate(save_raw_data = True)
+        mymodel.evaluate(
+            show_train = True,
+            dummy = True,
+            save_raw_data = True,
+            eval_metric = None
+        )
 
         mymodel.explain(
             select_background_data = "train",
@@ -169,17 +175,19 @@ def test_multiclass():
         )
 
         data = pd.read_csv("data/obesity.csv", encoding="utf-8",
-                        na_values=np.nan, index_col=["id"])
+                           na_values=np.nan, index_col=["id"])
         mymodel.load(
             input_data = data,
             y = "0be1dad",
             x_list = ["Gender","Age","Height","Weight",\
-                    "family_history_with_overweight",\
-                    "FAVC","FCVC","NCP","CAEC","SMOKE",\
-                    "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
+                      "family_history_with_overweight",\
+                      "FAVC","FCVC","NCP","CAEC","SMOKE",\
+                      "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
             test_ratio = 0.3,
             inspect = False
         )
+
+        mymodel.diagnose(sample_k=None)
 
         # Return an instance of `sklearn.pipeline.Pipeline` object
         data_engineer_pipeline = data_engineer(
@@ -194,24 +202,38 @@ def test_multiclass():
             verbose = False
         )
 
-        mymodel.diagnose(sample_k=None)
-
         mymodel.optimize(
             model_name = i,
             data_engineer_pipeline = data_engineer_pipeline,
             strategy = "tpe",
             cv = 5,
-            trials = 100,
+            trials = 10,
             n_jobs = -1,
             # cat_features = ["Gender", "CAEC", "CALC", "MTRANS"],  # For CatBoost ONLY
             direction = "maximize",
-            eval_function = cohen_kappa_score,
+            eval_function = None,
             optimize_history = True,
             save_optimal_params = True,
             save_optimal_model = True
         )
 
-        mymodel.evaluate(save_raw_data = True)
+
+        from sklearn.metrics import fbeta_score, log_loss
+        def my_fbeta_score(y_test, y_test_pred):
+            return fbeta_score(y_test, y_test_pred, average = "weighted", beta = 0.5)
+        # def my_log_loss(y_test, y_test_pred):
+        #     return log_loss(y_test, y_test_pred)
+        self_defined_eval_metric = {
+            "Fbeta Score": my_fbeta_score,
+            # "Log Loss": my_log_loss
+        }
+
+        mymodel.evaluate(
+            show_train = True,
+            dummy = True,
+            save_raw_data = True,
+            eval_metric = self_defined_eval_metric
+        )
 
         mymodel.explain(
             select_background_data = "train",

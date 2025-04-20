@@ -234,17 +234,26 @@ class MyPipeline:
 
     def evaluate(
             self,
+            show_train: bool = True,
             dummy: bool = True,
-            save_raw_data: bool = True
+            save_raw_data: bool = True,
+            eval_metric: dict | None = None
         ):
         """Evaluate the model
 
         Args:
+            show_train (bool): Whether to show the training set evaluation results. Default is True.
             dummy (bool): Whether to use a dummy estimator for comparison. Default is True.
             save_raw_data (bool): Whether to save the raw prediction data. Default is True.
+            eval_metric (None): The self-defined evaluation metric to use. 
+                It must be None or a dictionary where each item is a callable function. Default is None.
         """
+        assert isinstance(show_train, bool), "show_train must be a boolean"
         assert isinstance(dummy, bool), "dummy must be a boolean"
         assert isinstance(save_raw_data, bool), "save_raw_data must be a boolean"
+        assert eval_metric is None \
+            or (isinstance(eval_metric, dict) and all(callable(item) for item in eval_metric.values())), \
+            "eval_metric must be None or a dictionary where each item is a callable function"
 
         evaluator = MyEvaluator()
         evaluator.evaluate(
@@ -254,7 +263,9 @@ class MyPipeline:
             y_train = self._y_train,
             optimal_model_object = self._optimal_model,
             data_engineer_pipeline = self.data_engineer_pipeline,
+            show_train = show_train,
             dummy = dummy,
+            eval_metric = eval_metric,
             # Output options
             results_dir = self.results_dir,
             show = self.show,

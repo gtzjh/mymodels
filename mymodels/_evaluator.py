@@ -4,18 +4,21 @@ import matplotlib.pyplot as plt
 from sklearn.base import is_classifier, is_regressor
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, cohen_kappa_score
-from sklearn.metrics import roc_curve, auc, roc_auc_score
-from sklearn.preprocessing import label_binarize
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import cohen_kappa_score, matthews_corrcoef
+from imblearn.metrics import specificity_score
 import yaml, pathlib, json
 
+
+
+from ._plot_classification import plot_roc_curve, plot_pr_curve, plot_confusion_matrix
 
 
 class MyEvaluator:
     """A class for evaluating machine learning regression models.
     
     This class handles the evaluation of machine learning models, computing various 
-    accuracy metrics (R², RMSE, MAE), visualizing actual vs predicted values, 
+    accuracy metrics (R², RMSE, MAE, F1, Kappa, etc.), visualizing actual vs predicted values, 
     and saving/printing results.
     """
     def __init__(self):
@@ -52,7 +55,9 @@ class MyEvaluator:
             y_train,
             optimal_model_object,
             data_engineer_pipeline,
+            show_train: bool,
             dummy: bool,
+            eval_metric: dict | None,
             # Output options
             results_dir: str | pathlib.Path,
             show: bool,
@@ -82,7 +87,9 @@ class MyEvaluator:
         self.y_train = y_train.copy(deep=True)
 
         self.optimal_model_object = optimal_model_object
+        self.show_train = show_train
         self.dummy = dummy
+        self.eval_metric = eval_metric
 
         # Output options
         self.results_dir = pathlib.Path(results_dir)
@@ -154,7 +161,7 @@ class MyEvaluator:
     def _get_accuracy_4_regression_task(self, y_test, y_test_pred, y_train, y_train_pred):
         """Calculate regression accuracy metrics for both test and training data.
         
-        Computes R², RMSE, and MAE metrics for both test and training predictions
+        Computes R2, RMSE, and MAE metrics for both test and training predictions
         and stores them in the accuracy_dict attribute.
         
         Args:
@@ -163,15 +170,32 @@ class MyEvaluator:
             y_train: Actual training target values.
             y_train_pred: Predicted training target values.
         """
-        accuracy_dict = dict({
-            "test_r2": float(r2_score(y_test, y_test_pred)),
-            "test_rmse": float(root_mean_squared_error(y_test, y_test_pred)),
-            "test_mae": float(mean_absolute_error(y_test, y_test_pred)),
-            "train_r2": float(r2_score(y_train, y_train_pred)),
-            "train_rmse": float(root_mean_squared_error(y_train, y_train_pred)),
-            "train_mae": float(mean_absolute_error(y_train, y_train_pred))
+        test_accuracy_dict = dict({
+            "R2": float(r2_score(y_test, y_test_pred)),
+            "RMSE": float(root_mean_squared_error(y_test, y_test_pred)),
+            "MAE": float(mean_absolute_error(y_test, y_test_pred)),
         })
-        return accuracy_dict
+
+        train_accuracy_dict = dict({
+            "R2": float(r2_score(y_train, y_train_pred)),
+            "RMSE": float(root_mean_squared_error(y_train, y_train_pred)),
+            "MAE": float(mean_absolute_error(y_train, y_train_pred))
+        })
+
+        if self.eval_metric is not None:
+            for _key, _metric in self.eval_metric.items():
+                test_accuracy_dict[_key] = _metric(y_test, y_test_pred)
+                train_accuracy_dict[_key] = _metric(y_train, y_train_pred)
+
+        if self.show_train:
+            return {
+                "test": test_accuracy_dict,
+                "train": train_accuracy_dict
+            }
+        else:
+            return {
+                "test": test_accuracy_dict,
+            }
     
 
 
@@ -187,19 +211,53 @@ class MyEvaluator:
             y_train: Actual training target values.
             y_train_pred: Predicted training target values.
         """
-        accuracy_dict = dict({
-            "test_accuracy": float(accuracy_score(y_test, y_test_pred)),
-            "test_precision": float(precision_score(y_test, y_test_pred, average = "weighted")),
-            "test_recall": float(recall_score(y_test, y_test_pred, average = "weighted")),
-            "test_f1": float(f1_score(y_test, y_test_pred, average = "weighted")),
-            "test_kappa": float(cohen_kappa_score(y_test, y_test_pred)),
-            "train_accuracy": float(accuracy_score(y_train, y_train_pred)),
-            "train_precision": float(precision_score(y_train, y_train_pred, average = "weighted")),
-            "train_recall": float(recall_score(y_train, y_train_pred, average = "weighted")),
-            "train_f1": float(f1_score(y_train, y_train_pred, average = "weighted")),
-            "train_kappa": float(cohen_kappa_score(y_train, y_train_pred))
+        # Determine if it's binary or multi-class based on unique classes in y_test
+        unique_classes = np.unique(y_test)
+        n_classes = len(unique_classes)
+        is_binary = n_classes == 2
+
+        test_accuracy_dict = dict({
+            "Overall Accuracy": float(accuracy_score(y_test, y_test_pred)),
+            "Precision": float(precision_score(y_test, y_test_pred, average = "weighted")),
+            "Recall": float(recall_score(y_test, y_test_pred, average = "weighted")),
+            "F1": float(f1_score(y_test, y_test_pred, average = "weighted")),
+            "Kappa": float(cohen_kappa_score(y_test, y_test_pred)),
         })
-        return accuracy_dict
+        
+        train_accuracy_dict = dict({            
+            "Overall Accuracy": float(accuracy_score(y_train, y_train_pred)),
+            "Precision": float(precision_score(y_train, y_train_pred, average = "weighted")),
+            "Recall": float(recall_score(y_train, y_train_pred, average = "weighted")),
+            "F1": float(f1_score(y_train, y_train_pred, average = "weighted")),
+            "Kappa": float(cohen_kappa_score(y_train, y_train_pred)),
+        })
+
+        # if it's binary, add matthews_corrcoef
+        if is_binary:
+            test_accuracy_dict["Matthews Correlation Coefficient"] = float(matthews_corrcoef(y_test, y_test_pred))
+            test_accuracy_dict["Specificity"] = float(specificity_score(y_test, y_test_pred, average = "binary"))
+            train_accuracy_dict["Matthews Correlation Coefficient"] = float(matthews_corrcoef(y_train, y_train_pred))
+            train_accuracy_dict["Specificity"] = float(specificity_score(y_train, y_train_pred, average = "binary"))
+        else:
+            test_accuracy_dict["Specificity"] = float(specificity_score(y_test, y_test_pred, average = "weighted"))
+            train_accuracy_dict["Specificity"] = float(specificity_score(y_train, y_train_pred, average = "weighted"))
+
+        # The user-defined evaluation metrics
+        if self.eval_metric is not None:
+            for _key, _metric in self.eval_metric.items():
+                test_accuracy_dict[_key] = float(_metric(y_test, y_test_pred))
+                train_accuracy_dict[_key] = float(_metric(y_train, y_train_pred))
+
+        # Output
+        if self.show_train:
+            return {
+                "test": test_accuracy_dict,
+                "train": train_accuracy_dict
+            }
+        else:
+            return {
+                "test": test_accuracy_dict,
+            }
 
 
 
@@ -226,16 +284,13 @@ class MyEvaluator:
         # Plot
         # Regression case
         if is_regressor(self.optimal_model_object):
-            self._plot_regression_results(
-                self.accuracy_dict["test_r2"],
-                self.accuracy_dict["test_rmse"],
-                self.accuracy_dict["test_mae"],
+            self._regression_scatter_plot(
                 self.y_test,
                 self.y_test_pred
             )
         # Classification case
         elif is_classifier(self.optimal_model_object):
-            self._plot_classification_results(
+            self._classification_plots(
                 self.y_test,
                 self.x_test,
                 self.optimal_model_object
@@ -263,114 +318,8 @@ class MyEvaluator:
         return None
 
 
-    
-    def _plot_classification_results(self, y_test, x_test, optimal_model_object):
-        """Creates ROC curve plots for classification model evaluation.
-        
-        For binary classification, plots a single ROC curve.
-        For multiclass classification, plots one-vs-rest ROC curves for each class.
-        
-        Args:
-            y_test: Actual test target values.
-            x_test: Test feature data, needed for classification models' predict_proba method
-            optimal_model_object: The optimal model object used to get probability estimates.
-        """
 
-        # Check if the optimal model object has the predict_proba method
-        if not hasattr(optimal_model_object, "predict_proba"):
-            raise ValueError("The optimal model object does not have the predict_proba method.")
-
-        # Get probability estimates
-        y_prob = optimal_model_object.predict_proba(X=x_test)
-        # Get unique classes
-        classes = np.unique(y_test)
-        n_classes = len(classes)
-    
-        plt.figure()
-        ###########################################################################################
-        # Binary classification case
-        if n_classes == 2:            
-            # For binary classification, use probability of positive class
-            if y_prob.shape[1] == 2:  # If there are probabilities for both classes
-                # Get probability of positive class (index 1)
-                pos_prob = y_prob[:, 1]
-            else:
-                # If only one probability returned (some models do this for binary)
-                pos_prob = y_prob.ravel()
-                
-            # Compute ROC curve and ROC area
-            fpr, tpr, _ = roc_curve(y_test, pos_prob)
-            roc_auc = auc(fpr, tpr)
-            
-            # Plot ROC curve
-            plt.plot(fpr, tpr, lw=2, label=f'ROC curve (AUC = {roc_auc:.3f})')
-            plt.plot([0, 1], [0, 1], 'k--', lw=2)  # Diagonal reference line
-            
-        # Multiclass classification case
-        else:
-            # Convert y_test to binary format (one-hot encoding)
-            y_test_bin = label_binarize(y_test, classes=classes)
-            
-            # Compute ROC curve and ROC area for each class
-            fpr = dict()
-            tpr = dict()
-            roc_auc = dict()
-            
-            for i in range(n_classes):
-                # For each class, plot one-vs-rest ROC curve
-                fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_prob[:, i])
-                roc_auc[i] = auc(fpr[i], tpr[i])
-                plt.plot(fpr[i], tpr[i], lw=2, 
-                         label=f'ROC curve of class {classes[i]} (AUC = {roc_auc[i]:.3f})')
-                
-            # Calculate and display macro-average ROC AUC
-            macro_roc_auc = np.mean([roc_auc[i] for i in range(n_classes)])
-            plt.plot([0, 1], [0, 1], 'k--', lw=2)
-            plt.text(0.5, 0.3, f'Macro-average AUC = {macro_roc_auc:.3f}', 
-                    bbox=dict(facecolor='white', alpha=0.8), fontsize=12)
-        ###########################################################################################
-        
-        # Plotting
-        # Formatting the plot
-        plt.xlabel('False Positive Rate', fontdict={'size': 14})
-        plt.ylabel('True Positive Rate', fontdict={'size': 14})
-        plt.title('Receiver Operating Characteristic (ROC) Curve', fontdict={'size': 16})
-        plt.legend(loc="lower right", prop={'size': 12})
-        plt.grid(alpha=0.3)
-        
-        # Add accuracy metrics in the plot
-        plt.annotate(f"Accuracy: {self.accuracy_dict['test_accuracy']:.3f}\n"
-                     f"Precision: {self.accuracy_dict['test_precision']:.3f}\n"
-                     f"Recall: {self.accuracy_dict['test_recall']:.3f}\n"
-                     f"F1: {self.accuracy_dict['test_f1']:.3f}",
-                     xy=(0.05, 0.05), xycoords='axes fraction',
-                     bbox=dict(boxstyle="round,pad=0.5", fc="white", alpha=0.8),
-                     fontsize=12)
-        
-        # Set appearance
-        ax = plt.gca()
-        ax.spines['right'].set_color('none')
-        ax.spines['top'].set_color('none')
-        plt.xticks(size=14)
-        plt.yticks(size=14)
-        
-        # Save and show
-        plt.tight_layout()
-        plt.savefig(
-            self.results_dir.joinpath('roc_curve_plot.' + self.plot_format),
-            dpi=self.plot_dpi
-        )
-        
-        if self.show:
-            plt.show()
-            
-        plt.close()
-        
-        return None
-
-
-
-    def _plot_regression_results(self, _r2_value, _rmse_value, _mae_value, _y, _y_pred):
+    def _regression_scatter_plot(self, _y, _y_pred):
         """Creates a scatter plot of actual vs predicted values for regression model evaluation.
 
         This function generates a visualization comparing actual values to predicted values
@@ -381,9 +330,8 @@ class MyEvaluator:
             _r2_value (float): R-squared value of the regression model.
             _rmse_value (float): Root Mean Squared Error value of the regression model.
             _mae_value (float): Mean Absolute Error value of the regression model.
-            _y (pandas.Series): Actual target values.
+            _y (pandas.Series, or numpy.ndarray): Actual target values.
             _y_pred (pandas.Series or numpy.ndarray): Predicted target values.
-            _results_dir (str or pathlib.Path): Directory where the plot image will be saved.
 
         Returns:
             None: The function saves the plot to disk and does not return a value.
@@ -406,11 +354,8 @@ class MyEvaluator:
 
         _line1, = plt.plot(_y, y2, color = 'black', label = 'y = ' + f'{param[0]:.2f}' + " * x" + " + " + f'{param[1]:.2f}')
         _line2, = plt.plot([_min, _max], [_min, _max], '--', color = 'gray', label = 'y = x') # 绘制 y = x 的虚线
-        _plot_r2, = plt.plot(0, 0, '-', color = 'w', label = f'R2      :  {_r2_value:.3f}')
-        _plot_rmse, = plt.plot(0, 0, '-', color = 'w', label = f'RMSE:  {_rmse_value:.3f}')
-        _plot_mae, = plt.plot(0, 0, '-', color = 'w', label = f'MAE  :  {_mae_value:.3f}')
 
-        plt.legend(handles = [_line1, _line2, _plot_r2, _plot_rmse, _plot_mae], 
+        plt.legend(handles = [_line1, _line2], 
                 loc = 'upper left', fancybox = True, shadow = True, fontsize = 16, prop = {'size': 16})
         
         plt.ylabel('Predicted values', fontdict = {'size': 18})
@@ -434,3 +379,67 @@ class MyEvaluator:
         plt.close()
 
         return None
+
+    
+    def _classification_plots(self, y_test, x_test, optimal_model_object):
+        """Creates ROC curve, PR curve, and confusion matrix plots for classification model evaluation.
+        
+        For binary classification, plots a single ROC curve.
+        For multiclass classification, plots one-vs-rest ROC curves for each class.
+        
+        Args:
+            y_test: Actual test target values.
+            x_test: Test feature data, needed for classification models' predict_proba method
+            optimal_model_object: The optimal model object used to get probability estimates.
+        """
+        ###########################################################################################
+        # Plot ROC curve
+        fig_roc, ax_roc = plot_roc_curve(y_test, x_test, optimal_model_object)
+        fig_roc.savefig(
+            self.results_dir.joinpath('roc_curve_plot.' + self.plot_format),
+            dpi=self.plot_dpi
+        )
+
+        if self.show:
+            plt.figure(fig_roc.number)
+            plt.show()
+
+        plt.close(fig_roc)
+        ###########################################################################################
+
+
+        ###########################################################################################
+        # Plot PR curve
+        fig_pr, ax_pr = plot_pr_curve(y_test, x_test, optimal_model_object)
+        fig_pr.savefig(
+            self.results_dir.joinpath('pr_curve_plot.' + self.plot_format),
+            dpi=self.plot_dpi
+        )
+        if self.show:
+            plt.figure(fig_pr.number)
+            plt.show()
+        plt.close(fig_pr)
+
+        ###########################################################################################
+
+
+        ###########################################################################################
+        # Plot confusion matrix
+        y_test_pred = optimal_model_object.predict(x_test)
+        fig_cm, ax_cm = plot_confusion_matrix(y_test, y_test_pred)
+        fig_cm.savefig(
+            self.results_dir.joinpath('confusion_matrix_plot.' + self.plot_format),
+            dpi=self.plot_dpi
+        )
+        if self.show:
+            plt.figure(fig_cm.number)
+            plt.show()
+        plt.close(fig_cm)
+
+        ###########################################################################################
+
+        return None
+    
+
+
+
