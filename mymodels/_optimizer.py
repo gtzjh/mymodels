@@ -9,7 +9,6 @@ from sklearn.base import clone
 from joblib import Parallel, delayed, dump
 from functools import partial
 import pickle, yaml, pathlib, logging
-from types import MappingProxyType
 
 
 
@@ -90,7 +89,7 @@ class MyOptimizer:
         data_engineer_pipeline: Pipeline | None = None,
         strategy = "tpe",
         cv: int = 5,
-        trials: int = 50,
+        trials: int = 100,
         n_jobs: int = -1,
         cat_features: list[str] | tuple[str] | None = None,
     ):
@@ -184,13 +183,13 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
                     logging.warning("""The Scaler is NOT recommended for tree-based models.""")
         ###########################################################################################
 
-        _model_obj, param_space, static_params = MyModels(
+        _model = MyModels(
             model_name = self.model_name,
             random_state = self.random_state,
             cat_features = cat_features
-        ).get()
+        )
 
-        return _model_obj, param_space, static_params
+        return _model.model_object, _model.param_space, _model.static_params
 
 
 
@@ -249,10 +248,10 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
 
         # Get parameters for model training
         # Make the param immutable
-        param = MappingProxyType({
+        param = {
             **{k: v(trial) for k, v in _param_space.items()},
             **_static_params
-        })
+        }
         
         # Single fold execution
         def _single_fold(train_idx, val_idx, param) -> float:

@@ -1,0 +1,536 @@
+# Model configuration file - Contains the parameter space and static parameters for all models
+
+# Classifiers
+lc:  # LogisticRegression
+  param_space:
+    solver:
+      type: categorical
+      values: ["lbfgs", "saga"]
+    penalty:
+      type: categorical
+      values: ["l2", null]
+    C:
+      type: float
+      values: {min: 0.01, max: 10.0, log: true}
+    max_iter:
+      type: integer
+      values: {min: 100, max: 1000, step: 100}
+  static_params:
+    class_weight: balanced
+    tol: 1.0e-4
+    fit_intercept: true
+    n_jobs: -1
+    verbose: 0
+    warm_start: false
+
+svc:  # SVC
+  param_space:
+    kernel:
+      type: categorical
+      values: ["linear", "rbf", "poly", "sigmoid"]
+    C:
+      type: float
+      values: {min: 0.1, max: 200, log: true}
+    degree:
+      type: integer
+      values: {min: 2, max: 5}
+  static_params:
+    class_weight: balanced
+    probability: true
+    verbose: 0
+
+knc:  # KNeighborsClassifier
+  param_space:
+    n_neighbors:
+      type: integer
+      values: {min: 1, max: 50, step: 1}
+    weights:
+      type: categorical
+      values: ["uniform", "distance"]
+    algorithm:
+      type: categorical
+      values: ["auto", "ball_tree", "kd_tree", "brute"]
+    leaf_size:
+      type: integer
+      values: {min: 10, max: 100, step: 10}
+    p:
+      type: integer
+      values: {min: 1, max: 2}
+  static_params:
+    n_jobs: -1
+
+mlpc:  # MLPClassifier
+  param_space:
+    activation:
+      type: categorical
+      values: ["relu", "tanh", "logistic"]
+    alpha:
+      type: float
+      values: {min: 0.0001, max: 0.1, log: true}
+    learning_rate:
+      type: categorical
+      values: ["constant", "adaptive"]
+    learning_rate_init:
+      type: float
+      values: {min: 0.0001, max: 0.1, log: true}
+    max_iter:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+  static_params:
+    hidden_layer_sizes: [300, 300, 300]
+    solver: adam
+    batch_size: auto
+    early_stopping: true
+    n_iter_no_change: 10
+    verbose: 0
+
+dtc:  # DecisionTreeClassifier
+  param_space:
+    criterion:
+      type: categorical
+      values: ["gini", "entropy", "log_loss"]
+    max_depth:
+      type: integer
+      values: {min: 2, max: 20}
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 20}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 20}
+    max_features:
+      type: float
+      values: {min: 0.2, max: 1.0}
+    class_weight:
+      type: categorical
+      values: ["balanced", null]
+  static_params: {}
+
+rfc:  # RandomForestClassifier
+  param_space:
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    criterion:
+      type: categorical
+      values: ["gini", "entropy", "log_loss"]
+    max_depth:
+      type: integer
+      values: {min: 1, max: 15}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 5, step: 1}
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 10, step: 1}
+    max_features:
+      type: float
+      values: {min: 0.1, max: 1.0, step: 0.1}
+    bootstrap:
+      type: categorical
+      values: [true, false]
+    class_weight:
+      type: categorical
+      values: ["balanced", "balanced_subsample", null]
+  static_params:
+    verbose: 0
+    n_jobs: -1
+
+gbdtc:  # GradientBoostingClassifier
+  param_space:
+    learning_rate:
+      type: float
+      values: {min: 0.001, max: 0.3, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 50}
+    subsample:
+      type: float
+      values: {min: 0.5, max: 1.0, step: 0.1}
+    criterion:
+      type: categorical
+      values: ["friedman_mse", "squared_error"]
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 10, step: 1}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 5, step: 1}
+    max_depth:
+      type: integer
+      values: {min: 3, max: 8}
+    max_features:
+      type: float
+      values: {min: 0.2, max: 1.0, step: 0.1}
+  static_params:
+    verbose: 0
+    validation_fraction: 0.1
+    n_iter_no_change: 10
+    tol: 1.0e-4
+
+adac:  # AdaBoostClassifier
+  param_space:
+    n_estimators:
+      type: integer
+      values: {min: 50, max: 3000, step: 50}
+    learning_rate:
+      type: float
+      values: {min: 0.01, max: 1.0, log: true}
+  static_params:
+    algorithm: SAMME
+
+xgbc:  # XGBClassifier
+  param_space:
+    max_depth:
+      type: integer
+      values: {min: 3, max: 10}
+    learning_rate:
+      type: float
+      values: {min: 0.01, max: 0.3, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 50, max: 3000, step: 50}
+    subsample:
+      type: float
+      values: {min: 0.5, max: 1.0, step: 0.1}
+    colsample_bytree:
+      type: float
+      values: {min: 0.5, max: 1.0, step: 0.1}
+    colsample_bylevel:
+      type: float
+      values: {min: 0.5, max: 1.0, step: 0.1}
+    min_child_weight:
+      type: integer
+      values: {min: 1, max: 10}
+    gamma:
+      type: float
+      values: {min: 0, max: 1, step: 0.1}
+    reg_alpha:
+      type: float
+      values: {min: 0.001, max: 10.0, log: true}
+    reg_lambda:
+      type: float
+      values: {min: 0.001, max: 10.0, log: true}
+    tree_method:
+      type: categorical
+      values: ["auto", "exact", "approx", "hist"]
+  static_params:
+    booster: gbtree
+    enable_categorical: false
+    verbosity: 0
+    n_jobs: -1
+
+lgbc:  # LGBMClassifier
+  param_space:
+    num_leaves:
+      type: integer
+      values: {min: 20, max: 150}
+    max_depth:
+      type: integer
+      values: {min: -1, max: 15}
+    learning_rate:
+      type: float
+      values: {min: 0.01, max: 0.3, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 50, max: 3000, step: 50}
+    min_child_samples:
+      type: integer
+      values: {min: 5, max: 100}
+    subsample:
+      type: float
+      values: {min: 0.5, max: 1.0, step: 0.1}
+    subsample_freq:
+      type: integer
+      values: {min: 0, max: 10}
+    colsample_bytree:
+      type: float
+      values: {min: 0.5, max: 1.0}
+    reg_alpha:
+      type: float
+      values: {min: 0.001, max: 10.0, log: true}
+    reg_lambda:
+      type: float
+      values: {min: 0.001, max: 10.0, log: true}
+    min_split_gain:
+      type: float
+      values: {min: 0, max: 0.5}
+  static_params:
+    boosting_type: gbdt
+    verbose: -1
+    n_jobs: -1
+
+catc:  # CatBoostClassifier
+  param_space:
+    iterations:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    learning_rate:
+      type: float
+      values: {min: 0.01, max: 0.3, log: true}
+    depth:
+      type: integer
+      values: {min: 4, max: 10}
+    l2_leaf_reg:
+      type: float
+      values: {min: 1.0, max: 10.0, log: true}
+    bagging_temperature:
+      type: float
+      values: {min: 0.0, max: 1.0}
+    random_strength:
+      type: float
+      values: {min: 0.0, max: 1.0}
+    border_count:
+      type: integer
+      values: {min: 32, max: 255}
+    grow_policy:
+      type: categorical
+      values: ["SymmetricTree", "Depthwise", "Lossguide"]
+    min_data_in_leaf:
+      type: integer
+      values: {min: 1, max: 50}
+  static_params:
+    verbose: 0
+    allow_writing_files: false
+    train_dir: null
+    thread_count: -1
+
+
+
+# Regressors
+lr:  # LinearRegression
+  param_space: {}
+  static_params: {}
+
+svr:  # SVR
+  param_space:
+    kernel:
+      type: categorical
+      values: ["linear", "rbf", "poly", "sigmoid"]
+    C:
+      type: integer
+      values: {min: 1, max: 200, step: 1}
+    epsilon:
+      type: float
+      values: {min: 0.1, max: 10, step: 0.1}
+  static_params:
+    verbose: 0
+
+knr:  # KNeighborsRegressor
+  param_space:
+    n_neighbors:
+      type: integer
+      values: {min: 1, max: 10, step: 1}
+    weights:
+      type: categorical
+      values: ["uniform", "distance"]
+    algorithm:
+      type: categorical
+      values: ["auto", "ball_tree", "kd_tree", "brute"]
+    leaf_size:
+      type: integer
+      values: {min: 1, max: 100, step: 1}
+    p:
+      type: integer
+      values: {min: 1, max: 5, step: 1}
+  static_params:
+    n_jobs: -1
+
+mlpr:  # MLPRegressor
+  param_space:
+    alpha:
+      type: float
+      values: {min: 0.0001, max: 0.1, log: true}
+    learning_rate_init:
+      type: float
+      values: {min: 0.0001, max: 0.1, log: true}
+    max_iter:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+  static_params:
+    hidden_layer_sizes: [300, 300, 300]
+    activation: relu
+    solver: adam
+    batch_size: auto
+    verbose: 0
+
+dtr:  # DecisionTreeRegressor
+  param_space:
+    max_depth:
+      type: integer
+      values: {min: 2, max: 20}
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 20}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 20}
+    max_features:
+      type: float
+      values: {min: 0.2, max: 1.0}
+  static_params: {}
+
+rfr:  # RandomForestRegressor
+  param_space:
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    max_depth:
+      type: integer
+      values: {min: 1, max: 15}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 5, step: 1}
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 10, step: 1}
+    max_features:
+      type: float
+      values: {min: 0.1, max: 1.0, step: 0.1}
+  static_params:
+    verbose: 0
+    n_jobs: -1
+
+gbdtr:  # GradientBoostingRegressor
+  param_space:
+    learning_rate:
+      type: float
+      values: {min: 1.0e-8, max: 1.0, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    max_depth:
+      type: integer
+      values: {min: 1, max: 15}
+    subsample:
+      type: float
+      values: {min: 0.2, max: 1.0, step: 0.1}
+    min_samples_leaf:
+      type: integer
+      values: {min: 1, max: 5, step: 1}
+    min_samples_split:
+      type: integer
+      values: {min: 2, max: 10, step: 1}
+    max_features:
+      type: float
+      values: {min: 0.2, max: 1.0, step: 0.1}
+  static_params:
+    verbose: 0
+
+adar:  # AdaBoostRegressor
+  param_space:
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    learning_rate:
+      type: float
+      values: {min: 0.01, max: 1.0, log: true}
+    loss:
+      type: categorical
+      values: ["linear", "square", "exponential"]
+  static_params: {}
+
+xgbr:  # XGBRegressor
+  param_space:
+    max_depth:
+      type: integer
+      values: {min: 1, max: 15}
+    learning_rate:
+      type: float
+      values: {min: 1.0e-8, max: 1.0, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    subsample:
+      type: float
+      values: {min: 0.2, max: 1.0, step: 0.1}
+    colsample_bytree:
+      type: float
+      values: {min: 0.2, max: 1.0, step: 0.1}
+    gamma:
+      type: float
+      values: {min: 0, max: 5, step: 0.1}
+    min_child_weight:
+      type: integer
+      values: {min: 1, max: 10}
+    reg_alpha:
+      type: float
+      values: {min: 0, max: 5}
+    reg_lambda:
+      type: float
+      values: {min: 0.5, max: 5}
+    tree_method:
+      type: categorical
+      values: ["hist", "approx"]
+  static_params:
+    enable_categorical: false
+    verbosity: 0
+    n_jobs: -1
+
+lgbr:  # LGBMRegressor
+  param_space:
+    max_depth:
+      type: integer
+      values: {min: 1, max: 15}
+    learning_rate:
+      type: float
+      values: {min: 1.0e-8, max: 1.0, log: true}
+    n_estimators:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    num_leaves:
+      type: integer
+      values: {min: 2, max: 256}
+    colsample_bytree:
+      type: float
+      values: {min: 0.2, max: 1.0}
+    subsample:
+      type: float
+      values: {min: 0.2, max: 1.0}
+    subsample_freq:
+      type: integer
+      values: {min: 1, max: 7}
+    reg_alpha:
+      type: float
+      values: {min: 1.0e-8, max: 10.0, log: true}
+    reg_lambda:
+      type: float
+      values: {min: 1.0e-8, max: 10.0, log: true}
+  static_params:
+    verbose: -1
+    n_jobs: -1
+
+catr:  # CatBoostRegressor
+  param_space:
+    iterations:
+      type: integer
+      values: {min: 100, max: 3000, step: 100}
+    learning_rate:
+      type: float
+      values: {min: 1.0e-5, max: 1.0, log: true}
+    max_depth:
+      type: integer
+      values: {min: 3, max: 10}
+    bagging_temperature:
+      type: float
+      values: {min: 0.0, max: 1.0}
+    subsample:
+      type: float
+      values: {min: 0.05, max: 1.0}
+    colsample_bylevel:
+      type: float
+      values: {min: 0.05, max: 1.0}
+    min_data_in_leaf:
+      type: integer
+      values: {min: 1, max: 100}
+    l2_leaf_reg:
+      type: float
+      values: {min: 1.0, max: 10.0, log: true}
+    leaf_estimation_iterations:
+      type: integer
+      values: {min: 1, max: 10}
+  static_params:
+    verbose: 0
+    allow_writing_files: false
+    train_dir: null
+    thread_count: -1
