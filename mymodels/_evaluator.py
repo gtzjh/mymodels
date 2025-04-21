@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.base import is_classifier, is_regressor
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
@@ -316,10 +315,4 @@ class MyEvaluator:
             train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = True)    
 
         return None
-
-
-
-
-
-
 

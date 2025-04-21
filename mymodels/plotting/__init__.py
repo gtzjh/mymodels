@@ -1,3 +1,3 @@
-from .main import Plotting
+from .main import Plotter
 
-__all__ = ['Plotting']
+__all__ = ['Plotter']

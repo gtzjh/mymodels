@@ -4,13 +4,14 @@ import logging
 
 
 
-from .plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
-from .plot_optimizer import _plot_optimize_history
-from .plot_evaluated_classifier import _plot_roc_curve, _plot_pr_curve, _plot_confusion_matrix
-from .plot_evaluated_regressor import _plot_regression_scatter
+from ._plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
+from ._plot_optimizer import _plot_optimize_history
+from ._plot_evaluated_classifier import _plot_roc_curve, _plot_pr_curve, _plot_confusion_matrix
+from ._plot_evaluated_regressor import _plot_regression_scatter
+from ._plot_explainer import _plot_summary, _plot_dependence, _plot_partial_dependence
 
 
-class Plotting:
+class Plotter:
     """Base class for plotting functionality in mymodels.
     
     This class serves as a foundation for all plotting modules, providing
@@ -144,14 +145,14 @@ class Plotting:
         return None
     
 
-    def plot_correlation(self, data, name=None):
+    def plot_correlation(self, data, corr_threshold=0.8, name=None):
         """Plot the correlation matrix.
         
         Args:
             data: Data to plot
             name: Name of the data
         """
-        result = _plot_correlation(data, name=name, show=self.show)
+        result = _plot_correlation(data, name=name, corr_threshold=corr_threshold, show=self.show)
         pearson_fig, pearson_ax = result["pearson"]
         spearman_fig, spearman_ax = result["spearman"]
 
@@ -241,5 +242,53 @@ class Plotting:
 
         return None
     ###########################################################################################
+
+
+
+    ###########################################################################################
+    # Plotting for explainer
+    ###########################################################################################
+    def plot_summary(self, shap_values, title=None):
+        """Plot SHAP summary.
+
+        Args:
+            shap_values: SHAP values
+            title: Title of the plot
+        """
+        fig, ax = _plot_summary(shap_values, title=title)
+        self._finalize_plot(fig, filename = "summary")
+
+        return None
+    
+
+    def plot_dependence(self, shap_values, title=None):
+        """Plot SHAP dependence.
+        
+        Args:
+            shap_values: SHAP values
+            title: Title of the plot
+        """
+        fig, ax = _plot_dependence(shap_values, title=title)
+        self._finalize_plot(fig, filename = "dependence")
+
+        return None
+    
+
+    def plot_partial_dependence(self, shap_values, title=None):
+        """Plot partial dependence.
+        
+        Args:
+            shap_values: SHAP values
+            title: Title of the plot
+        """
+        fig, ax = _plot_partial_dependence(shap_values, title=title)
+        self._finalize_plot(fig, filename = "partial_dependence")
+
+        return None
+    ###########################################################################################
+    
+
+
+
 
 

@@ -10,6 +10,7 @@ from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
 
 
+
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
     A class that handles data loading, model training, and evaluation with SHAP analysis.
@@ -238,9 +239,6 @@ class MyPipeline:
             eval_metric = eval_metric,
             # Output options
             results_dir = self.results_dir,
-            show = self.show,
-            plot_format = self.plot_format,
-            plot_dpi = self.plot_dpi,
             print_results = True,
             save_results = True,
             save_raw_data = save_raw_data
@@ -317,10 +315,6 @@ class MyPipeline:
         explainer.explain(
             results_dir = self.results_dir,
             numeric_features = _numeric_features,
-            plot = True,
-            show = self.show,
-            plot_format = self.plot_format,
-            plot_dpi = self.plot_dpi,
             output_raw_data = output_raw_data
         )
         

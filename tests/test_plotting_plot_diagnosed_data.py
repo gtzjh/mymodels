@@ -7,20 +7,19 @@ import pathlib
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mymodels.plotting.plot_diagnosed_data import _plot_data_distribution, _plot_correlation, _plot_category
+from mymodels.plotting import Plotter
 
 
+"""
 logging.basicConfig(
     level = logging.DEBUG,
     format = "%(asctime)s - %(levelname)s - %(message)s"
 )
+"""
+
 
 
 def test_plot_data_distribution():
-    # Create test directory if it doesn't exist
-    results_dir = pathlib.Path("./results/test_vis")
-    results_dir.mkdir(parents=True, exist_ok=True)
-    
     # Create different distributions for testing
     np.random.seed(42)
     normal_data = np.random.normal(0, 1, 1000)
@@ -34,24 +33,21 @@ def test_plot_data_distribution():
     print("Generating visualizations for test data...")
     
     # Test with normal distribution
-    _plot_data_distribution(
+    plotter.plot_data_distribution(
         data=normal_data,
         name="Normal Distribution",
-        show=True
     )
     
     # Test with skewed distribution
-    _plot_data_distribution(
+    plotter.plot_data_distribution(
         data=skewed_data,
         name="Skewed Distribution",
-        show=True
     )
     
     # Test with bimodal distribution
-    _plot_data_distribution(
+    plotter.plot_data_distribution(
         data=bimodal_data,
         name="Bimodal Distribution",
-        show=True
     )
     
     # Test with DataFrame input
@@ -76,26 +72,23 @@ def test_plot_data_distribution():
     
     # Test visualization of each column in the DataFrame
     for column in df_test.columns:
-        _plot_data_distribution(
+        plotter.plot_data_distribution(
             data=df_test[column],
             name=f"DataFrame-{column}",
-            show=True
         )
     
     # Test with a subset of rows
-    _plot_data_distribution(
+    plotter.plot_data_distribution(
         data=df_test.iloc[100:600]['lognormal'],
         name="DataFrame-Subset-Lognormal",
-        show=True
     )
     
     # Test with a Series created from DataFrame
     series_test = df_test['bimodal'].copy()
     series_test.name = "Series from DataFrame"
-    _plot_data_distribution(
+    plotter.plot_data_distribution(
         data=series_test,
         name="DataFrame-Series",
-        show=True
     )
 
     return None
@@ -130,9 +123,6 @@ def test_plot_correlation():
        - Using stratified NaN value densities (ranging from 5% to 25%)
        - Verify algorithm performance and accuracy on large-scale complex data
     """
-    # Create test directory if it doesn't exist
-    results_dir = pathlib.Path("./results/test_vis")
-    results_dir.mkdir(parents=True, exist_ok=True)
     
     # Test correlation visualization
     test_df = pd.DataFrame({
@@ -151,17 +141,15 @@ def test_plot_correlation():
     print(f"Added {random_mask.sum()} NaN values to test_df")
     
     # Test correlation with the original data
-    _plot_correlation(
+    plotter.plot_correlation(
         data=test_df,
         name="Test Correlation (No NaNs)",
-        show=True
     )
     
     # Test correlation with NaNs
-    _plot_correlation(
+    plotter.plot_correlation(
         data=test_df_with_nans,
         name="Test Correlation (With NaNs)",
-        show=True
     )
     
     print("Testing correlation visualization with additional datasets...")
@@ -189,10 +177,9 @@ def test_plot_correlation():
     
     print(f"Added {random_mask.sum()} NaN values to large_test_df")
     
-    _plot_correlation(
+    plotter.plot_correlation(
         data=large_test_df_with_nans,
         name="Large Dataset Correlation (With NaNs)",
-        show=True
     )
     
     # Test with very strong correlations (should trigger warning)
@@ -222,11 +209,10 @@ def test_plot_correlation():
     nan_count = strong_corr_df_with_nans.isna().sum().sum()
     print(f"Added {nan_count} NaN values to strong_corr_df with varying densities")
     
-    _plot_correlation(
+    plotter.plot_correlation(
         data=strong_corr_df_with_nans,
         corr_threshold=0.7,  # Lower threshold to ensure warning is triggered
         name="Strong Correlations (With NaNs)",
-        show=True
     )
     
     # Test with mixed data types (some non-numeric columns)
@@ -249,10 +235,9 @@ def test_plot_correlation():
     nan_count = mixed_df_with_nans[['Numeric1', 'Numeric2', 'Numeric3']].isna().sum().sum()
     print(f"Added {nan_count} NaN values to numeric columns in mixed_df")
     
-    _plot_correlation(
+    plotter.plot_correlation(
         data=mixed_df_with_nans,
         name="Mixed Data Types (With NaNs)",
-        show=True
     )
     
     # Test with much larger dataset and many more features
@@ -323,13 +308,10 @@ def test_plot_correlation():
     nan_percent = 100 * nan_count / (extensive_df_with_nans.shape[0] * extensive_df_with_nans.shape[1])
     print(f"Added {nan_count} NaN values to extensive_df ({nan_percent:.1f}% of data)")
     
-    _plot_correlation(
+    plotter.plot_correlation(
         data=extensive_df_with_nans,
         name="Extensive Dataset (With NaNs)",
-        show=True
     )
-    
-    print(f"Visualizations saved to {results_dir.absolute()}")
 
     return None
 
@@ -345,19 +327,14 @@ def test_plot_category():
     """
     print("Testing categorical data visualization...")
     
-    # Create test directory if it doesn't exist
-    results_dir = pathlib.Path("./results/test_vis")
-    results_dir.mkdir(parents=True, exist_ok=True)
-    
     # Test 1: Basic functionality with a few categories
     print("Test 1: Basic categorical data visualization")
     basic_categories = np.array(['A', 'B', 'C', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'A', 'C', 'B', 'A', 'C'])
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=basic_categories,
             name="Basic Categories",
-            show=True
         )
         print("✓ Basic categorical visualization successful")
     except Exception as e:
@@ -374,10 +351,9 @@ def test_plot_category():
     np.random.shuffle(many_categories)  # Shuffle the data
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=many_categories,
             name="Many Categories",
-            show=True
         )
         print("✓ Many categories visualization successful (check for warning in logs)")
     except Exception as e:
@@ -388,10 +364,9 @@ def test_plot_category():
     float_data = np.array([1.1, 2.2, 3.3, 1.1, 2.2, 3.3, 4.4, 1.1, 2.2])
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=float_data,
             name="Float Data",
-            show=True
         )
         print("✗ Float data test failed: Should have raised an assertion error")
     except AssertionError as e:
@@ -408,10 +383,9 @@ def test_plot_category():
     ])
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=matrix_data,
             name="Matrix Data",
-            show=True
         )
         print("✗ 2D matrix test failed: Should have raised an assertion error")
     except AssertionError as e:
@@ -424,10 +398,9 @@ def test_plot_category():
     mixed_data = np.array([1, 2, 3, 'A', 'B', 'C', 1, 2, 'A', 'B', 3, 'C'])
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=mixed_data,
             name="Mixed Data Types",
-            show=True
         )
         print("✓ Mixed data types visualization successful")
     except Exception as e:
@@ -439,22 +412,24 @@ def test_plot_category():
                            name='Colors')
     
     try:
-        _plot_category(
+        plotter.plot_category(
             data=series_data,
-            show=True
         )
         print("✓ Pandas Series visualization successful")
     except Exception as e:
         print(f"✗ Pandas Series visualization failed: {e}")
-    
-    print(f"\nCategory visualizations saved to {results_dir.absolute()}")
+        
     return None
 
 
+
 if __name__ == "__main__":
-    results_dir = pathlib.Path("./results/test_vis")
-    results_dir.mkdir(parents=True, exist_ok=True)
-    
+    plotter = Plotter(
+        show = False,
+        plot_format = "png",
+        plot_dpi = 300,
+        results_dir = "./results/test_plotting"
+    )
 
     test_plot_category()
     test_plot_data_distribution()

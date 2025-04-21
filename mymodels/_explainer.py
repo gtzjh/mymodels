@@ -1,15 +1,9 @@
 import numpy as np
 import pandas as pd
 import shap
-import matplotlib
-import matplotlib.pyplot as plt
 import pathlib
 import logging
 
-
-# logging.getLogger().setLevel(logging.WARNING)
-# shap.initjs()
-matplotlib.use('Agg')
 
 
 class MyExplainer:
@@ -53,10 +47,6 @@ class MyExplainer:
         self.feature_names = None
         self.shap_values_dataframe = None
         self.numeric_features = None
-        # After plot_results()
-        self.show = None
-        self.plot_format = None
-        self.plot_dpi = None
 
         self._check_input()
 
@@ -86,13 +76,10 @@ class MyExplainer:
 
     
 
-    def explain(self,
+    def explain(
+            self,
             results_dir: str | pathlib.Path,
             numeric_features: list[str] | tuple[str],
-            plot: bool = True,
-            show: bool = False,
-            plot_format: str = "jpg",
-            plot_dpi: int = 500,
             output_raw_data: bool = False
         ):
         """Calculate SHAP values and generate explanations.
@@ -108,9 +95,6 @@ class MyExplainer:
         # Convert to list if input is tuple
         self.results_dir = pathlib.Path(results_dir)
         self.numeric_features = list(numeric_features) if isinstance(numeric_features, tuple) else numeric_features
-        self.show = show
-        self.plot_format = plot_format
-        self.plot_dpi = plot_dpi
 
         # Check if the model is a multi-class GBDT model
         if self.model_name == "gbdtc" and len(self.classes_) > 2:
@@ -161,10 +145,6 @@ class MyExplainer:
         self.shap_base_values = _explanation.base_values
         self.feature_names = _explanation.feature_names
 
-
-        # Plot the results
-        if plot:
-            self._plot_results()
         
         # Output the raw data
         if output_raw_data:
@@ -173,7 +153,7 @@ class MyExplainer:
         return None
 
 
-
+    """
     def _plot_results(self):
         if self.shap_values.ndim == 2:
             # All models used in regression tasks,
@@ -194,10 +174,9 @@ class MyExplainer:
                 save_dir = self.results_dir.joinpath("dependence_plots/")
             )
 
-            """Partial Dependence Plot 
-            is supported for regression task only.
-            is not supported for categorical features.
-            """
+            # Partial Dependence Plot 
+            # is supported for regression task only.
+            # is not supported for categorical features.
             if self.model_name in ["lr", "svr", "knr", "mlpr", "adar", "dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr"]:
                 self._plot_partial_dependence(
                     save_dir = self.results_dir.joinpath("partial_dependence_plots/")
@@ -236,6 +215,8 @@ class MyExplainer:
             raise ValueError(f"Invalid SHAP values dimension: {self.shap_values.ndim}")
         
         return None
+    """
+    
     
 
 

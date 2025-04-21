@@ -96,7 +96,7 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         logging.info(f"\nCategorical features: {_categorical_features}")
         if _categorical_features:
             for _cat_col in _categorical_features:
-                _vis_category(
+                plot_category(
                     data=self.x_data[_cat_col],
                     name=_cat_col,
                     save_dir=self.results_dir / "data_categorical",
@@ -140,7 +140,7 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         # Visualize the distribution of each numerical feature
         if _numeric_features:
             for col in _numeric_features:
-                _vis_data_distribution(
+                plot_data_distribution(
                     data=self.x_data[col],
                     name=col,
                     save_dir=dist_dir,
@@ -150,7 +150,7 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
                 )
             
             # Visualize correlations between numerical features
-            _vis_correlation(
+            plot_correlation(
                 data=self.x_data[_numeric_features],
                 name="numerical_features",
                 save_dir=corr_dir,

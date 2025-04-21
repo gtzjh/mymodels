@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import optuna
 from optuna.samplers import TPESampler, RandomSampler
 from sklearn.model_selection import KFold, StratifiedKFold
