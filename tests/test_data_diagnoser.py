@@ -8,7 +8,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mymodels.pipeline import MyPipeline
+from mymodels.main import MyPipeline
 
 
 logging.basicConfig(

@@ -44,8 +44,7 @@ def data_loader(
     elif isinstance(y, int):
         y_data = input_data.iloc[:, y]
     else:
-        raise ValueError("`y` must be either a string or " \
-                         "index within the whole dataset")
+        raise ValueError("`y` must be either a string or index in the input dataframe")
 
     # Verify x_list contains valid column identifiers and select data
     # All elements must be either strings (column names) or integers (column indices)
@@ -55,8 +54,7 @@ def data_loader(
     elif all([isinstance(i, int) for i in x_list]):
         x_data = input_data.iloc[:, x_list]
     else:
-        raise ValueError("`x_list` must be either a list or tuple of strings " \
-                         "or indices within the whole dataset")
+        raise ValueError("`x_list` must be either a list or tuple of strings or indices in the input dataframe")
 
 
     # Transform non-numeric target to label encoding

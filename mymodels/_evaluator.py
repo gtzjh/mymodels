@@ -11,9 +11,6 @@ import yaml, pathlib, json
 
 
 
-from ._plot_classification import plot_roc_curve, plot_pr_curve, plot_confusion_matrix
-
-
 class MyEvaluator:
     """A class for evaluating machine learning regression models.
     
@@ -281,6 +278,8 @@ class MyEvaluator:
             print(f"Dummy Accuracy: \n", \
                   json.dumps(self.dummy_accuracy_dict, indent=4))
 
+
+        """
         # Plot
         # Regression case
         if is_regressor(self.optimal_model_object):
@@ -295,10 +294,11 @@ class MyEvaluator:
                 self.x_test,
                 self.optimal_model_object
             )
+        """
+
 
         # Output train and test results
         if self.save_raw_data:
-            # 检查并确保是一维数据
             y_test_pred_1d = self.y_test_pred
             y_train_pred_1d = self.y_train_pred
             
@@ -319,127 +319,7 @@ class MyEvaluator:
 
 
 
-    def _regression_scatter_plot(self, _y, _y_pred):
-        """Creates a scatter plot of actual vs predicted values for regression model evaluation.
 
-        This function generates a visualization comparing actual values to predicted values
-        from a regression model. It includes a scatter plot of the data points, a linear fit line,
-        a y=x reference line, and displays performance metrics (R2, RMSE, MAE) in the legend.
-
-        Args:
-            _r2_value (float): R-squared value of the regression model.
-            _rmse_value (float): Root Mean Squared Error value of the regression model.
-            _mae_value (float): Mean Absolute Error value of the regression model.
-            _y (pandas.Series, or numpy.ndarray): Actual target values.
-            _y_pred (pandas.Series or numpy.ndarray): Predicted target values.
-
-        Returns:
-            None: The function saves the plot to disk and does not return a value.
-        """
-        plt.figure(figsize = (8, 8), dpi = 500)
-        plt.scatter(_y, _y_pred, color = '#4682B4', alpha = 0.4, s = 150)
-        
-        # 定义x轴的上下限，为了防止轴须图中的离散值改变了坐标轴定位
-        _min = _y.min() - abs(_y.min()) * 0.15
-        _max = _y.max() + abs(_y.max()) * 0.15
-        plt.xlim(_min, _max)
-        plt.ylim(_min, _max)
-
-        # 进行散点的线性拟合
-        param = np.polyfit(_y, _y_pred, 1)
-        y2 = param[0] * _y + param[1]
-
-        _y = _y.to_numpy()
-        y2 = y2.to_numpy()
-
-        _line1, = plt.plot(_y, y2, color = 'black', label = 'y = ' + f'{param[0]:.2f}' + " * x" + " + " + f'{param[1]:.2f}')
-        _line2, = plt.plot([_min, _max], [_min, _max], '--', color = 'gray', label = 'y = x') # 绘制 y = x 的虚线
-
-        plt.legend(handles = [_line1, _line2], 
-                loc = 'upper left', fancybox = True, shadow = True, fontsize = 16, prop = {'size': 16})
-        
-        plt.ylabel('Predicted values', fontdict = {'size': 18})
-        plt.xlabel('Actual values', fontdict = {'size': 18})
-        plt.yticks(size = 16)
-        plt.xticks(size = 16)
-
-        ax = plt.gca()
-        ax.spines['right'].set_color('none')
-        ax.spines['top'].set_color('none')
-
-
-        plt.savefig(
-            self.results_dir.joinpath('accuracy_plot.' + self.plot_format),
-            dpi = self.plot_dpi
-        )
-
-        if self.show:
-            plt.show()
-
-        plt.close()
-
-        return None
-
-    
-    def _classification_plots(self, y_test, x_test, optimal_model_object):
-        """Creates ROC curve, PR curve, and confusion matrix plots for classification model evaluation.
-        
-        For binary classification, plots a single ROC curve.
-        For multiclass classification, plots one-vs-rest ROC curves for each class.
-        
-        Args:
-            y_test: Actual test target values.
-            x_test: Test feature data, needed for classification models' predict_proba method
-            optimal_model_object: The optimal model object used to get probability estimates.
-        """
-        ###########################################################################################
-        # Plot ROC curve
-        fig_roc, ax_roc = plot_roc_curve(y_test, x_test, optimal_model_object)
-        fig_roc.savefig(
-            self.results_dir.joinpath('roc_curve_plot.' + self.plot_format),
-            dpi=self.plot_dpi
-        )
-
-        if self.show:
-            plt.figure(fig_roc.number)
-            plt.show()
-
-        plt.close(fig_roc)
-        ###########################################################################################
-
-
-        ###########################################################################################
-        # Plot PR curve
-        fig_pr, ax_pr = plot_pr_curve(y_test, x_test, optimal_model_object)
-        fig_pr.savefig(
-            self.results_dir.joinpath('pr_curve_plot.' + self.plot_format),
-            dpi=self.plot_dpi
-        )
-        if self.show:
-            plt.figure(fig_pr.number)
-            plt.show()
-        plt.close(fig_pr)
-
-        ###########################################################################################
-
-
-        ###########################################################################################
-        # Plot confusion matrix
-        y_test_pred = optimal_model_object.predict(x_test)
-        fig_cm, ax_cm = plot_confusion_matrix(y_test, y_test_pred)
-        fig_cm.savefig(
-            self.results_dir.joinpath('confusion_matrix_plot.' + self.plot_format),
-            dpi=self.plot_dpi
-        )
-        if self.show:
-            plt.figure(fig_cm.number)
-            plt.show()
-        plt.close(fig_cm)
-
-        ###########################################################################################
-
-        return None
-    
 
 
 

@@ -34,6 +34,8 @@ class MyExplainer:
             sample_shap_data_k (int|float|None): If int, the number of samples to explain;
                 if float, the fraction of data to explain; if None, explain all data.
         """
+        if not callable(self.model_obj):
+            raise ValueError("model_object must be callable")
         
         self.model_obj = model_object
         self.model_name = model_name
@@ -134,21 +136,6 @@ class MyExplainer:
                                              self.sample_shap_data_k)
         ###########################################################################################
 
-        """
-        # Print all methods and attributes of self.model_obj
-        logging.debug("\nMethods and attributes of the model object:")
-        # Get all attributes and methods
-        model_attributes = dir(self.model_obj)
-        # Print them in a more readable format
-        for attr in sorted(model_attributes):
-            # Skip private attributes (those starting with '_')
-            if not attr.startswith('_'):
-                attr_type = type(getattr(self.model_obj, attr))
-                if callable(getattr(self.model_obj, attr)):
-                    logging.debug(f"  Method: {attr}()")
-                else:
-                    logging.debug(f"  Attribute: {attr} - {attr_type}")
-        """
 
         ###########################################################################################
         # Set the explainer
@@ -249,75 +236,7 @@ class MyExplainer:
             raise ValueError(f"Invalid SHAP values dimension: {self.shap_values.ndim}")
         
         return None
-
-
-
-    def _plot_summary(self, shap_values, save_dir: pathlib.Path, file_name: str, title: str):
-        """Summary Plot
-        https://shap.readthedocs.io/en/latest/release_notes.html#release-v0-36-0
-        """
-        fig = plt.figure()
-        shap.summary_plot(shap_values, self.shap_data, show = False)
-        plt.title(title)
-        plt.tight_layout()
-        plt.savefig(save_dir.joinpath(file_name + '.' + self.plot_format), dpi = self.plot_dpi)
-        if self.show:
-            plt.show()
-        plt.close("all")
-        return None
-
-
-
-    def _plot_dependence(self, shap_values, save_dir: pathlib.Path):
-        """Dependence Plot
-        https://shap.readthedocs.io/en/latest/example_notebooks/api_examples/plots/scatter.html#Using-color-to-highlight-interaction-effects
-        """
-        _results_dir = save_dir
-        _results_dir.mkdir(parents = True, exist_ok = True)
-
-        def _dp(_feature_name):
-            # Close any existing figures before creating a new one
-            # shap.dependence_plot creates its own figure internally
-            shap.dependence_plot(_feature_name, shap_values, self.shap_data, show = False)
-            plt.tight_layout()
-            plt.savefig(_results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
-            if self.show:
-                plt.show()
-            plt.close("all")
-            return None
-
-        for i in self.feature_names:
-            _dp(str(i))
-            
-        return None
     
-
-
-    def _plot_partial_dependence(self, save_dir: pathlib.Path):
-        _results_dir = save_dir
-        _results_dir.mkdir(parents = True, exist_ok = True)
-        
-        def _pdp(_feature_name):
-            _fig, _ax = shap.partial_dependence_plot(
-                _feature_name,
-                self.model_obj.predict,
-                self.shap_data,
-                model_expected_value = True,
-                feature_expected_value = True,
-                ice = False,
-                show = False
-            )
-            if self.show:
-                _fig.show()
-            _fig.tight_layout()
-            _fig.savefig(_results_dir.joinpath(_feature_name + '.' + self.plot_format), dpi = self.plot_dpi)
-            plt.close("all")
-        
-        for r in self.numeric_features:
-            _pdp(str(r))
-
-        return None 
-
 
 
     def _output_shap_values(self):

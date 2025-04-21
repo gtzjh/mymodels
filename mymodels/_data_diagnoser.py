@@ -2,10 +2,6 @@ import pandas as pd
 import logging, pathlib
 
 
-from ._vis_data import _vis_data_distribution, _vis_correlation, _vis_category
-
-
-
 class MyDataDiagnoser:
     def __init__(
             self,

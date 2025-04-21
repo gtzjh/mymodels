@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
 from mymodels.data_engineer import data_engineer
-from mymodels.pipeline import MyPipeline
+from mymodels import MyPipeline
 
 
 

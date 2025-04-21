@@ -6,7 +6,7 @@ from sklearn.preprocessing import label_binarize
 
 
 
-def plot_roc_curve(y_test, x_test, optimal_model_object):
+def _plot_roc_curve(y_test, x_test, optimal_model_object):
     """Creates ROC curve plot for classification model evaluation.
     
     For binary classification, plots a single ROC curve.
@@ -28,7 +28,7 @@ def plot_roc_curve(y_test, x_test, optimal_model_object):
 
     fig = plt.figure()
     ###########################################################################################
-    # Binary classification case
+    # Binary classification
     if n_classes == 2:
         # For binary classification, use probability of positive class
         if y_prob.shape[1] == 2:  # If there are probabilities for both classes
@@ -41,12 +41,13 @@ def plot_roc_curve(y_test, x_test, optimal_model_object):
         # Compute ROC curve and ROC area
         fpr, tpr, _ = roc_curve(y_test, pos_prob)
         roc_auc = auc(fpr, tpr)
-        
-        # Plot ROC curve
+
         plt.plot(fpr, tpr, lw=2, label=f'ROC curve (AUC = {roc_auc:.3f})')
         plt.plot([0, 1], [0, 1], 'k--', lw=2)  # Diagonal reference line
-        
-    # Multiclass classification case
+    ###########################################################################################
+    
+    ###########################################################################################
+    # Multiclass classification
     else:
         # Convert y_test to binary format (one-hot encoding)
         y_test_bin = label_binarize(y_test, classes=classes)
@@ -63,7 +64,6 @@ def plot_roc_curve(y_test, x_test, optimal_model_object):
             plt.plot(fpr[i], tpr[i], lw=2, 
                         label=f'ROC curve of class {classes[i]} (AUC = {roc_auc[i]:.3f})')
             
-        # Calculate and display macro-average ROC AUC
         macro_roc_auc = np.mean([roc_auc[i] for i in range(n_classes)])
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
         plt.text(0.5, 0.3, f'Macro-average AUC = {macro_roc_auc:.3f}', 
@@ -92,7 +92,7 @@ def plot_roc_curve(y_test, x_test, optimal_model_object):
 
 
 
-def plot_pr_curve(y_test, x_test, optimal_model_object):
+def _plot_pr_curve(y_test, x_test, optimal_model_object):
     """Creates PR curve plot for classification model evaluation.
     
     For binary classification, plots a single PR curve.
@@ -179,7 +179,7 @@ def plot_pr_curve(y_test, x_test, optimal_model_object):
 
 
 
-def plot_confusion_matrix(y_test, y_test_pred):
+def _plot_confusion_matrix(y_test, y_test_pred):
     """Creates confusion matrix plot for classification model evaluation.
     
     Args:

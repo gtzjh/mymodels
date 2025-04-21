@@ -13,7 +13,7 @@ import pickle, yaml, pathlib, logging
 
 
 
-from .models import MyModels
+from ._models import MyModels
 
 
 
@@ -371,10 +371,14 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
         self.plot_format = plot_format
         self.plot_dpi = plot_dpi
 
+        
+        """
         # Plot the optimization history
         if optimize_history:
             self._plot_optimize_history(self.optuna_study)
 
+        """
+        
         # Save optimal parameters
         if save_optimal_params:
             self._save_optimal_params()
@@ -385,48 +389,6 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
 
         return None
     
-
-
-    def _plot_optimize_history(self, optuna_study_object: optuna.Study):
-        """Plot the optimization history using matplotlib instead of plotly.
-
-        This version doesn't require additional packages to save images.
-        Creates a plot showing trial values and best values across optimization trials.
-        
-        Args:
-            optuna_study_object: The completed Optuna study containing trial results.
-            
-        Returns:
-            None. The plot is saved to the results directory.
-        """
-        # Get the optimization history data
-        trials = optuna_study_object.trials
-        values = [t.value for t in trials if t.value is not None]
-        best_values = [max(values[:i+1]) for i in range(len(values))]
-        
-        # Create figure
-        plt.figure(figsize=(10, 6))
-        plt.plot(range(1, len(values) + 1), values, 'o-', color='blue', alpha=0.5, label='Trial value')
-        plt.plot(range(1, len(best_values) + 1), best_values, 'o-', color='red', label='Best value')
-        
-        # Add labels and title
-        plt.xlabel('Trial number')
-        plt.ylabel('Objective value')
-        plt.title('Optimization History')
-        plt.legend()
-        plt.grid(True, linestyle='--', alpha=0.6)
-        
-        # Save the figure
-        plt.tight_layout()
-        plt.savefig(self.results_dir.joinpath("optimization_history." + self.plot_format), dpi = self.plot_dpi)
-
-        if self.show:
-            plt.show()
-
-        plt.close("all")
-        
-        return None
-
 
 
     def _save_optimal_params(self):
