@@ -29,7 +29,7 @@ def _plot_shap_summary(shap_values):
 
 
 
-def _plot_shap_dependence(shap_values):
+def _plot_shap_dependence(shap_explanation):
     """SHAP dependence plot
 
     Args:
@@ -39,18 +39,28 @@ def _plot_shap_dependence(shap_values):
         shap_dp_plot_list: list of tuple (fig, ax)
     """
     
-    assert isinstance(shap_values, (np.ndarray, pd.DataFrame)), \
-        "shap_values must be a ndarray or pd.DataFrame"
-    assert hasattr(shap_values, 'ndim'), "shap_values must have the attribute 'ndim'"
-    assert shap_values.ndim == 2
+    assert isinstance(shap_explanation, shap.Explanation), \
+        "shap_explanation must be a shap.Explanation object"
+    
+    # For binary classification (except for decision tree and random forest of sklearn)
+    if shap_explanation.values.ndim == 2:
+        shap_dp_plots = []
+        for feature_name in shap_explanation.feature_names:
+            fig = plt.figure()
+            shap.plots.scatter(shap_explanation[:, feature_name], show=False, color=shap_explanation)
+            plt.tight_layout()
+            ax = plt.gca()
+            shap_dp_plots.append((fig, ax, feature_name))
 
-    shap_dp_plot_list = []
-    for i in range(0, shap_values.shape[1]):
-        fig = plt.figure()
-        # shap.dependence_plot creates its own plot
-        shap.dependence_plot(i, shap_values, show=False)
-        plt.tight_layout()
-        ax = plt.gca()
-        shap_dp_plot_list.append((fig, ax))
+    elif shap_explanation.values.ndim == 3:
+        shap_dp_plots = dict()
+        for class_idx in range(shap_explanation.values.shape[2]):
+            shap_dp_plots[class_idx] = []
+            for feature_name in shap_explanation.feature_names:
+                fig = plt.figure()
+                shap.plots.scatter(shap_explanation[:, feature_name, class_idx], show=False, color=shap_explanation[:, :, class_idx])
+                plt.tight_layout()
+                ax = plt.gca()
+                shap_dp_plots[class_idx].append((fig, ax, feature_name))
 
-    return shap_dp_plot_list
+    return shap_dp_plots

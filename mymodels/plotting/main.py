@@ -286,8 +286,6 @@ class Plotter:
         if shap_values.ndim == 2:
             fig, ax = _plot_shap_summary(shap_values)
             self._finalize_plot(fig, sub_dir = f"SHAP/", saved_file_name = "shap_summary")
-        
-
         elif shap_values.ndim == 3:
             # shap_values.shape[2] is the number of classes
             for i in range(shap_values.shape[2]):
@@ -297,7 +295,6 @@ class Plotter:
                     sub_dir = f"SHAP/shap_summary/", 
                     saved_file_name = f"class_{i}"
                 )
-
         else:
             raise ValueError(f"Invalid SHAP values dimension: {shap_values.ndim}")
 
@@ -315,28 +312,19 @@ class Plotter:
         assert isinstance(shap_explanation, shap.Explanation), \
             "shap_explanation must be a shap.Explanation object"
 
-        shap_values = shap_explanation.values
-        feature_names_list = shap_explanation.feature_names
-
-
-        if shap_values.ndim == 2:
-            # The _plot_dependence() will return a list of tuple (fig, ax).
-            fig_ax_list = _plot_shap_dependence(shap_values)
-            for fig, ax, feature_name in zip(fig_ax_list, feature_names_list):
+        shap_dp_plots = _plot_shap_dependence(shap_explanation)
+        # shap_explanation.values.ndim == 2
+        if isinstance(shap_dp_plots, list):
+            for fig, ax, feature_name in shap_dp_plots:
                 self._finalize_plot(fig, sub_dir = "SHAP/shap_dependence/", saved_file_name = str(feature_name))
-
-
-        elif shap_values.ndim == 3:
-            # shap_values.shape[2] is the number of classes
-            for i in range(shap_values.shape[2]):
-                fig_ax_list = _plot_shap_dependence(shap_values[:, :, i])
-                for fig, ax, feature_name in zip(fig_ax_list, feature_names_list):
-                    self._finalize_plot(
-                        fig,
-                        sub_dir = f"SHAP/shap_dependence/class_{i}/",
-                        saved_file_name = str(feature_name)
-                    )
-
+        # shap_explanation.values.ndim == 3s
+        elif isinstance(shap_dp_plots, dict):
+            for class_idx, shap_dp_plots in shap_dp_plots.items():
+                for fig, ax, feature_name in shap_dp_plots:
+                    self._finalize_plot(fig, sub_dir = f"SHAP/shap_dependence/class_{class_idx}/", saved_file_name = str(feature_name))
+        else:
+            raise ValueError(f"Invalid return for _plot_shap_dependence")
+        
         return None
 
 

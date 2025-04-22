@@ -26,7 +26,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-import os
 import shutil
 import shap
 import matplotlib.pyplot as plt
@@ -42,21 +41,18 @@ from mymodels.plotting import Plotter
 
 
 # 创建测试所需的目录
-@pytest.fixture
 def test_results_dir():
     results_dir = "./results/test_plotting_plot_explainer/"
     os.makedirs(results_dir, exist_ok=True)
-    yield results_dir
-    # 测试完成后清理
-    if os.path.exists(results_dir):
-        shutil.rmtree(results_dir)
+    return results_dir
+    # 测试完成后清理部分移到主函数中
 
 
 # 创建二分类数据和模型
-@pytest.fixture
 def binary_classification_data():
     X, y = make_classification(n_samples=100, n_features=5, n_informative=3, n_redundant=1, random_state=42, n_classes=2)
     feature_names = [f"feature_{i}" for i in range(X.shape[1])]
+    X  = pd.DataFrame(X, columns=feature_names)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -64,7 +60,6 @@ def binary_classification_data():
     
     # 创建SHAP解释器
     explainer = shap.TreeExplainer(model)
-    explainer.feature_names = feature_names
     
     return {
         "X_train": X_train, 
@@ -77,10 +72,10 @@ def binary_classification_data():
 
 
 # 创建多分类数据和模型
-@pytest.fixture
 def multiclass_classification_data():
     X, y = make_classification(n_samples=100, n_features=5, n_informative=4, n_redundant=1, random_state=42, n_classes=6)
     feature_names = [f"feature_{i}" for i in range(X.shape[1])]
+    X  = pd.DataFrame(X, columns=feature_names)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -88,7 +83,6 @@ def multiclass_classification_data():
     
     # 创建SHAP解释器
     explainer = shap.TreeExplainer(model)
-    explainer.feature_names = feature_names
     
     return {
         "X_train": X_train, 
@@ -101,10 +95,10 @@ def multiclass_classification_data():
 
 
 # 创建回归数据和模型
-@pytest.fixture
 def regression_data():
     X, y = load_diabetes(return_X_y=True)
     feature_names = load_diabetes().feature_names
+    X = pd.DataFrame(X, columns=feature_names)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     
     model = RandomForestRegressor(n_estimators=10, random_state=42)
@@ -112,7 +106,6 @@ def regression_data():
     
     # 创建SHAP解释器
     explainer = shap.TreeExplainer(model)
-    explainer.feature_names = feature_names
     
     return {
         "X_train": X_train, 
@@ -192,7 +185,7 @@ def test_plot_shap_summary_regression(test_results_dir, regression_data):
     explainer = regression_data["explainer"]
     X_test = regression_data["X_test"]
     explanation = explainer(X_test, check_additivity=False)
-    
+
     # 测试绘制功能
     plotter.plot_shap_summary(explanation)
     
@@ -216,6 +209,7 @@ def test_plot_shap_dependence_binary(test_results_dir, binary_classification_dat
     explainer = binary_classification_data["explainer"]
     X_test = binary_classification_data["X_test"]
     explanation = explainer(X_test, check_additivity=False)
+
     
     # 测试绘制功能
     plotter.plot_shap_dependence(explanation)
@@ -472,70 +466,13 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Failed to clean up test directory: {str(e)}")
 
-
     # Create test directory
     os.makedirs(results_dir, exist_ok=True)
     
-
-    # Create binary classification data and model directly (recreating fixture logic)
-    X_binary, y_binary = make_classification(n_samples=100, n_features=5, n_informative=3, n_redundant=1, random_state=42)
-    feature_names_binary = [f"feature_{i}" for i in range(X_binary.shape[1])]
-    X_train_binary, X_test_binary, y_train_binary, y_test_binary = train_test_split(X_binary, y_binary, test_size=0.3, random_state=42)
-    
-    model_binary = RandomForestClassifier(n_estimators=10, random_state=42)
-    model_binary.fit(X_train_binary, y_train_binary)
-    
-    explainer_binary = shap.Explainer(model_binary, X_train_binary)
-    explainer_binary.feature_names = feature_names_binary
-    
-    binary_data = {
-        "X_train": X_train_binary, 
-        "X_test": X_test_binary, 
-        "y_train": y_train_binary, 
-        "y_test": y_test_binary, 
-        "model": model_binary, 
-        "explainer": explainer_binary
-    }
-    
-    # Create multiclass classification data and model directly
-    X_multi, y_multi = make_classification(n_samples=100, n_features=5, n_informative=4, n_redundant=1, random_state=42, n_classes=6)
-    feature_names_multi = [f"feature_{i}" for i in range(X_multi.shape[1])]
-    X_train_multi, X_test_multi, y_train_multi, y_test_multi = train_test_split(X_multi, y_multi, test_size=0.3, random_state=42)
-    
-    model_multi = RandomForestClassifier(n_estimators=10, random_state=42)
-    model_multi.fit(X_train_multi, y_train_multi)
-    
-    explainer_multi = shap.Explainer(model_multi, X_train_multi)
-    explainer_multi.feature_names = feature_names_multi
-    
-    multiclass_data = {
-        "X_train": X_train_multi, 
-        "X_test": X_test_multi, 
-        "y_train": y_train_multi, 
-        "y_test": y_test_multi, 
-        "model": model_multi, 
-        "explainer": explainer_multi
-    }
-    
-    # Create regression data and model directly
-    X_reg, y_reg = load_diabetes(return_X_y=True)
-    feature_names_reg = load_diabetes().feature_names
-    X_train_reg, X_test_reg, y_train_reg, y_test_reg = train_test_split(X_reg, y_reg, test_size=0.3, random_state=42)
-    
-    model_reg = RandomForestRegressor(n_estimators=10, random_state=42)
-    model_reg.fit(X_train_reg, y_train_reg)
-    
-    explainer_reg = shap.Explainer(model_reg, X_train_reg)
-    explainer_reg.feature_names = feature_names_reg
-    
-    regression_data = {
-        "X_train": X_train_reg, 
-        "X_test": X_test_reg, 
-        "y_train": y_train_reg, 
-        "y_test": y_test_reg, 
-        "model": model_reg, 
-        "explainer": explainer_reg
-    }
+    # 获取测试数据
+    binary_data = binary_classification_data()
+    multiclass_data = multiclass_classification_data()
+    reg_data = regression_data()
     
     # Run all tests
     print("Running test_plot_shap_summary_binary...")
@@ -545,7 +482,7 @@ if __name__ == "__main__":
     test_plot_shap_summary_multiclass(results_dir, multiclass_data)
     
     print("Running test_plot_shap_summary_regression...")
-    test_plot_shap_summary_regression(results_dir, regression_data)
+    test_plot_shap_summary_regression(results_dir, reg_data)
     
     print("Running test_plot_shap_dependence_binary...")
     test_plot_shap_dependence_binary(results_dir, binary_data)
@@ -554,7 +491,7 @@ if __name__ == "__main__":
     test_plot_shap_dependence_multiclass(results_dir, multiclass_data)
     
     print("Running test_plot_shap_dependence_regression...")
-    test_plot_shap_dependence_regression(results_dir, regression_data)
+    test_plot_shap_dependence_regression(results_dir, reg_data)
     
     print("Running test_invalid_explainer_type...")
     test_invalid_explainer_type(results_dir)
@@ -566,12 +503,12 @@ if __name__ == "__main__":
     test_inconsistent_feature_names(results_dir, binary_data)
     
     print("Running test_different_plot_formats...")
-    test_different_plot_formats(results_dir, regression_data)
+    test_different_plot_formats(results_dir, reg_data)
     
     print("Running test_few_features...")
     test_few_features(results_dir)
     
     print("Running test_with_nan_values...")
-    test_with_nan_values(results_dir, regression_data)
+    test_with_nan_values(results_dir, reg_data)
     
     print("All tests completed successfully!")
