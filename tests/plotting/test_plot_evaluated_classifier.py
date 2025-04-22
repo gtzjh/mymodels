@@ -5,10 +5,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 
+
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from mymodels.plotting import Plotter
+
 
 
 def test_plot_binary_classification():

@@ -5,12 +5,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 
-
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from mymodels.plotting import Plotter
-
 
 
 def test_plot_optimize_history():
@@ -55,17 +53,16 @@ def test_plot_optimize_history():
     study.optimize(objective, n_trials=10)
     
     # Plot the optimization history
-    plotter.plot_optimize_history(study)
-    
-    return study
-
-
-if __name__ == "__main__":
     plotter = Plotter(
         show = False,
         plot_format = "png",
         plot_dpi = 300,
         results_dir = "./results/test_plotting_plot_optimizer"
     )
+    plotter.plot_optimize_history(study)
     
+    return study
+
+
+if __name__ == "__main__":
     test_plot_optimize_history()

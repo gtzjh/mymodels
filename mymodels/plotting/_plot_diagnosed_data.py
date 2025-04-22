@@ -24,7 +24,12 @@ def _plot_category(
         tuple: (fig, ax) matplotlib figure and axes objects
     """
     # Validate input is 1D ndarray-like
-    assert hasattr(data, 'shape') and len(data.shape) == 1, "Data must be a 1D array-like object"
+    assert hasattr(data, 'shape') and len(data.shape) == 1, \
+        "Data must be a 1D array-like object"
+    assert np.issubdtype(np.array(data).dtype, np.object_) \
+        or np.issubdtype(np.array(data).dtype, np.category) \
+            or np.all(pd.isna(data)), \
+                "All values in data must be of type object, category, or None"
     
     # Convert to numpy array for easier handling
     data_array = np.array(data)
@@ -408,11 +413,4 @@ def _plot_correlation(
     result['pearson'] = create_heatmap(pearson_corr, pearson_pvalues, pearson_dropped_rows, "Pearson")
     result['spearman'] = create_heatmap(spearman_corr, spearman_pvalues, spearman_dropped_rows, "Spearman")
     
-    """
-    result:
-        {
-            "pearson": (fig, ax),
-            "spearman": (fig, ax)
-        }
-    """
     return result

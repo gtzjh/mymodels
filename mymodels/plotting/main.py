@@ -112,9 +112,10 @@ class Plotter:
             logging.warning("Cannot save figure: results_dir is not set.")
             return None
         
+        saved_dir = self.results_dir
         # Create the sub_dir if it does not exist
         if sub_dir is not None:
-            saved_dir = self.results_dir.joinpath(sub_dir)
+            saved_dir = saved_dir.joinpath(sub_dir)
             saved_dir.mkdir(parents = True, exist_ok = True)
         
         # Ensure filename has the correct extension

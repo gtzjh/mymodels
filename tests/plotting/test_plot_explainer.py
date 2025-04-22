@@ -18,7 +18,6 @@ Beyond these basic tests, we should add input exception handling tests:
 
 import numpy as np
 import pandas as pd
-import pytest
 import shutil
 import shap
 import matplotlib.pyplot as plt
@@ -29,7 +28,7 @@ from sklearn.model_selection import train_test_split
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from mymodels.plotting import Plotter
 
 
