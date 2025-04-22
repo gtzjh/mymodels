@@ -62,7 +62,7 @@ class Plotter:
 
 
     ###########################################################################################
-    # Utility functions
+    # Utility functions (private)
     ###########################################################################################
     def _save_figure(self, fig, filename):
         """Save the provided figure to the results directory.

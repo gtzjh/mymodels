@@ -10,10 +10,6 @@ from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
 
 
-from plotting import Plotter
-from output import Output
-
-
 
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
@@ -134,7 +130,7 @@ class MyPipeline:
         n_jobs: int = 5,
         cat_features: list[str] | tuple[str] | None = None,
         direction: str = "maximize",
-        eval_function: callable | None = None,
+        eval_function: None = None,
         optimize_history: bool = True,
         save_optimal_params: bool = True,
         save_optimal_model: bool = True,

@@ -1,8 +1,34 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix
 from sklearn.preprocessing import label_binarize
+
+
+
+
+def _check_input(y_test, x_test):
+    """
+    Check if the input y_test is a valid binary or multiclass classification label.
+    
+    Args:
+        y_test: True labels
+        
+    Returns:
+        bool: True if y_test is a valid binary or multiclass classification label, False otherwise
+    """
+    # Check if y_test is a valid binary or multiclass classification label
+    if hasattr(y_test, 'ndim'):
+        assert (y_test.ndim == 1), "Input y_test must be a 1D array-like structure."
+    else:
+        assert isinstance(y_test, (list, np.ndarray, pd.Series)), "Input y_test must be a 1D array-like structure."
+
+    assert len(y_test) == len(x_test), "The length of y_test and x_test must be the same."
+
+    assert not np.any(pd.isnull(y_test)), "Input _y must not contain any empty values."
+
+    return None
 
 
 
@@ -15,6 +41,7 @@ def _plot_roc_curve(y_test, x_test, optimal_model_object):
     Returns:
         tuple: (fig, ax) The figure and axis objects containing the ROC curve plot
     """
+    _check_input(y_test, x_test)
 
     # Check if the optimal model object has the predict_proba method
     if not hasattr(optimal_model_object, "predict_proba"):
@@ -26,7 +53,7 @@ def _plot_roc_curve(y_test, x_test, optimal_model_object):
     classes = np.unique(y_test)
     n_classes = len(classes)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 10))
     ###########################################################################################
     # Binary classification
     if n_classes == 2:
@@ -111,7 +138,7 @@ def _plot_pr_curve(y_test, x_test, optimal_model_object):
     classes = np.unique(y_test)
     n_classes = len(classes)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 10))
     
     # Binary classification case
     if n_classes == 2:

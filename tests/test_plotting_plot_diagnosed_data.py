@@ -428,7 +428,7 @@ if __name__ == "__main__":
         show = False,
         plot_format = "png",
         plot_dpi = 300,
-        results_dir = "./results/test_plotting"
+        results_dir = "./results/test_plotting_plot_diagnosed_data"
     )
 
     test_plot_category()

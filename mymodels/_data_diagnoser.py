@@ -1,5 +1,5 @@
 import pandas as pd
-import logging, pathlib
+import logging
 
 
 class MyDataDiagnoser:
@@ -7,17 +7,9 @@ class MyDataDiagnoser:
             self,
             x_data: pd.DataFrame,
             y_data: pd.Series,
-            results_dir: str | pathlib.Path,
-            show: bool = False,
-            plot_format: str = "jpg",
-            plot_dpi: int = 500
         ):
         self.x_data = x_data.copy()
         self.y_data = y_data.copy()
-        self.results_dir = pathlib.Path(results_dir)
-        self.show = show
-        self.plot_format = plot_format
-        self.plot_dpi = plot_dpi
 
         self._check_input()
 
