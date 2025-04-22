@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
 import shap
-
+import numpy as np
 
 from ._plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
 from ._plot_optimizer import _plot_optimize_history
@@ -64,41 +64,6 @@ class Plotter:
     ###########################################################################################
     # Utility functions (private)
     ###########################################################################################
-    def _save_figure(self, fig, sub_dir = None, saved_file_name = None):
-        """Save the provided figure to the results directory.
-        
-        Args:
-            fig (matplotlib.figure.Figure): The figure to save.
-            saved_dir (str, optional): Directory for the saved file.
-                If None, the figure will not be saved.
-            saved_file_name (str, optional): Name for the saved file (without extension).
-                If None, the figure will not be saved.
-            
-        Returns:
-            str or None: Path to the saved file if results_dir is set, otherwise None.
-        """
-        
-        if self.results_dir is None:
-            logging.warning("Cannot save figure: results_dir is not set.")
-            return None
-        
-        # Create the sub_dir if it does not exist
-        if sub_dir is not None:
-            sub_dir = self.results_dir / sub_dir
-            sub_dir.mkdir(parents = True, exist_ok = True)
-        
-        # Ensure filename has the correct extension
-        if not saved_file_name.endswith(f".{self.plot_format}"):
-            filepath = self.results_dir / f"{saved_file_name}.{self.plot_format}"
-        else:
-            filepath = self.results_dir / saved_file_name
-        
-        # Save the figure
-        fig.savefig(filepath, dpi = self.plot_dpi, bbox_inches = 'tight')
-        
-        return str(filepath)
-    
-
     def _finalize_plot(self, fig, sub_dir = None, saved_file_name = None):
         """Finalize a plot by optionally saving and showing it.
         
@@ -127,6 +92,41 @@ class Plotter:
             plt.close(fig)
             
         return saved_path
+    
+
+    def _save_figure(self, fig, sub_dir = None, saved_file_name = None):
+        """Save the provided figure to the results directory.
+        
+        Args:
+            fig (matplotlib.figure.Figure): The figure to save.
+            saved_dir (str, optional): Directory for the saved file.
+                If None, the figure will not be saved.
+            saved_file_name (str, optional): Name for the saved file (without extension).
+                If None, the figure will not be saved.
+            
+        Returns:
+            str or None: Path to the saved file if results_dir is set, otherwise None.
+        """
+        
+        if self.results_dir is None:
+            logging.warning("Cannot save figure: results_dir is not set.")
+            return None
+        
+        # Create the sub_dir if it does not exist
+        if sub_dir is not None:
+            saved_dir = self.results_dir.joinpath(sub_dir)
+            saved_dir.mkdir(parents = True, exist_ok = True)
+        
+        # Ensure filename has the correct extension
+        if not saved_file_name.endswith(f".{self.plot_format}"):
+            saved_dir = saved_dir.joinpath(f"{saved_file_name}.{self.plot_format}")
+        else:
+            saved_dir = saved_dir.joinpath(saved_file_name)
+        
+        # Save the figure
+        fig.savefig(saved_dir, dpi = self.plot_dpi, bbox_inches = 'tight')
+        
+        return str(saved_dir)
     ###########################################################################################
 
 
@@ -263,27 +263,38 @@ class Plotter:
     ###########################################################################################
     # Plotting for explainer
     ###########################################################################################
-    def plot_shap_summary(self, shap_explainer):
+    # For binary classification tasks using sklearn's decision tree and random forest models,
+    # as well as all models used in multi-classification tasks,
+    # the dimensions of the output shap_values are (n_samples, n_features, n_targets)
+    # In binary classification tasks with sklearn's decision tree and random forest, shap values represent 
+    # each feature's contribution to the probability of a sample being classified as positive or negative
+    # Therefore, results are output for each class,
+    # saved in the shap_summary directory, and named according to the class
+    # Similarly, in the dependence_plots directory, subdirectories are created and named according to the class
+
+    def plot_shap_summary(self, shap_explanation):
         """Plot SHAP summary
 
         Args:
-            shap_explainer: SHAP explainer object
+            shap_explanation: SHAP explanation object
         """
-        assert isinstance(shap_explainer, shap.Explainer), "shap_explainer must be a shap.Explainer object"
+        assert isinstance(shap_explanation, shap.Explanation), "shap_explanation must be a shap.Explanation object"
 
-        shap_values = shap_explainer.shap_values
+        shap_values = shap_explanation.values
+
 
         if shap_values.ndim == 2:
             fig, ax = _plot_shap_summary(shap_values)
-            self._finalize_plot(fig, sub_dir = "SHAP/", saved_file_name = "shap_summary")
+            self._finalize_plot(fig, sub_dir = f"SHAP/", saved_file_name = "shap_summary")
         
+
         elif shap_values.ndim == 3:
             # shap_values.shape[2] is the number of classes
             for i in range(shap_values.shape[2]):
                 fig, ax = _plot_shap_summary(shap_values[:, :, i])
                 self._finalize_plot(
                     fig,
-                    sub_dir = "SHAP/shap_summary/", 
+                    sub_dir = f"SHAP/shap_summary/", 
                     saved_file_name = f"class_{i}"
                 )
 
@@ -294,25 +305,27 @@ class Plotter:
     
     
 
-    def plot_shap_dependence(self, shap_explainer):
+    def plot_shap_dependence(self, shap_explanation):
         """Plot SHAP dependence
         
         Args:
-            shap_explainer: SHAP explainer object
+            shap_explanation: SHAP explanation object
         """
 
-        assert isinstance(shap_explainer, shap.Explainer), \
-            "shap_explainer must be a shap.Explainer object"
+        assert isinstance(shap_explanation, shap.Explanation), \
+            "shap_explanation must be a shap.Explanation object"
 
-        shap_values = shap_explainer.shap_values
-        feature_names_list = shap_explainer.feature_names
+        shap_values = shap_explanation.values
+        feature_names_list = shap_explanation.feature_names
+
 
         if shap_values.ndim == 2:
             # The _plot_dependence() will return a list of tuple (fig, ax).
             fig_ax_list = _plot_shap_dependence(shap_values)
             for fig, ax, feature_name in zip(fig_ax_list, feature_names_list):
                 self._finalize_plot(fig, sub_dir = "SHAP/shap_dependence/", saved_file_name = str(feature_name))
-        
+
+
         elif shap_values.ndim == 3:
             # shap_values.shape[2] is the number of classes
             for i in range(shap_values.shape[2]):

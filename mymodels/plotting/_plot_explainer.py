@@ -45,7 +45,7 @@ def _plot_shap_dependence(shap_values):
     assert shap_values.ndim == 2
 
     shap_dp_plot_list = []
-    for i in range(shap_values.shape[1]):
+    for i in range(0, shap_values.shape[1]):
         fig = plt.figure()
         # shap.dependence_plot creates its own plot
         shap.dependence_plot(i, shap_values, show=False)
