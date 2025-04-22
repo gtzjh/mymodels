@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 import yaml, pickle
 from joblib import dump
-
+import shap
 
 
 
@@ -153,23 +153,21 @@ class Output:
     ###########################################################################################
     # Output SHAP values
     ###########################################################################################
-    def output_shap_values(self, shap_values, shap_data, feature_names, classes_ = None):
+    def output_shap_values(self, shap_explanation):
         """
         Output SHAP values to files and console.
         
         Args:
-            shap_values: Array of SHAP values
-            shap_data: pandas Series or DataFrame of SHAP data
-            feature_names: List of feature names
+            shap_explanation: SHAP explanation object
             classes_: List of class names for multi-class classification models
         """
+
+        assert isinstance(shap_explanation, shap.Explanation), \
+            "shap_explanation must be a shap.Explanation object"
         
-        assert isinstance(shap_values, np.ndarray), \
-            "shap_values must be a numpy array"
-        assert isinstance(feature_names, list), \
-            "feature_names must be a list"
-        assert isinstance(shap_data, (pd.Series, pd.DataFrame)), \
-            "shap_data must be a pandas Series or DataFrame"
+        shap_values = shap_explanation.values
+        feature_names = shap_explanation.feature_names
+        shap_data = shap_explanation.data
         
         # Create a DataFrame from SHAP values with feature names as columns
         if shap_values.ndim == 2:

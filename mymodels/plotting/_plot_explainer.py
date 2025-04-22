@@ -46,9 +46,9 @@ def _plot_shap_dependence(shap_explanation):
     if shap_explanation.values.ndim == 2:
         shap_dp_plots = []
         for feature_name in shap_explanation.feature_names:
-            fig = plt.figure()
             shap.plots.scatter(shap_explanation[:, feature_name], show=False, color=shap_explanation)
             plt.tight_layout()
+            fig = plt.gcf()
             ax = plt.gca()
             shap_dp_plots.append((fig, ax, feature_name))
 
@@ -57,9 +57,9 @@ def _plot_shap_dependence(shap_explanation):
         for class_idx in range(shap_explanation.values.shape[2]):
             shap_dp_plots[class_idx] = []
             for feature_name in shap_explanation.feature_names:
-                fig = plt.figure()
-                shap.plots.scatter(shap_explanation[:, feature_name, class_idx], show=False, color=shap_explanation[:, :, class_idx])
+                ax = shap.plots.scatter(shap_explanation[:, feature_name, class_idx], show=False, color=shap_explanation[:, :, class_idx])
                 plt.tight_layout()
+                fig = plt.gcf()
                 ax = plt.gca()
                 shap_dp_plots[class_idx].append((fig, ax, feature_name))
 

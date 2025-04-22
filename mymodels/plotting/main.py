@@ -278,7 +278,13 @@ class Plotter:
         Args:
             shap_explanation: SHAP explanation object
         """
-        assert isinstance(shap_explanation, shap.Explanation), "shap_explanation must be a shap.Explanation object"
+        assert isinstance(shap_explanation, shap.Explanation), \
+            "shap_explanation must be a shap.Explanation object"
+        
+        # If the feature_names is None, generate a new list of feature_names
+        if shap_explanation.feature_names is None:
+            feature_count = shap_explanation.values.shape[1]
+            shap_explanation.feature_names = [f"feature_{i}" for i in range(feature_count)]
 
         shap_values = shap_explanation.values
 
@@ -311,6 +317,11 @@ class Plotter:
 
         assert isinstance(shap_explanation, shap.Explanation), \
             "shap_explanation must be a shap.Explanation object"
+
+        # If the feature_names is None, generate a new list of feature_names
+        if shap_explanation.feature_names is None:
+            feature_count = shap_explanation.values.shape[1]
+            shap_explanation.feature_names = [f"feature_{i}" for i in range(feature_count)]
 
         shap_dp_plots = _plot_shap_dependence(shap_explanation)
         # shap_explanation.values.ndim == 2
