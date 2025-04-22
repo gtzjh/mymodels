@@ -130,10 +130,7 @@ class MyPipeline:
         n_jobs: int = 5,
         cat_features: list[str] | tuple[str] | None = None,
         direction: str = "maximize",
-        eval_function: None = None,
-        optimize_history: bool = True,
-        save_optimal_params: bool = True,
-        save_optimal_model: bool = True,
+        eval_function: None = None
     ):
         """Optimization"""
         
@@ -185,16 +182,6 @@ class MyPipeline:
             cat_features = cat_features,
             direction = direction,
             eval_function = eval_function
-        )
-
-        # Output the optimization history, optimal model and parameters
-        optimizer.output(
-            optimize_history = optimize_history,
-            save_optimal_params = save_optimal_params,
-            save_optimal_model = save_optimal_model,
-            show = self.show,
-            plot_format = self.plot_format,
-            plot_dpi = self.plot_dpi
         )
 
         # Output data for evaluate() and explain()
