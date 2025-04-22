@@ -14,6 +14,9 @@ def _plot_optimize_history(optuna_study_object: optuna.Study):
     Returns:
         tuple: (fig, ax) Matplotlib figure and axes objects.
     """
+    assert isinstance(optuna_study_object, optuna.Study), \
+        "Input optuna_study_object must be an Optuna study object."
+
     # Get the optimization history data
     trials = optuna_study_object.trials
     values = [t.value for t in trials if t.value is not None]

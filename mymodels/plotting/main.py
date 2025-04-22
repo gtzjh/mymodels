@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
-
+import shap
 
 
 from ._plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
 from ._plot_optimizer import _plot_optimize_history
 from ._plot_evaluated_classifier import _plot_roc_curve, _plot_pr_curve, _plot_confusion_matrix
 from ._plot_evaluated_regressor import _plot_regression_scatter
-from ._plot_explainer import _plot_summary, _plot_dependence, _plot_partial_dependence
+from ._plot_explainer import _plot_shap_summary, _plot_shap_dependence
 
 
 
@@ -43,8 +43,8 @@ class Plotter:
 
         # Check input parameters
         assert isinstance(show, bool), "show must be a boolean"
-        assert plot_format in ["jpg", "png", "jpeg", "tiff", "pdf", "svg", "eps"], \
-            "plot_format must be one of the following: jpg, png, jpeg, tiff, pdf, svg, eps"
+        # assert plot_format in ["jpg", "png", "jpeg", "tiff", "pdf", "svg", "eps"], \
+        #     "plot_format must be one of the following: jpg, png, jpeg, tiff, pdf, svg, eps"
         assert isinstance(plot_dpi, int), "plot_dpi must be an integer"
 
         assert isinstance(results_dir, Path) \
@@ -64,47 +64,61 @@ class Plotter:
     ###########################################################################################
     # Utility functions (private)
     ###########################################################################################
-    def _save_figure(self, fig, filename):
+    def _save_figure(self, fig, sub_dir = None, saved_file_name = None):
         """Save the provided figure to the results directory.
         
         Args:
             fig (matplotlib.figure.Figure): The figure to save.
-            filename (str): Name for the saved file (without extension).
+            saved_dir (str, optional): Directory for the saved file.
+                If None, the figure will not be saved.
+            saved_file_name (str, optional): Name for the saved file (without extension).
+                If None, the figure will not be saved.
             
         Returns:
             str or None: Path to the saved file if results_dir is set, otherwise None.
         """
+        
         if self.results_dir is None:
             logging.warning("Cannot save figure: results_dir is not set.")
             return None
         
+        # Create the sub_dir if it does not exist
+        if sub_dir is not None:
+            sub_dir = self.results_dir / sub_dir
+            sub_dir.mkdir(parents = True, exist_ok = True)
+        
         # Ensure filename has the correct extension
-        if not filename.endswith(f".{self.plot_format}"):
-            filepath = self.results_dir / f"{filename}.{self.plot_format}"
+        if not saved_file_name.endswith(f".{self.plot_format}"):
+            filepath = self.results_dir / f"{saved_file_name}.{self.plot_format}"
         else:
-            filepath = self.results_dir / filename
+            filepath = self.results_dir / saved_file_name
         
         # Save the figure
-        fig.savefig(filepath, dpi=self.plot_dpi, bbox_inches='tight')
+        fig.savefig(filepath, dpi = self.plot_dpi, bbox_inches = 'tight')
         
         return str(filepath)
     
 
-    def _finalize_plot(self, fig, filename=None):
+    def _finalize_plot(self, fig, sub_dir = None, saved_file_name = None):
         """Finalize a plot by optionally saving and showing it.
         
         Args:
             fig (matplotlib.figure.Figure): The figure to finalize.
-            filename (str, optional): Name for the saved file (without extension).
+            sub_dir (str, optional): Directory for the saved file.
+                If None, the figure will not be saved.
+            saved_file_name (str, optional): Name for the saved file (without extension).
                 If None, the figure will not be saved.
                 
         Returns:
             str or None: Path to the saved file if saved, otherwise None.
         """
+        assert isinstance(fig, plt.Figure), "fig must be a matplotlib.figure.Figure"
+        assert isinstance(sub_dir, str) or sub_dir is None, "sub_dir must be a string or None"
+        assert isinstance(saved_file_name, str) or saved_file_name is None, "saved_file_name must be a string or None"
+
         # Save figure if filename is provided
-        saved_path = None
-        if filename is not None:
-            saved_path = self._save_figure(fig, filename)
+        if saved_file_name is not None:
+            saved_path = self._save_figure(fig, sub_dir, saved_file_name)
         
         # Show figure if requested
         if self.show:
@@ -128,7 +142,7 @@ class Plotter:
             name: Name of the data
         """
         fig, ax = _plot_category(data, name=name, show=self.show)
-        self._finalize_plot(fig, filename = "category")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "category")
 
         return None
     
@@ -141,7 +155,7 @@ class Plotter:
             name: Name of the data
         """
         fig, ax = _plot_data_distribution(data, name=name, show=self.show)
-        self._finalize_plot(fig, filename = "data_distribution")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "data_distribution")
 
         return None
     
@@ -157,8 +171,8 @@ class Plotter:
         pearson_fig, pearson_ax = result["pearson"]
         spearman_fig, spearman_ax = result["spearman"]
 
-        self._finalize_plot(pearson_fig, filename = "correlation_pearson")
-        self._finalize_plot(spearman_fig, filename = "correlation_spearman")
+        self._finalize_plot(pearson_fig, sub_dir = None, saved_file_name = "correlation_pearson")
+        self._finalize_plot(spearman_fig, sub_dir = None, saved_file_name = "correlation_spearman")
 
         return None
     ###########################################################################################
@@ -175,7 +189,7 @@ class Plotter:
             optuna_study_object: The completed Optuna study containing trial results.
         """
         fig, ax = _plot_optimize_history(optuna_study_object)
-        self._finalize_plot(fig, filename = "optimization_history")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "optimization_history")
 
         return None
     ###########################################################################################
@@ -194,7 +208,7 @@ class Plotter:
             optimal_model_object: Trained model object
         """
         fig, ax = _plot_roc_curve(y_test, x_test, optimal_model_object)
-        self._finalize_plot(fig, filename = "roc_curve")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "roc_curve")
 
         return None
 
@@ -208,7 +222,7 @@ class Plotter:
             optimal_model_object: Trained model object
         """
         fig, ax = _plot_pr_curve(y_test, x_test, optimal_model_object)
-        self._finalize_plot(fig, filename = "pr_curve")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "pr_curve")
 
         return None
     
@@ -221,7 +235,7 @@ class Plotter:
             y_test_pred: Predicted test target values
         """
         fig, ax = _plot_confusion_matrix(y_test, y_test_pred)
-        self._finalize_plot(fig, filename = "confusion_matrix")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "confusion_matrix")
 
         return None
     ###########################################################################################
@@ -239,7 +253,7 @@ class Plotter:
             y_test_pred: Predicted test target values
         """
         fig, ax = _plot_regression_scatter(y_test, y_test_pred)
-        self._finalize_plot(fig, filename = "regression_scatter")
+        self._finalize_plot(fig, sub_dir = None, saved_file_name = "regression_scatter")
 
         return None
     ###########################################################################################
@@ -249,41 +263,85 @@ class Plotter:
     ###########################################################################################
     # Plotting for explainer
     ###########################################################################################
-    def plot_summary(self, shap_values, title=None):
-        """Plot SHAP summary.
+    def plot_shap_summary(self, shap_explainer):
+        """Plot SHAP summary
 
         Args:
-            shap_values: SHAP values
-            title: Title of the plot
+            shap_explainer: SHAP explainer object
         """
-        fig, ax = _plot_summary(shap_values, title=title)
-        self._finalize_plot(fig, filename = "summary")
+        assert isinstance(shap_explainer, shap.Explainer), "shap_explainer must be a shap.Explainer object"
+
+        shap_values = shap_explainer.shap_values
+
+        if shap_values.ndim == 2:
+            fig, ax = _plot_shap_summary(shap_values)
+            self._finalize_plot(fig, sub_dir = "SHAP/", saved_file_name = "shap_summary")
+        
+        elif shap_values.ndim == 3:
+            # shap_values.shape[2] is the number of classes
+            for i in range(shap_values.shape[2]):
+                fig, ax = _plot_shap_summary(shap_values[:, :, i])
+                self._finalize_plot(
+                    fig,
+                    sub_dir = "SHAP/shap_summary/", 
+                    saved_file_name = f"class_{i}"
+                )
+
+        else:
+            raise ValueError(f"Invalid SHAP values dimension: {shap_values.ndim}")
 
         return None
     
+    
 
-    def plot_dependence(self, shap_values, title=None):
-        """Plot SHAP dependence.
+    def plot_shap_dependence(self, shap_explainer):
+        """Plot SHAP dependence
         
         Args:
-            shap_values: SHAP values
-            title: Title of the plot
+            shap_explainer: SHAP explainer object
         """
-        fig, ax = _plot_dependence(shap_values, title=title)
-        self._finalize_plot(fig, filename = "dependence")
+
+        assert isinstance(shap_explainer, shap.Explainer), \
+            "shap_explainer must be a shap.Explainer object"
+
+        shap_values = shap_explainer.shap_values
+        feature_names_list = shap_explainer.feature_names
+
+        if shap_values.ndim == 2:
+            # The _plot_dependence() will return a list of tuple (fig, ax).
+            fig_ax_list = _plot_shap_dependence(shap_values)
+            for fig, ax, feature_name in zip(fig_ax_list, feature_names_list):
+                self._finalize_plot(fig, sub_dir = "SHAP/shap_dependence/", saved_file_name = str(feature_name))
+        
+        elif shap_values.ndim == 3:
+            # shap_values.shape[2] is the number of classes
+            for i in range(shap_values.shape[2]):
+                fig_ax_list = _plot_shap_dependence(shap_values[:, :, i])
+                for fig, ax, feature_name in zip(fig_ax_list, feature_names_list):
+                    self._finalize_plot(
+                        fig,
+                        sub_dir = f"SHAP/shap_dependence/class_{i}/",
+                        saved_file_name = str(feature_name)
+                    )
 
         return None
-    
 
-    def plot_partial_dependence(self, shap_values, title=None):
+
+
+    def plot_partial_dependence(self, optimal_model_object, x_data):
         """Plot partial dependence.
         
         Args:
-            shap_values: SHAP values
-            title: Title of the plot
+            x_data: Data for partial dependence plot.
+                If the data engineering was implemented, the data should be the data after the data engineering.
+            optimal_model_object: Trained model object
         """
-        fig, ax = _plot_partial_dependence(shap_values, title=title)
-        self._finalize_plot(fig, filename = "partial_dependence")
+        pass
+
+        # The _plot_partial_dependence() will return a list, every element in the list is a tuple of (fig, ax).
+        # fig_ax_list = _plot_partial_dependence(optimal_model_object, x_data)
+        # for fig, ax in fig_ax_list:
+        #     self._finalize_plot(fig, filename = "partial_dependence")
 
         return None
     ###########################################################################################
