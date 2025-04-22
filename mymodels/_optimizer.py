@@ -6,9 +6,9 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.base import clone, is_classifier, is_regressor
 from sklearn.metrics import accuracy_score, r2_score
-from joblib import Parallel, delayed, dump
+from joblib import Parallel, delayed
 from functools import partial
-import pickle, yaml, pathlib, logging
+import logging
 
 
 
@@ -20,7 +20,6 @@ class MyOptimizer:
     def __init__(
             self, 
             random_state: int, 
-            results_dir: pathlib.Path,
             stratify: bool = False
         ):
         """A class for training and optimizing various machine learning models.
@@ -42,21 +41,14 @@ class MyOptimizer:
         |         |
         |         +-- _single_fold() # Single fold execution
         |
-        +-- output() # Process results
-            |
-            +-- _plot_optimize_history() # Plot optimization history
-            |
-            +-- _save_optimal_params() # Save optimal parameters
-            |
-            +-- _save_optimal_model() # Save optimal model
+        +-- output() # save results
         
         Args:
             random_state: Random seed for reproducibility.
-            results_dir: Directory path to store the optimization results.
+            stratify: Whether to use stratified cross-validation.
         """
         
         self.random_state = random_state
-        self.results_dir = results_dir
         self.stratify = stratify
 
         # Global variables statement
@@ -66,20 +58,19 @@ class MyOptimizer:
         self.model_name = None
         self.data_engineer_pipeline = None
         self.strategy = None
-        self.direction = None
-        # self.eval_metric = None
         self.cv = None
         self.trials = None
         self.n_jobs = None
+        self.direction = None
+        self.eval_function = None
+        
         # Inside fit()
         self._model_obj = None
+        
         # Inside output()
         self.optuna_study = None
         self.optimal_params = None
         self.optimal_model = None
-        self.show = None
-        self.plot_format = None
-        self.plot_dpi = None
 
     
 
@@ -116,7 +107,6 @@ class MyOptimizer:
             strategy: 
                 - "tpe": Tree-structured Parzen Estimator algorithm implemented (Default)
                 - "random": Random search
-                - "grid": Grid search
             cv: Number of folds for cross-validation.
             trials: Number of trials to execute in Optuna optimization.
             n_jobs: Number of jobs to run in parallel for cross-validation. Default is -1
@@ -336,99 +326,4 @@ The Scaler is recommended for: LinearRegression, LogisticRegression, SVR, SVC, K
             )
         
         return np.mean(cv_scores)
-
-
-
-    def output(
-        self,
-        optimize_history: bool = True,
-        save_optimal_params: bool = True,
-        save_optimal_model: bool = True,
-        show: bool = False,
-        plot_format: str = "jpg",
-        plot_dpi: int = 500
-    ):
-        """Output the optimization history, optimal model and parameters.
-        
-        This method handles the results visualization and saving:
-        1. Plots the optimization history
-        2. Saves the optimal parameters to a YAML file
-        3. Optionally saves the optimal model to a pickle file
-        
-        Args:
-            optimize_history: Whether to plot and save the optimization history.
-            save_optimal_params: Whether to save the optimal parameters to a YAML file.
-            save_optimal_model: Whether to save the optimal model to a pickle file.
-            show: Whether to display the plots.
-            plot_format: Format for saving plots (jpg, png, pdf, etc.).
-            plot_dpi: Resolution for saved plots.
-            
-        Returns:
-            None. Results are saved to files in the results directory.
-        """
-        self.show = show
-        self.plot_format = plot_format
-        self.plot_dpi = plot_dpi
-
-        
-        """
-        # Plot the optimization history
-        if optimize_history:
-            self._plot_optimize_history(self.optuna_study)
-
-        """
-        
-        # Save optimal parameters
-        if save_optimal_params:
-            self._save_optimal_params()
-
-        # Save optimal model
-        if save_optimal_model:
-            self._save_optimal_model()
-
-        return None
-    
-
-
-    def _save_optimal_params(self):
-        """Save the optimal parameters to a YAML file.
-        """
-        with open(self.results_dir.joinpath("params.yml"), 'w', encoding="utf-8") as file:
-            yaml.dump(self.optimal_params, file)
-        return None
-
-
-
-    def _save_optimal_model(self):
-        """Save the optimal model using the recommended export method based on model type.
-        
-        Different models have different recommended export methods:
-        - CatBoost: save_model() method to save in binary format
-        - XGBoost: save_model() method to save in binary format  
-        - LightGBM: booster_.save_model() method to save in text format
-        - Scikit-learn models: joblib is recommended over pickle
-        """
-        model_path = self.results_dir.joinpath("optimal-model")
-        
-        # XGBoost models
-        if self.model_name in ["xgbr", "xgbc"]:
-            self.optimal_model.save_model(f"{model_path}.json")
-            
-        # LightGBM models
-        elif self.model_name in ["lgbr", "lgbc"]:
-            self.optimal_model.booster_.save_model(f"{model_path}.txt")
-            
-        # CatBoost models
-        elif self.model_name in ["catr", "catc"]:
-            self.optimal_model.save_model(f"{model_path}.cbm")
-            
-        # For scikit-learn based models, use joblib which is more efficient for numpy arrays
-        else:
-            dump(self.optimal_model, f"{model_path}.joblib")
-            
-        # Also save a pickle version for backward compatibility
-        with open(self.results_dir.joinpath("optimal-model.pkl"), 'wb') as file:
-            pickle.dump(self.optimal_model, file)
-            
-        return None
     

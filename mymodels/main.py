@@ -10,6 +10,10 @@ from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
 
 
+from plotting import Plotter
+from output import Output
+
+
 
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
@@ -41,6 +45,7 @@ class MyPipeline:
         self._x_test = None
         self._y_train = None
         self._y_test = None
+        self.y_mapping_dict = None
 
         # In optimize()
         self.model_name = None
@@ -60,7 +65,7 @@ class MyPipeline:
         inspect: bool = True
     ):
         """Prepare training and test data"""
-        self._x_train, self._x_test, self._y_train, self._y_test = data_loader(
+        self._x_train, self._x_test, self._y_train, self._y_test, self.y_mapping_dict = data_loader(
             input_data=input_data,
             y=y,
             x_list=x_list,
@@ -112,6 +117,7 @@ class MyPipeline:
             plot_format = self.plot_format,
             plot_dpi = self.plot_dpi
         )
+
         diagnoser.diagnose()
         
         return None
@@ -128,7 +134,7 @@ class MyPipeline:
         n_jobs: int = 5,
         cat_features: list[str] | tuple[str] | None = None,
         direction: str = "maximize",
-        eval_function: None = None,
+        eval_function: callable | None = None,
         optimize_history: bool = True,
         save_optimal_params: bool = True,
         save_optimal_model: bool = True,

@@ -12,6 +12,7 @@ def data_loader(
         random_state,
         stratify
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+
     """Load and preprocess data from a CSV file.
     
     Args:
@@ -58,25 +59,30 @@ def data_loader(
 
 
     # Transform non-numeric target to label encoding
+    # Save the mapping dict as wll.
+    y_mapping_dict = None
     if pd.api.types.is_numeric_dtype(y_data.dtype) != True:
         label_encoder = LabelEncoder()
         y_data = pd.Series(label_encoder.fit_transform(y_data), index = y_data.index)
         
         # Output the mapping from original categories to encoded integers
-        mapping = {original: encoded for original, encoded in 
+        y_mapping_dict = {original: encoded for original, encoded in 
                   zip(label_encoder.classes_, range(len(label_encoder.classes_)))}
         print("Label Encoding Mapping:")
-        for original, encoded in mapping.items():
+        for original, encoded in y_mapping_dict.items():
             print(f"  {original} -> {encoded}")
 
     # print(x_data.head(30))
 
     # Split data into training and testing sets
-    # X_train, X_test, y_train, y_test
-    return train_test_split(
-        x_data, y_data, 
-        test_size = test_ratio,
-        random_state = random_state,
-        shuffle = True,  # Default is True
-        stratify = y_data if stratify else None
-    )
+    # X_train, X_test, y_train, y_test, y_mapping_dict (optional)
+    return (
+                train_test_split(
+                    x_data, y_data, 
+                    test_size = test_ratio,
+                    random_state = random_state,
+                    shuffle = True,  # Default value in `train_test_split()` is True
+                    stratify = y_data if stratify else None
+                ),
+                y_mapping_dict
+            )

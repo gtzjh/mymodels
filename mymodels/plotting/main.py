@@ -11,6 +11,7 @@ from ._plot_evaluated_regressor import _plot_regression_scatter
 from ._plot_explainer import _plot_summary, _plot_dependence, _plot_partial_dependence
 
 
+
 class Plotter:
     """Base class for plotting functionality in mymodels.
     
@@ -26,20 +27,20 @@ class Plotter:
     
     def __init__(
         self,
+        results_dir: str | Path,
         show: bool = False,
         plot_format: str = "jpg",
         plot_dpi: int = 500,
-        results_dir: str | Path | None = None
     ):
         """Initialize the Plotting object.
         
         Args:
+            results_dir (str or Path): Directory to save plots.
             show (bool, optional): Whether to display plots. Defaults to False.
             plot_format (str, optional): Format for saved plots. Defaults to "jpg".
             plot_dpi (int, optional): DPI for saved plots. Defaults to 500.
-            results_dir (str or Path, optional): Directory to save plots. Defaults to None.
-                If None, plots will not be saved.
         """
+
         # Check input parameters
         assert isinstance(show, bool), "show must be a boolean"
         assert plot_format in ["jpg", "png", "jpeg", "tiff", "pdf", "svg", "eps"], \
