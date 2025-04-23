@@ -3,14 +3,16 @@ from sklearn.pipeline import Pipeline
 import logging, pathlib
 
 
-from ._data_loader import data_loader
+from ._data_loader import MyDataLoader
 from ._data_diagnoser import MyDataDiagnoser
 from ._optimizer import MyOptimizer
 from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
 
 
+"""
 
+"""
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
     A class that handles data loading, model training, and evaluation with SHAP analysis.
@@ -25,8 +27,7 @@ class MyPipeline:
             plot_format: str = "jpg",
             plot_dpi: int = 500
         ):
-        assert isinstance(random_state, int), "random_state must be an integer"
-        assert isinstance(stratify, bool), "stratify must be a boolean"
+
 
         self.random_state = random_state
         self.stratify = stratify
