@@ -12,7 +12,7 @@ def _convert_param_space(param_space_config):
         dict: A parameter space dictionary that can be used with Optuna for hyperparameter optimization.
 
     Example:
-    To assess the results of the parameter space configuration, you can use the following example:
+    To assess the results of the parameter space configuration, the following example can be used:
     >>> param_space_config = {
     ...     'learning_rate': {
     ...         'type': 'float',
@@ -53,7 +53,7 @@ def _convert_param_space(param_space_config):
         if 'type' not in param_config:
             raise KeyError(f"Configuration for '{param_name}' must include a 'type'")
         if param_config['type'] not in ['categorical', 'integer', 'float']:
-            raise ValueError(f"Invalid type for parameter '{param_name}'")
+            raise ValueError(f"Unsupported parameter type")
         if param_config['type'] == 'categorical':
             if 'values' not in param_config:
                 raise KeyError(f"Configuration for '{param_name}' must include 'values'")
@@ -103,39 +103,37 @@ def _convert_param_space(param_space_config):
 class MyEstimator:
     def __init__(
             self,
-            random_state: int = 0, 
             cat_features: list[str] | tuple[str] | None = None, 
             model_configs_path: str = 'model_configs.yml'
         ):
         """Initialize the Models class.
         
         Args:
-            random_state (int): The random state to use for the model. (Default: 0)
             cat_features (list[str] | tuple[str] | None): The categorical features to use for the CatBoost ONLY.
             model_configs_path (str): The path to the model configs file. (Default: 'model_configs.yml' in the root directory)
         
         Attributes:
             empty_model_object: An empty model object.
-            param_space: The parameter space.
+            param_space: The parameter space for Optuna tuning.
             static_params: The static parameters.
             shap_explainer_type: The type of SHAP explainer to use.
             optimal_model_object: The optimal model object. (After optimization)
             optimal_params: The optimal parameters. (After optimization)
 
         Examples:
-            >>> from mymodels import MyModels
-            >>> model = MyModels(random_state=42)
-            >>> model.load(model_name='lr')
-            >>> model.empty_model_object
-            >>> model.param_space
-            >>> model.static_params
-            >>> model.shap_explainer_type
-            >>> model.optimal_model_object
-            >>> model.optimal_params
+            >>> from mymodels import MyEstimator
+            >>> estimator = MyEstimator()
+            >>> estimator.load(model_name='lr')
+            >>> estimator.empty_model_object
+            >>> estimator.param_space
+            >>> estimator.static_params
+            >>> estimator.shap_explainer_type
         """
 
+        # Validate the input
+        assert isinstance(cat_features, (list, tuple, type(None))), "cat_features must be a list, tuple, or None"
+
         # Initialize variables
-        self.random_state = random_state
         self.cat_features = cat_features
 
         # Load model configs
@@ -163,96 +161,53 @@ class MyEstimator:
 
     def load(self, model_name: str = None):
         """Load model
+
+        Args:
+            model_name (str): The name of the model to load.
         
         Returns:
             self: The instance of the `MyModels` class
         """
 
         # Validate the model name
-        assert model_name in self._VALID_MODEL_NAMES, \
-            f"Invalid model name: {model_name}, it must be one of {self._VALID_MODEL_NAMES}"
+        if model_name not in self._VALID_MODEL_NAMES:
+            raise ValueError(f"Model '{model_name}' not found")
         self.model_name = model_name
         
         # Get parameters from config
-        model_config = self._config[model_name]
+        _model_config = self._config[model_name]
 
         # Import the emptys model class
-        import_info = model_config['IMPORTS']
-        module_name = import_info['module']
-        module = importlib.import_module(module_name)
-        class_name = import_info['class']
-        self.empty_model_object = getattr(module, class_name)
+        _import_info = _model_config['IMPORTS']
+        _module_name = _import_info['module']
+        _module = importlib.import_module(_module_name)
+        _class_name = _import_info['class']
+        self.empty_model_object = getattr(_module, _class_name)
 
         # The tuning parameters space, unchangeable dictionary
         self.param_space = MappingProxyType(
             _convert_param_space(
-                model_config['PARAM_SPACE']
+                _model_config['PARAM_SPACE']
             )
         )
 
         # The static parameters, unchangeable dictionary
-        self.static_params = dict(model_config['STATIC_PARAMS'])
+        self.static_params = dict(_model_config['STATIC_PARAMS'])
 
         # The SHAP explainer type
-        self.shap_explainer_type = model_config['SHAP_EXPLAINER_TYPE']
+        self.shap_explainer_type = _model_config['SHAP_EXPLAINER_TYPE']
 
         # The save type
-        self.save_type = model_config['SAVE_TYPE']
+        self.save_type = _model_config['SAVE_TYPE']
 
 
-        # 对于catboost模型，可以接受cat_features参数
-        # 对于其他模型，cat_features参数会被忽略。若此时用户还是提供了cat_features参数，会提供一个warning，告诉用户这里的cat_features参数将不会生效
-        # 对于可以接受random_state参数的模型，会自动将random_state参数设置为self.random_state
-        # 如果选择的模型不能接受random_state参数，但是用户还是提供了random_state参数，会提供一个warning，告诉用户这里的random_state参数将不会生效
-        # 反之，如果选择的模型能够接受random_state参数，但是用户没有提供random_state参数，则会提供以后警告，
-        # 告诉用户这里没有提供random_state参数，可能会影响模型的可复现性。
-        
-        # Create an instance of the model to check the available parameters inside
-        _model_object = self.empty_model_object(
-            **{
-                "cat_features": self.cat_features,
-                "random_state": self.random_state
-            }
-        )
-        
-        # _acceptable_params = _model_object.get_params()
-        # print(_acceptable_params)
- 
-        from sklearn.datasets import load_iris
-        iris = load_iris()
-        self.X_train, self.y_train = iris.data, iris.target
-        _model_object.fit(self.X_train, self.y_train)
-
-
-        """
-        # Check for random_state parameter compatibility
-        if 'random_state' in _acceptable_params:
-            if hasattr(self, 'random_state'):
-                self.static_params['random_state'] = self.random_state
+        # For CatBoost models, the `cat_features` parameter can be accepted.
+        if self.cat_features is not None:
+            if self.empty_model_object.__name__ == 'CatBoostClassifier' \
+                or self.empty_model_object.__name__ == 'CatBoostRegressor':
+                    self.static_params['cat_features'] = self.cat_features
             else:
-                logging.warning(f"Model {model_name} accepts random_state parameter, but none was provided. "
-                                 "This may affect model reproducibility.")
-        elif hasattr(self, 'random_state') and self.random_state is not None:
-            logging.warning(f"Model {model_name} does not accept random_state parameter. "
-                             "The provided random_state value will be ignored.")
-
-        # Check for cat_features parameter compatibility
-        if 'cat_features' in _acceptable_params:
-            if hasattr(self, 'cat_features') and self.cat_features is not None:
-                self.static_params['cat_features'] = self.cat_features
-        elif hasattr(self, 'cat_features') and self.cat_features is not None:
-            logging.warning(f"Model {model_name} does not accept cat_features parameter. "
-                             "The provided cat_features value will be ignored.")
-        """
+                logging.warning(f"Model {model_name} does not accept cat_features parameter. "
+                                 "The provided cat_features value will be ignored.")
         
         return self
-    
-
-
-if __name__ == "__main__":
-    model = MyEstimator(random_state=0, cat_features=['cat_feature', "xxx"]).load(model_name='svc')
-
-    for attr in dir(model):
-        if not attr.startswith('_'):
-            # print(f"{attr}: {getattr(model, attr)}")
-            pass
