@@ -244,10 +244,3 @@ def test_multiclass():
         )
 
     return None
-
-
-
-if __name__ == "__main__":
-    # test_regression()
-    # test_binary()
-    test_multiclass()

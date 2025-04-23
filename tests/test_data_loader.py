@@ -83,7 +83,6 @@ def test_string_boolean_y_conversion():
     assert set(dataset.y_test) <= {0, 1}
 
 def test_y_boolean_conversion(sample_data):
-    """兼容旧测试（实际应触发转换）"""
     # 创建字符串型布尔列
     sample_data = sample_data.copy()
     sample_data['y_str_bool'] = sample_data['y_bool'].astype(str)

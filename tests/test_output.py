@@ -15,11 +15,3 @@ def test_output():
 
     return None
 
-
-
-if __name__ == "__main__":
-    output = Output(
-        results_dir = "./results/test_output"
-    )
-
-    test_output()
