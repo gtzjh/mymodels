@@ -1,8 +1,47 @@
-# Model configuration file - Contains the parameter space and static parameters for all models
+# HOW TO CUSTOMIZE YOUR OWN MODEL
+# ----------------------------
+# This configuration file allows you to define machine learning models with their hyperparameters.
+# To add a new model, follow this structure:
+#
+# model_key:  # Short name for your model (e.g., 'my_classifier')
+#   IMPORTS:
+#     module: package.submodule  # Python module where the model class is located
+#     class: ClassName  # Name of the model class to import
+#   PARAM_SPACE:  # Parameters to tune during optimization
+#     parameter_name:
+#       type: categorical|float|integer  # Parameter type
+#       values: [val1, val2] or {min: min_val, max: max_val, step: step_val, log: bool}
+#   STATIC_PARAMS:  # Fixed parameters that won't be tuned
+#     parameter_name: value
+#   SHAP_EXPLAINER_TYPE: linear|kernel|tree|permutation  # Type of SHAP explainer to use
+#   SAVE_TYPE: joblib|xgboost|lightgbm|catboost  # Method used to save the model
+#
+# PARAMETER TYPES:
+# - categorical: discrete set of choices (list of values)
+# - float: continuous numerical value (min/max range with optional step)
+#   - log: true makes the sampling logarithmic
+# - integer: whole numbers (min/max range with optional step)
+#
+# SHAP EXPLAINER TYPES:
+# - linear: for linear models (faster for LinearRegression, LogisticRegression)
+# - kernel: model-agnostic explainer (can be used with any model, but slower)
+# - tree: optimized for tree-based models (RandomForest, XGBoost, etc.)
+# - permutation: feature permutation-based approach for black-box models
+#
+# SAVE TYPES:
+# - joblib: default for scikit-learn models
+# - xgboost: for XGBoost models (saves as .json)
+# - lightgbm: for LightGBM models (saves as .txt)
+# - catboost: for CatBoost models (saves as .cbm)
+
+
 
 # Classifiers
 lc:  # LogisticRegression
-  param_space:
+  IMPORTS:
+    module: sklearn.linear_model
+    class: LogisticRegression
+  PARAM_SPACE:
     solver:
       type: categorical
       values: ["lbfgs", "saga"]
@@ -15,16 +54,21 @@ lc:  # LogisticRegression
     max_iter:
       type: integer
       values: {min: 100, max: 1000, step: 100}
-  static_params:
+  STATIC_PARAMS:
     class_weight: balanced
     tol: 1.0e-4
     fit_intercept: true
     n_jobs: -1
     verbose: 0
     warm_start: false
+  SHAP_EXPLAINER_TYPE: linear
+  SAVE_TYPE: joblib
 
 svc:  # SVC
-  param_space:
+  IMPORTS:
+    module: sklearn.svm
+    class: SVC
+  PARAM_SPACE:
     kernel:
       type: categorical
       values: ["linear", "rbf", "poly", "sigmoid"]
@@ -34,13 +78,18 @@ svc:  # SVC
     degree:
       type: integer
       values: {min: 2, max: 5}
-  static_params:
+  STATIC_PARAMS:
     class_weight: balanced
     probability: true
     verbose: 0
+  SHAP_EXPLAINER_TYPE: kernel
+  SAVE_TYPE: joblib
 
 knc:  # KNeighborsClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.neighbors
+    class: KNeighborsClassifier
+  PARAM_SPACE:
     n_neighbors:
       type: integer
       values: {min: 1, max: 50, step: 1}
@@ -56,11 +105,16 @@ knc:  # KNeighborsClassifier
     p:
       type: integer
       values: {min: 1, max: 2}
-  static_params:
+  STATIC_PARAMS:
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: permutation
+  SAVE_TYPE: joblib
 
 mlpc:  # MLPClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.neural_network
+    class: MLPClassifier
+  PARAM_SPACE:
     activation:
       type: categorical
       values: ["relu", "tanh", "logistic"]
@@ -76,16 +130,21 @@ mlpc:  # MLPClassifier
     max_iter:
       type: integer
       values: {min: 100, max: 3000, step: 100}
-  static_params:
+  STATIC_PARAMS:
     hidden_layer_sizes: [300, 300, 300]
     solver: adam
     batch_size: auto
     early_stopping: true
     n_iter_no_change: 10
     verbose: 0
+  SHAP_EXPLAINER_TYPE: kernel
+  SAVE_TYPE: joblib
 
 dtc:  # DecisionTreeClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.tree
+    class: DecisionTreeClassifier
+  PARAM_SPACE:
     criterion:
       type: categorical
       values: ["gini", "entropy", "log_loss"]
@@ -104,10 +163,15 @@ dtc:  # DecisionTreeClassifier
     class_weight:
       type: categorical
       values: ["balanced", null]
-  static_params: {}
+  STATIC_PARAMS: {}
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 rfc:  # RandomForestClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: RandomForestClassifier
+  PARAM_SPACE:
     n_estimators:
       type: integer
       values: {min: 100, max: 3000, step: 100}
@@ -132,12 +196,17 @@ rfc:  # RandomForestClassifier
     class_weight:
       type: categorical
       values: ["balanced", "balanced_subsample", null]
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 gbdtc:  # GradientBoostingClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: GradientBoostingClassifier
+  PARAM_SPACE:
     learning_rate:
       type: float
       values: {min: 0.001, max: 0.3, log: true}
@@ -162,25 +231,35 @@ gbdtc:  # GradientBoostingClassifier
     max_features:
       type: float
       values: {min: 0.2, max: 1.0, step: 0.1}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
     validation_fraction: 0.1
     n_iter_no_change: 10
     tol: 1.0e-4
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 adac:  # AdaBoostClassifier
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: AdaBoostClassifier
+  PARAM_SPACE:
     n_estimators:
       type: integer
       values: {min: 50, max: 3000, step: 50}
     learning_rate:
       type: float
       values: {min: 0.01, max: 1.0, log: true}
-  static_params:
+  STATIC_PARAMS:
     algorithm: SAMME
+  SHAP_EXPLAINER_TYPE: permutation
+  SAVE_TYPE: joblib
 
 xgbc:  # XGBClassifier
-  param_space:
+  IMPORTS:
+    module: xgboost
+    class: XGBClassifier
+  PARAM_SPACE:
     max_depth:
       type: integer
       values: {min: 3, max: 10}
@@ -214,14 +293,19 @@ xgbc:  # XGBClassifier
     tree_method:
       type: categorical
       values: ["auto", "exact", "approx", "hist"]
-  static_params:
+  STATIC_PARAMS:
     booster: gbtree
     enable_categorical: false
     verbosity: 0
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: json
 
 lgbc:  # LGBMClassifier
-  param_space:
+  IMPORTS:
+    module: lightgbm
+    class: LGBMClassifier
+  PARAM_SPACE:
     num_leaves:
       type: integer
       values: {min: 20, max: 150}
@@ -255,13 +339,18 @@ lgbc:  # LGBMClassifier
     min_split_gain:
       type: float
       values: {min: 0, max: 0.5}
-  static_params:
+  STATIC_PARAMS:
     boosting_type: gbdt
     verbose: -1
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: txt
 
 catc:  # CatBoostClassifier
-  param_space:
+  IMPORTS:
+    module: catboost
+    class: CatBoostClassifier
+  PARAM_SPACE:
     iterations:
       type: integer
       values: {min: 100, max: 3000, step: 100}
@@ -289,21 +378,31 @@ catc:  # CatBoostClassifier
     min_data_in_leaf:
       type: integer
       values: {min: 1, max: 50}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
     allow_writing_files: false
     train_dir: null
     thread_count: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: cbm
 
 
 
 # Regressors
 lr:  # LinearRegression
-  param_space: {}
-  static_params: {}
+  IMPORTS:
+    module: sklearn.linear_model
+    class: LinearRegression
+  PARAM_SPACE: {}
+  STATIC_PARAMS: {}
+  SHAP_EXPLAINER_TYPE: linear
+  SAVE_TYPE: joblib
 
 svr:  # SVR
-  param_space:
+  IMPORTS:
+    module: sklearn.svm
+    class: SVR
+  PARAM_SPACE:
     kernel:
       type: categorical
       values: ["linear", "rbf", "poly", "sigmoid"]
@@ -313,11 +412,16 @@ svr:  # SVR
     epsilon:
       type: float
       values: {min: 0.1, max: 10, step: 0.1}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
+  SHAP_EXPLAINER_TYPE: kernel
+  SAVE_TYPE: joblib
 
 knr:  # KNeighborsRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.neighbors
+    class: KNeighborsRegressor
+  PARAM_SPACE:
     n_neighbors:
       type: integer
       values: {min: 1, max: 10, step: 1}
@@ -333,11 +437,16 @@ knr:  # KNeighborsRegressor
     p:
       type: integer
       values: {min: 1, max: 5, step: 1}
-  static_params:
+  STATIC_PARAMS:
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: permutation
+  SAVE_TYPE: joblib
 
 mlpr:  # MLPRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.neural_network
+    class: MLPRegressor
+  PARAM_SPACE:
     alpha:
       type: float
       values: {min: 0.0001, max: 0.1, log: true}
@@ -347,15 +456,20 @@ mlpr:  # MLPRegressor
     max_iter:
       type: integer
       values: {min: 100, max: 3000, step: 100}
-  static_params:
+  STATIC_PARAMS:
     hidden_layer_sizes: [300, 300, 300]
     activation: relu
     solver: adam
     batch_size: auto
     verbose: 0
+  SHAP_EXPLAINER_TYPE: kernel
+  SAVE_TYPE: joblib
 
 dtr:  # DecisionTreeRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.tree
+    class: DecisionTreeRegressor
+  PARAM_SPACE:
     max_depth:
       type: integer
       values: {min: 2, max: 20}
@@ -368,10 +482,15 @@ dtr:  # DecisionTreeRegressor
     max_features:
       type: float
       values: {min: 0.2, max: 1.0}
-  static_params: {}
+  STATIC_PARAMS: {}
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 rfr:  # RandomForestRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: RandomForestRegressor
+  PARAM_SPACE:
     n_estimators:
       type: integer
       values: {min: 100, max: 3000, step: 100}
@@ -387,12 +506,17 @@ rfr:  # RandomForestRegressor
     max_features:
       type: float
       values: {min: 0.1, max: 1.0, step: 0.1}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 gbdtr:  # GradientBoostingRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: GradientBoostingRegressor
+  PARAM_SPACE:
     learning_rate:
       type: float
       values: {min: 1.0e-8, max: 1.0, log: true}
@@ -414,11 +538,16 @@ gbdtr:  # GradientBoostingRegressor
     max_features:
       type: float
       values: {min: 0.2, max: 1.0, step: 0.1}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: joblib
 
 adar:  # AdaBoostRegressor
-  param_space:
+  IMPORTS:
+    module: sklearn.ensemble
+    class: AdaBoostRegressor
+  PARAM_SPACE:
     n_estimators:
       type: integer
       values: {min: 100, max: 3000, step: 100}
@@ -428,10 +557,15 @@ adar:  # AdaBoostRegressor
     loss:
       type: categorical
       values: ["linear", "square", "exponential"]
-  static_params: {}
+  STATIC_PARAMS: {}
+  SHAP_EXPLAINER_TYPE: permutation
+  SAVE_TYPE: joblib
 
 xgbr:  # XGBRegressor
-  param_space:
+  IMPORTS:
+    module: xgboost
+    class: XGBRegressor
+  PARAM_SPACE:
     max_depth:
       type: integer
       values: {min: 1, max: 15}
@@ -462,13 +596,18 @@ xgbr:  # XGBRegressor
     tree_method:
       type: categorical
       values: ["hist", "approx"]
-  static_params:
+  STATIC_PARAMS:
     enable_categorical: false
     verbosity: 0
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: json
 
 lgbr:  # LGBMRegressor
-  param_space:
+  IMPORTS:
+    module: lightgbm
+    class: LGBMRegressor
+  PARAM_SPACE:
     max_depth:
       type: integer
       values: {min: 1, max: 15}
@@ -496,12 +635,17 @@ lgbr:  # LGBMRegressor
     reg_lambda:
       type: float
       values: {min: 1.0e-8, max: 10.0, log: true}
-  static_params:
+  STATIC_PARAMS:
     verbose: -1
     n_jobs: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: txt
 
 catr:  # CatBoostRegressor
-  param_space:
+  IMPORTS:
+    module: catboost
+    class: CatBoostRegressor
+  PARAM_SPACE:
     iterations:
       type: integer
       values: {min: 100, max: 3000, step: 100}
@@ -529,8 +673,10 @@ catr:  # CatBoostRegressor
     leaf_estimation_iterations:
       type: integer
       values: {min: 1, max: 10}
-  static_params:
+  STATIC_PARAMS:
     verbose: 0
     allow_writing_files: false
     train_dir: null
     thread_count: -1
+  SHAP_EXPLAINER_TYPE: tree
+  SAVE_TYPE: cbm
