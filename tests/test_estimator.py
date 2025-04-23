@@ -3,199 +3,141 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
-"""
-我正在构建一个机器学习的工作流，现在正在构建其中的一个模块，这个模块的功能是获取指定的模型。
-这个模块的调用方式如下：
->>> from mymodels import MyEstimator
->>> estimator = MyEstimator()
->>> estimator.load(model_name='lr')
 
-具体地，MyEstimator类的接口如下：
-cat_features (list[str] | tuple[str] | None): The categorical features to use for the CatBoost ONLY.
-model_configs_path (str): The path to the model configs file. (Default: 'model_configs.yml' in the root directory)
-
-其中，model_cofigs_path是一个模型的配置文件，它包含每一个模型的参数配置，它的每个参数大概是这样的：
-
-```yaml
-# HOW TO CUSTOMIZE YOUR OWN MODEL
-# ----------------------------
-# This configuration file allows you to define machine learning models with their hyperparameters.
-# To add a new model, follow this structure:
-#
-# model_key:  # Short name for your model (e.g., 'my_classifier')
-#   IMPORTS:
-#     module: package.submodule  # Python module where the model class is located
-#     class: ClassName  # Name of the model class to import
-#   PARAM_SPACE:  # Parameters to tune during optimization
-#     parameter_name:
-#       type: categorical|float|integer  # Parameter type
-#       values: [val1, val2] or {min: min_val, max: max_val, step: step_val, log: bool}
-#   STATIC_PARAMS:  # Fixed parameters that won't be tuned
-#     parameter_name: value
-#   SHAP_EXPLAINER_TYPE: linear|kernel|tree|permutation  # Type of SHAP explainer to use
-#   SAVE_TYPE: joblib|xgboost|lightgbm|catboost  # Method used to save the model
-#
-# PARAMETER TYPES:
-# - categorical: discrete set of choices (list of values)
-# - float: continuous numerical value (min/max range with optional step)
-#   - log: true makes the sampling logarithmic
-# - integer: whole numbers (min/max range with optional step)
-#
-# SHAP EXPLAINER TYPES:
-# - linear: for linear models (faster for LinearRegression, LogisticRegression)
-# - kernel: model-agnostic explainer (can be used with any model, but slower)
-# - tree: optimized for tree-based models (RandomForest, XGBoost, etc.)
-# - permutation: feature permutation-based approach for black-box models
-#
-# SAVE TYPES:
-# - joblib: default for scikit-learn models
-# - xgboost: for XGBoost models (saves as .json)
-# - lightgbm: for LightGBM models (saves as .txt)
-# - catboost: for CatBoost models (saves as .cbm)
-```
-
-当然，用户也可以按照以上的方式，定义自己的模型和对应的参数
-
-
-
-通过调用`load()`的方法，它返回一个MyEstimator的对象：
-
-其中，load() 方法的接口是这样的：
-Args:
-    model_name (str): The name of the model to load.
-
-Returns:
-    self: The instance of the `MyModels` class
-
-返回的内容是这样的
-
-Attributes:
-    empty_model_object: An empty model object.
-    param_space: The parameter space for Optuna tuning.
-    static_params: The static parameters.
-    shap_explainer_type: The type of SHAP explainer to use.
-    optimal_model_object: The optimal model object. (After optimization)
-    optimal_params: The optimal parameters. (After optimization)
-    
-
-需要注意，model_name这个参数，要与上面给出的yaml设置的key一致，比如像上面的随机森林模型，如果我想要调用它，那我就要输入 `rfr`
-也就是，在load方法这里，还会需要检查用户输入的model_name，是否在指定的yaml文件的key中被找到。
-
-
-接下来，我需要为这个模块，编写单元测试，首先是基准测试，需要确保模块能被正常调用，同时得到的模型能够被用来调优
-所以你需要构建基准单元测试，涵盖所有模型，并且包含回归、二分类、多分类任务，并且创建指定的数据集，用来进行模拟测试
-然后你要进行异常测试，你需要列出这里面可能存在的输入，确保模块都能捕捉到非法的输入，要涵盖机器学习任务中任何可能的情况，以及关键的边界条件。
-我要用pytest
-每个测试用例都应该用google python的风格编写注释，并且注明这个测试的内容，以及对期待的输出进行校验
-
-对于PARAM_SPACE获取的参数空间，最重要的是把这个参数空间放到optuna study中，看看能否被正常调用，能否正常执行参数调优的过程
-因此你要删掉原本的基准测试的代码，然后导入optuna包，然后尝试对每个模型构建一个study，然后把参数空间放进去，看看能否正常运行
-
-此外，你需要涵盖的模型类型包括一下，我以一个html表格的形式给出
-
-
-# Supported models
-
-<table>
-  <thead>
-    <tr>
-      <th colspan="2">Regression</th>
-      <th colspan="2">Classification</th>
-    </tr>
-    <tr>
-      <th>model_name</th>
-      <th>Models</th>
-      <th>model_name</th>
-      <th>Models</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>lr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html">Linear Regression</a></td>
-      <td>lc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html">Logistic Regression</a></td>
-    </tr>
-    <tr>
-      <td>svr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html">Support Vector Regression</a></td>
-      <td>svc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html">Support Vector Classification</a></td>
-    </tr>
-    <tr>
-      <td>knr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html">K-Nearest Neighbors Regression</a></td>
-      <td>knc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html">K-Nearest Neighbors Classification</a></td>
-    </tr>
-    <tr>
-      <td>mlpr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPRegressor.html">Multi-Layer Perceptron Regressor</a></td>
-      <td>mlpc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html">Multi-Layer Perceptron Classifier</a></td>
-    </tr>
-    <tr>
-      <td>dtr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html">Decision Tree Regressor</a></td>
-      <td>dtc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html">Decision Tree Classifier</a></td>
-    </tr>
-    <tr>
-      <td>rfr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">Random Forest Regressor</a></td>
-      <td>rfc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">Random Forest Classifier</a></td>
-    </tr>
-    <tr>
-      <td>gbdtr</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html">Gradient Boosted Decision Trees (GBDT) Regressor</a></td>
-      <td>gbdtc</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html">Gradient Boosted Decision Trees (GBDT) Classifier</a></td>
-    </tr>
-    <tr>
-      <td>adar</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html">AdaBoost Regressor</a></td>
-      <td>adac</td>
-      <td><a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html">AdaBoost Classifier</a></td>
-    </tr>
-    <tr>
-      <td>xgbr</td>
-      <td><a href="https://xgboost.readthedocs.io/en/latest/python/python_api.html">XGBoost Regressor</a></td>
-      <td>xgbc</td>
-      <td><a href="https://xgboost.readthedocs.io/en/latest/python/python_api.html">XGBoost Classifier</a></td>
-    </tr>
-    <tr>
-      <td>lgbr</td>
-      <td><a href="https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html">LightGBM Regressor</a></td>
-      <td>lgbc</td>
-      <td><a href="https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html">LightGBM Classifier</a></td>
-    </tr>
-    <tr>
-      <td>catr</td>
-      <td><a href="https://catboost.ai/en/docs/concepts/python-reference_catboostregressor">CatBoost Regressor</a></td>
-      <td>catc</td>
-      <td><a href="https://catboost.ai/en/docs/concepts/python-reference_catboostclassifier">CatBoost Classifier</a></td>
-    </tr>
-  </tbody>
-</table>
-"""
-
-
+import pandas as pd
 import pytest
 import optuna
+optuna.logging.set_verbosity(optuna.logging.WARNING)
 import yaml
-from pathlib import Path
 from sklearn.datasets import make_regression, make_classification
+from sklearn.base import clone
+from sklearn.model_selection import train_test_split
+from functools import partial
+from optuna.samplers import TPESampler
+
+
+
 from mymodels import MyEstimator
 
 
 # --------------------------
-# 基准测试
+# 模型功能基准测试
 # --------------------------
 
+# Create a regression dataset
+X_reg, y_reg = make_regression(n_samples=100, n_features=10, noise=0.1, random_state=0)
+X_reg = pd.DataFrame(X_reg, columns=[f'feature_{i}' for i in range(X_reg.shape[1])])
+y_reg = pd.Series(y_reg, name='target')
+
+X_binary, y_binary = make_classification(n_samples=100, n_features=10, n_classes=2, n_informative=5, random_state=0)
+X_binary = pd.DataFrame(X_binary, columns=[f'feature_{i}' for i in range(X_binary.shape[1])])
+y_binary = pd.Series(y_binary, name='target')
+
+X_multi, y_multi = make_classification(n_samples=100, n_features=10, n_classes=6, n_informative=5, random_state=0)
+X_multi = pd.DataFrame(X_multi, columns=[f'feature_{i}' for i in range(X_multi.shape[1])])
+y_multi = pd.Series(y_multi, name='target')
 
 
+# Construct the optimization
+class TestEstimator:
+    def __init__(self, model_name: str): 
+        self.model_name = model_name
 
+    def fit(self, x, y):
+        self.x_train = x
+        self.y_train = y
+
+        estimator = MyEstimator()
+        estimator.load(model_name=self.model_name)
+        self._model_obj = estimator.empty_model_object
+        param_space = estimator.param_space
+        static_params = estimator.static_params
+
+        # Create a study
+        _study = optuna.create_study(
+            direction = "maximize",
+            sampler = TPESampler(seed=0),
+        )
+
+        # Optimization
+        _study.optimize(
+            partial(self._objective, _param_space=param_space, _static_params=static_params),
+            n_trials = 5,
+            n_jobs = 1,
+            show_progress_bar = True
+        )
+
+        return None
+
+    def _objective(self, trial, _param_space, _static_params) -> float:
+        """Objective function for the Optuna study."""
+
+        # Get parameters for model training
+        # Make the param immutable
+        param = {
+            **{k: v(trial) for k, v in _param_space.items()},
+            **_static_params
+        }
+
+        # Data split
+        _x_train, _x_test, _y_train, _y_test = train_test_split(
+            self.x_train, self.y_train
+        )
+
+        # Create a validator
+        _validator = clone(self._model_obj(**param))
+        _validator.fit(_x_train, _y_train)
+        
+        return _validator.score(_x_test, _y_test)
+
+
+def test_regression_models_optimization():
+    """测试回归模型优化功能
+    
+    测试所有回归模型是否能成功完成trial，使用回归数据集
+    """
+    regression_models = ['lr', 'svr', 'knr', 'mlpr', 'dtr', 'rfr', 'gbdtr', 'adar', 'xgbr', 'lgbr', 'catr']
+    
+    for model_name in regression_models:
+        print(f"Testing regression model: {model_name}")
+        try:
+            test_estimator = TestEstimator(model_name=model_name)
+            test_estimator.fit(X_reg, y_reg)
+            print(f"Model {model_name} completed successfully")
+        except Exception as e:
+            pytest.fail(f"Model {model_name} failed with error: {str(e)}")
+
+def test_binary_classification_models_optimization():
+    """测试二分类模型优化功能
+    
+    测试所有分类模型是否能成功完成trial，使用二分类数据集
+    """
+    classification_models = ['lc', 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc']
+    
+    for model_name in classification_models:
+        print(f"Testing binary classification model: {model_name}")
+        try:
+            test_estimator = TestEstimator(model_name=model_name)
+            test_estimator.fit(X_binary, y_binary)
+            print(f"Model {model_name} completed successfully")
+        except Exception as e:
+            pytest.fail(f"Model {model_name} failed with error: {str(e)}")
+
+def test_multiclass_classification_models_optimization():
+    """测试多分类模型优化功能
+    
+    测试所有分类模型是否能成功完成trial，使用多分类数据集
+    """
+    classification_models = ['lc', 'svc', 'knc', 'mlpc', 'dtc', 'rfc', 'gbdtc', 'adac', 'xgbc', 'lgbc', 'catc']
+    
+    for model_name in classification_models:
+        print(f"Testing multiclass classification model: {model_name}")
+        try:
+            test_estimator = TestEstimator(model_name=model_name)
+            test_estimator.fit(X_multi, y_multi)
+            print(f"Model {model_name} completed successfully")
+        except Exception as e:
+            pytest.fail(f"Model {model_name} failed with error: {str(e)}")
 
 
 # --------------------------
