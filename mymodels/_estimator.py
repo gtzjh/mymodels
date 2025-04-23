@@ -1,5 +1,5 @@
 from types import MappingProxyType
-import yaml, importlib
+import yaml, importlib, logging
 
 
 def _convert_param_space(param_space_config):
@@ -100,7 +100,7 @@ def _convert_param_space(param_space_config):
 
 
 
-class MyModels:
+class MyEstimator:
     def __init__(
             self,
             random_state: int = 0, 
@@ -152,6 +152,7 @@ class MyModels:
         self.param_space = None
         self.static_params = None
         self.shap_explainer_type = None
+        self.save_type = None
         self.optimal_model_object = None
         self.optimal_params = None
         
@@ -167,9 +168,10 @@ class MyModels:
             self: The instance of the `MyModels` class
         """
 
+        # Validate the model name
         assert model_name in self._VALID_MODEL_NAMES, \
-            f"Invalid model name: {model_name}, \
-              it must be one of {self._VALID_MODEL_NAMES}"
+            f"Invalid model name: {model_name}, it must be one of {self._VALID_MODEL_NAMES}"
+        self.model_name = model_name
         
         # Get parameters from config
         model_config = self._config[model_name]
@@ -189,7 +191,7 @@ class MyModels:
         )
 
         # The static parameters, unchangeable dictionary
-        self.static_params = MappingProxyType(dict(model_config['STATIC_PARAMS']))
+        self.static_params = dict(model_config['STATIC_PARAMS'])
 
         # The SHAP explainer type
         self.shap_explainer_type = model_config['SHAP_EXPLAINER_TYPE']
@@ -197,26 +199,60 @@ class MyModels:
         # The save type
         self.save_type = model_config['SAVE_TYPE']
 
-        """
-        # For all models that support random_state
-        if self.model_name not in ['lr', 'svr', 'knr', 'knc']:
-            static_params['random_state'] = self.random_state
-            
-        # For CatBoost models, add cat_features
-        if self.model_name in ['catc', 'catr'] and self.cat_features is not None:
-            static_params['cat_features'] = self.cat_features
-        """
 
+        # 对于catboost模型，可以接受cat_features参数
+        # 对于其他模型，cat_features参数会被忽略。若此时用户还是提供了cat_features参数，会提供一个warning，告诉用户这里的cat_features参数将不会生效
+        # 对于可以接受random_state参数的模型，会自动将random_state参数设置为self.random_state
+        # 如果选择的模型不能接受random_state参数，但是用户还是提供了random_state参数，会提供一个warning，告诉用户这里的random_state参数将不会生效
+        # 反之，如果选择的模型能够接受random_state参数，但是用户没有提供random_state参数，则会提供以后警告，
+        # 告诉用户这里没有提供random_state参数，可能会影响模型的可复现性。
+        
+        # Create an instance of the model to check the available parameters inside
+        _model_object = self.empty_model_object(
+            **{
+                "cat_features": self.cat_features,
+                "random_state": self.random_state
+            }
+        )
+        
+        # _acceptable_params = _model_object.get_params()
+        # print(_acceptable_params)
+ 
+        from sklearn.datasets import load_iris
+        iris = load_iris()
+        self.X_train, self.y_train = iris.data, iris.target
+        _model_object.fit(self.X_train, self.y_train)
+
+
+        """
+        # Check for random_state parameter compatibility
+        if 'random_state' in _acceptable_params:
+            if hasattr(self, 'random_state'):
+                self.static_params['random_state'] = self.random_state
+            else:
+                logging.warning(f"Model {model_name} accepts random_state parameter, but none was provided. "
+                                 "This may affect model reproducibility.")
+        elif hasattr(self, 'random_state') and self.random_state is not None:
+            logging.warning(f"Model {model_name} does not accept random_state parameter. "
+                             "The provided random_state value will be ignored.")
+
+        # Check for cat_features parameter compatibility
+        if 'cat_features' in _acceptable_params:
+            if hasattr(self, 'cat_features') and self.cat_features is not None:
+                self.static_params['cat_features'] = self.cat_features
+        elif hasattr(self, 'cat_features') and self.cat_features is not None:
+            logging.warning(f"Model {model_name} does not accept cat_features parameter. "
+                             "The provided cat_features value will be ignored.")
+        """
+        
         return self
     
 
 
 if __name__ == "__main__":
-    model = MyModels(random_state=42).load(model_name='rfr')
-    
-    print(model.empty_model_object)
-    print(model.param_space)
-    print(model.static_params)
-    print(model.shap_explainer_type)
-    print(model.save_type)
+    model = MyEstimator(random_state=0, cat_features=['cat_feature', "xxx"]).load(model_name='svc')
 
+    for attr in dir(model):
+        if not attr.startswith('_'):
+            # print(f"{attr}: {getattr(model, attr)}")
+            pass

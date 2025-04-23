@@ -12,7 +12,7 @@ import logging
 
 
 
-from ._models import MyModels
+from ._estimator import MyEstimator
 
 
 
