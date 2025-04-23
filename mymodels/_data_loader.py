@@ -1,17 +1,16 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-import numpy as np
 
 
-
-def _label_y(y_data):
+def _label_y(y_data, verbose=False):
     """Encode non-numeric target variable to integers.
     
     Args:
         y_data (pd.Series): The target variable series to encode.
+        verbose (bool, optional): Whether to print encoding mapping information. Defaults to False.
         
     Returns:
-        dict: A dictionary mapping the original categories to their encoded integer values.
+        tuple: A tuple containing (encoded_data, mapping_dict) where mapping_dict maps original categories to encoded integers.
         
     Raises:
         AssertionError: If y_data is already numeric.
@@ -19,44 +18,37 @@ def _label_y(y_data):
     Examples:
         >>> import pandas as pd
         >>> series = pd.Series(['cat', 'dog', 'bird', 'cat'])
-        >>> mapping = _label_y(series)
-        Label Encoding Mapping:
-        <BLANKLINE>
-          bird -> 0
-          cat -> 1
-          dog -> 2
+        >>> encoded_data, mapping = _label_y(series)
         >>> sorted(mapping.items())
         [('bird', 0), ('cat', 1), ('dog', 2)]
     """
     from sklearn.preprocessing import LabelEncoder
 
-    # If y_data is already numeric, return empty dictionary
+    # If y_data is already numeric, return original data and empty dictionary
     if pd.api.types.is_numeric_dtype(y_data.dtype):
-        return {}
+        return y_data, {}
     
-    # Handle boolean series (create mapping manually)
-    if pd.api.types.is_bool_dtype(y_data.dtype):
+    # Handle boolean series (create mapping manually and transform data)
+    if pd.api.types.is_bool_dtype(y_data.dtype) or y_data.isin([True, False]).all():
         y_mapping_dict = {False: 0, True: 1}
-        print("Label Encoding Mapping:\n")
-        for _original, _encoded in y_mapping_dict.items():
-            print(f"  {_original} -> {_encoded}")
-        return y_mapping_dict
+        encoded_y_data = y_data.map(y_mapping_dict)
+        if verbose:
+            print("Label Encoding Mapping:\n")
+            for _original, _encoded in y_mapping_dict.items():
+                print(f"  {_original} -> {_encoded}")
+        return encoded_y_data, y_mapping_dict
     
     # Handle categorical/string data
     label_encoder = LabelEncoder()
-    y_data = pd.Series(label_encoder.fit_transform(y_data), index = y_data.index)
+    encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
     
     # Create mapping dictionary from original categories to encoded integers
     y_mapping_dict = {
         original: encoded for original, encoded in \
             zip(label_encoder.classes_, range(len(label_encoder.classes_)))
     }
-    
-    print("Label Encoding Mapping:\n")
-    for _original, _encoded in y_mapping_dict.items():
-        print(f"  {_original} -> {_encoded}")
-    
-    return y_mapping_dict
+
+    return encoded_y_data, y_mapping_dict
 
 
 
@@ -241,26 +233,18 @@ class MyDataLoader:
             _x_data = self.input_data.loc[:, list(self.x_list)]
         elif all([isinstance(i, int) for i in list(self.x_list)]):
             _x_data = self.input_data.iloc[:, list(self.x_list)]
-            
-        # Check for missing values in features
-        if _x_data.isna().any().any():
-            raise ValueError("Missing values are not allowed in the feature variables")
 
+        # Encode non-numeric target variables and get mapping dictionary
+        encoded_y_data, self.y_mapping_dict = _label_y(_y_data, verbose=False)
+        
         # Split data into training and testing sets
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             _x_data,
-            _y_data,
+            encoded_y_data,
             test_size = self.test_ratio,
             random_state = self.random_state,
             shuffle = True,
-            stratify = _y_data if self.stratify else None
+            stratify = encoded_y_data if self.stratify else None
         )
-        
-        # Initialize y_mapping_dict to empty dict (for numeric data)
-        self.y_mapping_dict = {}
-        
-        # Encode non-numeric target variables
-        if not pd.api.types.is_numeric_dtype(_y_data.dtype):
-            self.y_mapping_dict = _label_y(_y_data)
 
         return self

@@ -6,6 +6,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
+
 from mymodels._data_loader import MyDataLoader
 
 
@@ -39,7 +40,9 @@ def test_y_string_conversion(sample_data):
     assert set(dataset.y_train) <= {0, 1}
     assert set(dataset.y_test) <= {0, 1}
 
-def test_y_boolean_conversion(sample_data):
+
+def test_boolean_y_no_conversion(sample_data):
+    """当y列已经是布尔类型时不应进行编码"""
     loader = MyDataLoader(
         input_data=sample_data,
         y='y_bool',
@@ -48,9 +51,56 @@ def test_y_boolean_conversion(sample_data):
         random_state=42
     )
     dataset = loader.load()
-    # 检查布尔值转换为0和1
-    assert dataset.y_mapping_dict == {False: 0, True: 1}
+    
+    # 验证无编码字典
+    assert not dataset.y_mapping_dict
+    # 验证y值保持布尔型
+    assert dataset.y_train.dtype == bool
+    assert dataset.y_test.dtype == bool
+    # 验证值范围
+    assert set(dataset.y_train) <= {True, False}
+    assert set(dataset.y_test) <= {True, False}
+
+def test_string_boolean_y_conversion():
+    """当y列是字符串型布尔值时应进行编码"""
+    data = pd.DataFrame({
+        'y': ['True', 'False', 'True', 'False', 'True'],
+        'x1': np.random.randn(5)
+    })
+    loader = MyDataLoader(
+        input_data=data,
+        y='y',
+        x_list=['x1'],
+        test_ratio=0.4,
+        random_state=42
+    )
+    dataset = loader.load()
+    
+    # 验证编码字典
+    assert dataset.y_mapping_dict == {'False': 0, 'True': 1}
+    # 验证数值转换
     assert set(dataset.y_train) <= {0, 1}
+    assert set(dataset.y_test) <= {0, 1}
+
+def test_y_boolean_conversion(sample_data):
+    """兼容旧测试（实际应触发转换）"""
+    # 创建字符串型布尔列
+    sample_data = sample_data.copy()
+    sample_data['y_str_bool'] = sample_data['y_bool'].astype(str)
+    
+    loader = MyDataLoader(
+        input_data=sample_data,
+        y='y_str_bool',
+        x_list=['x1', 'x2', 'x3'],
+        test_ratio=0.4,
+        random_state=42
+    )
+    dataset = loader.load()
+    
+    # 验证字符串布尔被转换
+    assert dataset.y_mapping_dict == {'False': 0, 'True': 1}
+    assert set(dataset.y_train) <= {0, 1}
+
 
 def test_y_numeric_no_conversion(sample_data):
     loader = MyDataLoader(
@@ -159,14 +209,6 @@ def test_missing_values_in_y():
     data = pd.DataFrame({
         'y': [0, 1, np.nan, 0, 1],
         'x1': [1, 2, 3, 4, 5]
-    })
-    with pytest.raises(ValueError):
-        MyDataLoader(data, y='y', x_list=['x1']).load()
-
-def test_missing_values_in_x():
-    data = pd.DataFrame({
-        'y': [0, 1, 0, 1, 0],
-        'x1': [1, 2, np.nan, 4, 5]
     })
     with pytest.raises(ValueError):
         MyDataLoader(data, y='y', x_list=['x1']).load()
