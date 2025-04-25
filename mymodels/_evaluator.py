@@ -19,7 +19,7 @@ class MyEvaluator:
     and saving/printing results.
     """
     def __init__(self):
-        """Initialize the Evaluator with model name."""
+        """Initialize the Evaluator with model name.""" 
 
         # Global variables statement
         self.x_test = None
@@ -71,7 +71,7 @@ class MyEvaluator:
         assert isinstance(x_train, (pd.DataFrame, pd.Series)), "x_train must be a pandas DataFrame or Series"
         assert isinstance(y_test, (pd.DataFrame, pd.Series)), "y_test must be a pandas DataFrame or Series"
         assert isinstance(y_train, (pd.DataFrame, pd.Series)), "y_train must be a pandas DataFrame or Series"
-        
+
         # Assert the optimal_model_object is callable
         assert callable(optimal_model_object), \
             "optimal_model_object must be a callable object"

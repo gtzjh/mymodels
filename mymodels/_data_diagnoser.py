@@ -2,6 +2,12 @@ import pandas as pd
 import logging
 
 
+
+from plotting import Plotter
+
+
+
+
 class MyDataDiagnoser:
     def __init__(
             self,
@@ -12,6 +18,14 @@ class MyDataDiagnoser:
         self.y_data = y_data.copy()
 
         self._check_input()
+
+        plotter = Plotter(
+            show = False,
+            plot_format = "png",
+            plot_dpi = 300,
+            results_dir = "./results/test_plotting_plot_diagnosed_data"
+        )
+
 
 
     def _check_input(self):

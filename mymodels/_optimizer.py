@@ -119,6 +119,26 @@ class MyOptimizer:
                 - A user-defined function that takes in y_true and y_pred and returns a float
         """
 
+        assert strategy in ["tpe", "random"], \
+            "strategy must be one of the following: tpe, random"
+        assert direction in ["maximize", "minimize"], \
+            "direction must be one of the following: maximize, minimize"
+        assert eval_function is None or callable(eval_function), \
+            "eval_function must be a callable function"
+
+        # Check data_engineer_pipeline validity
+        if data_engineer_pipeline is not None:
+            assert isinstance(data_engineer_pipeline, Pipeline), \
+                "data_engineer_pipeline must be a `sklearn.pipeline.Pipeline` object"
+        else:
+            logging.warning("No data engineering will be implemented, the raw data will be used.")
+
+        # Check if `cat_features` is explicitly provided for the CatBoost model
+        if cat_features is not None:
+            assert self.model_name in ["catr", "catc"], \
+                "`cat_features` is supported when choosing CatBoost model"
+
+
         self.x_train = x_train.copy(deep=True)
         self.y_train = y_train.copy(deep=True)
         self.model_name = model_name

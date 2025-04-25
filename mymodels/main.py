@@ -3,16 +3,10 @@ from sklearn.pipeline import Pipeline
 import logging, pathlib
 
 
-from ._data_loader import MyDataLoader
-from ._data_diagnoser import MyDataDiagnoser
-from ._optimizer import MyOptimizer
-from ._evaluator import MyEvaluator
-from ._explainer import MyExplainer
+from mymodels import MyDataLoader, MyDataDiagnoser, MyEstimator, MyOptimizer, MyEvaluator, MyExplainer
 
 
-"""
 
-"""
 class MyPipeline:
     """Machine Learning Pipeline for Model Training and Evaluation
     A class that handles data loading, model training, and evaluation with SHAP analysis.
@@ -20,74 +14,60 @@ class MyPipeline:
     """
     def __init__(
             self,
-            results_dir: str | pathlib.Path,
             random_state: int = 0,
             stratify: bool = False,
-            show: bool = False,
-            plot_format: str = "jpg",
-            plot_dpi: int = 500
         ):
-
 
         self.random_state = random_state
         self.stratify = stratify
-        self.show = show
-        self.plot_format = plot_format
-        self.plot_dpi = plot_dpi
-        self.results_dir = results_dir
 
         # Global variables statement
-        # In load()
-        self._x_train = None
-        self._x_test = None
-        self._y_train = None
-        self._y_test = None
-        self.y_mapping_dict = None
-
-        # In optimize()
-        self.model_name = None
+        self.dataset = None
+        self.estimator = None
         self.data_engineer_pipeline = None
-        
-        # After optimization
-        self._optimal_model = None
-        
+
+        self.optimized_estimator = None
+        self.optimized_dataset = None
+        self.optimized_data_engineer_pipeline = None
 
 
     def load(
         self,
+        model_name: str,
         input_data: pd.DataFrame,
         y: str | int, 
         x_list: list[str | int],
+        data_engineer_pipeline: Pipeline | None = None,
         test_ratio: float = 0.3,
-        inspect: bool = True
+        cat_features: list[str] | tuple[str] | None = None,
+        model_configs_path: str = 'model_configs.yml',
     ):
-        """Prepare training and test data"""
-        self._x_train, self._x_test, self._y_train, self._y_test, self.y_mapping_dict = data_loader(
+        """Load the estimator, (train/test) dataset, and data engineer pipeline"""
+
+        # Load the estimator
+        self.estimator = MyEstimator(
+            cat_features = cat_features,
+            model_configs_path = model_configs_path
+        ).load(model_name = model_name)
+
+        # Load the dataset
+        self.dataset = MyDataLoader(
             input_data=input_data,
             y=y,
             x_list=x_list,
             test_ratio=test_ratio,
             random_state=self.random_state,
             stratify=self.stratify
-        )
-        if inspect:
-            print(f"\nTotal samples: {len(self._x_train) + len(self._x_test)}")
-            print(f"\nTrain X data info:")
-            print(self._x_train.info())
-            print(f"\nTrain X data head:")
-            print(self._x_train.head(10))
-            print(f"\nTrain y data info:")
-            print(self._y_train.info())
-            print(f"\nTrain y data head:")
-            print(self._y_train.head(10))
-            print(f"\nTotally features: {self._x_train.shape[1]}")
+        ).load()
 
+        # Load the data engineer pipeline
+        self.data_engineer_pipeline = data_engineer_pipeline
+    
         return None
 
 
-
+    """
     def diagnose(self, sample_k: int | float | None = None):
-        """Diagnose the data"""
 
         diagnose_x_data = self._x_train.copy(deep=True)
         diagnose_y_data = self._y_train.copy(deep=True)
@@ -118,76 +98,39 @@ class MyPipeline:
         diagnoser.diagnose()
         
         return None
+    """
 
 
 
     def optimize(
         self,
-        model_name: str,
-        data_engineer_pipeline: Pipeline | None = None,
         strategy = "tpe",
         cv: int = 5,
         trials: int = 50,
         n_jobs: int = 5,
-        cat_features: list[str] | tuple[str] | None = None,
         direction: str = "maximize",
-        eval_function: None = None
+        eval_function: None = None,
     ):
         """Optimization"""
-        
-        ###########################################################################################
-        # Input validation
-        assert model_name in \
-            ["lr", "svr", "knr", "mlpr", "dtr", "rfr", "gbdtr", "adar", "xgbr", "lgbr", "catr",
-             "lc", "svc", "knc", "mlpc", "dtc", "rfc", "gbdtc", "adac", "xgbc", "lgbc", "catc"], \
-             "model_name is invalid"
-        self.model_name = model_name
-
-        # Check data_engineer_pipeline validity
-        if data_engineer_pipeline is not None:
-            assert isinstance(data_engineer_pipeline, Pipeline), \
-                "data_engineer_pipeline must be a `sklearn.pipeline.Pipeline` object"
-        else:
-            logging.warning("No data engineering will be implemented, the raw data will be used.")
-
-        assert strategy in ["tpe", "random"], \
-            "strategy must be one of the following: tpe, random"
-        
-        # Check if `cat_features` is explicitly provided for the CatBoost model
-        if cat_features is not None:
-            assert self.model_name in ["catr", "catc"], \
-                "`cat_features` is only supported for CatBoost"
-        assert direction in ["maximize", "minimize"], \
-            "direction must be one of the following: maximize, minimize"
-        assert eval_function is None or callable(eval_function), \
-            "eval_function must be a callable function"
-        ###########################################################################################
         
         # Initialize optimizer
         optimizer = MyOptimizer(
             random_state=self.random_state,
-            results_dir=self.results_dir,
             stratify = self.stratify
         )
 
         # Fit the optimizer
-        optimizer.fit(
-            x_train=self._x_train,
-            y_train=self._y_train,
-            model_name=self.model_name,
-            data_engineer_pipeline=data_engineer_pipeline,
+        self.optimized_estimator, self.optimized_dataset, self.optimized_data_engineer_pipeline = optimizer.fit(
+            dateset = self.dataset,
+            estimator = self.estimator,
+            data_engineer_pipeline=self.data_engineer_pipeline,
             strategy = strategy,
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,
-            cat_features = cat_features,
             direction = direction,
             eval_function = eval_function
         )
-
-        # Output data for evaluate() and explain()
-        self._optimal_model = optimizer.optimal_model
-        self.data_engineer_pipeline = optimizer.data_engineer_pipeline
 
         return None
     
@@ -197,7 +140,6 @@ class MyPipeline:
             self,
             show_train: bool = True,
             dummy: bool = True,
-            save_raw_data: bool = True,
             eval_metric: dict | None = None
         ):
         """Evaluate the model
@@ -209,29 +151,14 @@ class MyPipeline:
             eval_metric (None): The self-defined evaluation metric to use. 
                 It must be None or a dictionary where each item is a callable function. Default is None.
         """
-        assert isinstance(show_train, bool), "show_train must be a boolean"
-        assert isinstance(dummy, bool), "dummy must be a boolean"
-        assert isinstance(save_raw_data, bool), "save_raw_data must be a boolean"
-        assert eval_metric is None \
-            or (isinstance(eval_metric, dict) and all(callable(item) for item in eval_metric.values())), \
-            "eval_metric must be None or a dictionary where each item is a callable function"
 
         evaluator = MyEvaluator()
         evaluator.evaluate(
-            x_test = self._x_test,
-            x_train = self._x_train,
-            y_test = self._y_test,
-            y_train = self._y_train,
-            optimal_model_object = self._optimal_model,
+
             data_engineer_pipeline = self.data_engineer_pipeline,
             show_train = show_train,
             dummy = dummy,
             eval_metric = eval_metric,
-            # Output options
-            results_dir = self.results_dir,
-            print_results = True,
-            save_results = True,
-            save_raw_data = save_raw_data
         )
 
         return None
