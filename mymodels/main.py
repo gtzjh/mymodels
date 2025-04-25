@@ -42,7 +42,7 @@ class MyPipeline:
         stratify: bool = False,
         data_engineer_pipeline: Pipeline | None = None,
         cat_features: list[str] | tuple[str] | None = None,
-        model_configs_path: str = 'model_configs.yml',
+        model_configs_path: str = 'model_configs.yml'
     ):
         """Load the estimator, (train/test) dataset, and data engineer pipeline
         
@@ -55,7 +55,7 @@ class MyPipeline:
             stratify (bool, optional): Whether to stratify the dataset. Defaults to False.
             data_engineer_pipeline (Pipeline | None, optional): The data engineering pipeline to use. Defaults to None.
             cat_features (list[str] | tuple[str] | None, optional): Categorical features to be used. Defaults to None.
-            model_configs_path (str, optional): Path to the model configuration file. Defaults to 'model_configs.yml'.
+            model_configs_path (str, optional): Path to the model configuration file. Defaults is 'model_configs.yml'.
         """
 
         self.stratify = stratify
@@ -101,17 +101,14 @@ class MyPipeline:
                 sample_k = int(sample_k * len(self._x_train))
 
             diagnose_data = diagnose_x_data.merge(diagnose_y_data,
-                                                    left_index=True,
-                                                    right_index=True).sample(sample_k,
-                                                                            random_state=self.random_state)
+                                                  left_index=True,
+                                                  right_index=True).sample(sample_k,
+                                                                           random_state=self.random_state)
             diagnose_x_data = diagnose_data.iloc[:, :-1]
             diagnose_y_data = diagnose_data.iloc[:, -1]
         """
 
-        diagnoser = MyDataDiagnoser(
-            dataset = self.dataset,
-        )
-
+        diagnoser = MyDataDiagnoser(dataset = self.dataset)
         diagnoser.diagnose(sample_k = sample_k)
         
         return None
@@ -124,7 +121,7 @@ class MyPipeline:
         trials: int = 100,
         n_jobs: int = 5,
         direction: str = "maximize",
-        eval_function: None = None,
+        eval_function: None | callable = None,
     ):
         """Optimization
         
@@ -134,7 +131,7 @@ class MyPipeline:
             trials (int): The number of trials to run. Default is 100.
             n_jobs (int): The number of jobs to run in parallel. Default is 5.
             direction (str): The direction of the optimization. Default is "maximize".
-            eval_function (None): The evaluation function to use. Default is None.
+            eval_function (None | callable): The evaluation function to use. Default is None.
 
         Returns:
             The optimized estimator, dataset, and data engineer pipeline.
@@ -148,7 +145,7 @@ class MyPipeline:
         )
 
         # Fit the optimizer
-        self.optimized_estimator, self.optimized_dataset, self.optimized_data_engineer_pipeline = optimizer.fit(
+        self.optimized_dataset, self.optimized_estimator, self.optimized_data_engineer_pipeline = optimizer.fit(
             random_state = self.random_state,
             stratify = self.stratify,
             strategy = strategy,
