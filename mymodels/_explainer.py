@@ -9,8 +9,6 @@ import logging
 class MyExplainer:
     def __init__(
             self,
-            model_object,
-            model_name: str,
             background_data: pd.DataFrame,
             shap_data: pd.DataFrame,
             sample_background_data_k: int | float | None = None,
@@ -19,14 +17,7 @@ class MyExplainer:
         """Initialize the MyExplainer with model and data.
 
         Args:
-            model_object: Trained model object to be explained.
-            model_name (str): Identifier for the model type (e.g., 'rfr', 'xgbc').
-            background_data (pd.DataFrame): Reference data for SHAP explainer.
-            shap_data (pd.DataFrame): Data samples to be explained.
-            sample_background_data_k (int|float|None): If int, the number of background samples
-                to use; if float, the fraction of background data to sample; if None, use all data.
-            sample_shap_data_k (int|float|None): If int, the number of samples to explain;
-                if float, the fraction of data to explain; if None, explain all data.
+
         """
     
         self.model_object = model_object
@@ -55,9 +46,11 @@ class MyExplainer:
         if not callable(self.model_object):
             raise ValueError("model_object must be callable")
         
-        # Validate dataframes
-        assert isinstance(self.background_data, pd.DataFrame), "background_data must be a pandas DataFrame"
-        assert isinstance(self.shap_data, pd.DataFrame), "shap_data must be a pandas DataFrame"
+        # Check input parameters
+        assert self.select_background_data in ["train", "test", "all"], \
+            "select_background_data must be one of the following: train, test, all"
+        assert self.select_shap_data in ["train", "test", "all"], \
+            "select_shap_data must be one of the following: train, test, all"
             
         # Validate sample sizes
         if self.sample_background_data_k:
@@ -79,17 +72,39 @@ class MyExplainer:
 
     
 
-    def explain(
-            self,
-            numeric_features: list[str] | tuple[str],
-        ):
+    def explain(self):
         """Calculate SHAP values and generate explanations.
-        
-        Args:
-            numeric_features: List of feature names considered numerical
         """
-        # Convert to list if input is tuple
-        self.numeric_features = list(numeric_features) if isinstance(numeric_features, tuple) else numeric_features
+
+        
+        # Transform X data
+        if self.data_engineer_pipeline:
+            _used_x_train = self.data_engineer_pipeline.transform(self._x_train)
+            _used_x_test = self.data_engineer_pipeline.transform(self._x_test)
+        else:
+            _used_x_train = self._x_train
+            _used_x_test = self._x_test
+
+
+
+        # Background data for building the explainer
+        if select_background_data == "train":
+            _background_data = _used_x_train
+        elif select_background_data == "test":
+            _background_data = _used_x_test
+        elif select_background_data == "all":
+            _background_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
+
+        # SHAP data for calculating SHAP values
+        if select_shap_data == "train":
+            _shap_data = _used_x_train
+        elif select_shap_data == "test":
+            _shap_data = _used_x_test
+        elif select_shap_data == "all":
+            _shap_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
+
+
+
 
         # Check if the model is a multi-class GBDT model
         if self.model_name == "gbdtc" and len(self.classes_) > 2:
