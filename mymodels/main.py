@@ -2,10 +2,14 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 
-
-from mymodels import MyDataLoader, MyEstimator
-from mymodels import MyDataDiagnoser, MyOptimizer, MyEvaluator, MyExplainer, Plotter, Output
-
+from ._data_loader import MyDataLoader
+from ._estimator import MyEstimator
+from ._data_diagnoser import MyDataDiagnoser
+from ._optimizer import MyOptimizer
+from ._evaluator import MyEvaluator
+from ._explainer import MyExplainer
+# from .plotting import Plotter
+# from .output import Output
 
 
 class MyPipeline:
@@ -121,7 +125,7 @@ class MyPipeline:
         trials: int = 100,
         n_jobs: int = 5,
         direction: str = "maximize",
-        eval_function: None | callable = None,
+        eval_function = None ,
     ):
         """Optimization
         
@@ -131,7 +135,7 @@ class MyPipeline:
             trials (int): The number of trials to run. Default is 100.
             n_jobs (int): The number of jobs to run in parallel. Default is 5.
             direction (str): The direction of the optimization. Default is "maximize".
-            eval_function (None | callable): The evaluation function to use. Default is None.
+            eval_function: The evaluation function to use. Default is None.
 
         Returns:
             The optimized estimator, dataset, and data engineer pipeline.
@@ -146,14 +150,14 @@ class MyPipeline:
 
         # Fit the optimizer
         self.optimized_dataset, self.optimized_estimator, self.optimized_data_engineer_pipeline = optimizer.fit(
-            random_state = self.random_state,
             stratify = self.stratify,
             strategy = strategy,
             cv = cv,
             trials = trials,
             n_jobs = n_jobs,
             direction = direction,
-            eval_function = eval_function
+            eval_function = eval_function,
+            random_state = self.random_state,
         )
 
         return None

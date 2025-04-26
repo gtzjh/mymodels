@@ -2,10 +2,8 @@ import numpy as np
 import pandas as pd
 
 
-
 from mymodels.data_engineer import data_engineer
 from mymodels import MyPipeline
-
 
 
 data = pd.read_csv("data/titanic.csv", encoding="utf-8",
@@ -46,12 +44,13 @@ mymodel.load(
 mymodel.optimize(
     strategy = "tpe",
     cv = 5,
-    trials = 100,
+    trials = 10,
     n_jobs = 5,
     direction = "maximize",
     eval_function = None
 )
 
+"""
 # Evaluate
 mymodel.evaluate(
     show_train = True,
@@ -65,4 +64,6 @@ mymodel.explain(
     sample_background_data_k = None,
     sample_shap_data_k = None
 )
+"""
+
 
