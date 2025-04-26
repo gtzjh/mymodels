@@ -1,4 +1,4 @@
-from .main import MyPipeline
+from .main import MyModel
 
 
-__all__ = ['MyPipeline']
+__all__ = ['MyModel']

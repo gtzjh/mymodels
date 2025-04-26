@@ -117,8 +117,8 @@ class MyEstimator:
             param_space: The parameter space for Optuna tuning.
             static_params: The static parameters.
             shap_explainer_type: The type of SHAP explainer to use.
-            optimal_model_object: The optimal model object. (After optimization)
-            optimal_params: The optimal parameters. (After optimization)
+            optimal_model_object: The optimal model object. (After fit() in optimization)
+            optimal_params: The optimal parameters. (After fit() in optimization)
 
         Examples:
             >>> from mymodels import MyEstimator
@@ -207,7 +207,7 @@ class MyEstimator:
                 or self.empty_model_object.__name__ == 'CatBoostRegressor':
                     self.static_params['cat_features'] = self.cat_features
             else:
-                logging.warning(f"Model {model_name} does not accept cat_features parameter. "
+                logging.warning(f"Model {str(self.empty_model_object)} does not accept cat_features parameter. "
                                  "The provided cat_features value will be ignored.")
         
         return self

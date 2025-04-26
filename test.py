@@ -3,7 +3,7 @@ import pandas as pd
 
 
 from mymodels.data_engineer import data_engineer
-from mymodels import MyPipeline
+from mymodels import MyModel
 
 
 data = pd.read_csv("data/titanic.csv", encoding="utf-8",
@@ -25,7 +25,7 @@ data_engineer_pipeline = data_engineer(
 
 
 # Construct the pipeline
-mymodel = MyPipeline(random_state = 0)
+mymodel = MyModel(random_state = 0)
 
 # Load dateset, model, and data engineer pipeline
 mymodel.load(
@@ -50,7 +50,7 @@ mymodel.optimize(
     eval_function = None
 )
 
-"""
+
 # Evaluate
 mymodel.evaluate(
     show_train = True,
@@ -58,6 +58,7 @@ mymodel.evaluate(
     eval_metric = None
 )
 
+"""
 mymodel.explain(
     select_background_data = "train",
     select_shap_data = "test",

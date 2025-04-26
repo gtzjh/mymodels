@@ -2,17 +2,15 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 
-from ._data_loader import MyDataLoader
-from ._estimator import MyEstimator
-from ._data_diagnoser import MyDataDiagnoser
-from ._optimizer import MyOptimizer
-from ._evaluator import MyEvaluator
-from ._explainer import MyExplainer
-# from .plotting import Plotter
-# from .output import Output
+from .core import MyDataLoader
+from .core import MyEstimator
+from .data_diagnoser import MyDataDiagnoser
+from .core import MyOptimizer
+from .core import MyEvaluator
+from .core import MyExplainer
 
 
-class MyPipeline:
+class MyModel:
     """Machine Learning Pipeline for Model Training and Evaluation
     A class that handles data loading, model training, and evaluation with SHAP analysis.
     Supports various regression models with hyperparameter optimization and cross-validation.
@@ -34,6 +32,9 @@ class MyPipeline:
         self.optimized_estimator = None
         self.optimized_dataset = None
         self.optimized_data_engineer_pipeline = None
+
+        # After evaluation
+        self.evaluated_accuracy_dict = None
 
 
     def load(
@@ -183,11 +184,14 @@ class MyPipeline:
             optimized_dataset = self.optimized_dataset,
             optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
         )
-        evaluator.evaluate(
+        self.evaluated_accuracy_dict = evaluator.evaluate(
             show_train = show_train,
             dummy = dummy,
             eval_metric = eval_metric,
         )
+
+        import json
+        print(json.dumps(self.evaluated_accuracy_dict, indent=4))
 
         return None
 

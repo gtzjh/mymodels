@@ -11,14 +11,15 @@ from functools import partial
 import logging
 
 
-logging.basicConfig(level=logging.INFO)
+from ._data_loader import MyDataLoader
+from ._estimator import MyEstimator
 
 
 class MyOptimizer:
     def __init__(
             self,
-            dataset,
-            estimator,
+            dataset: MyDataLoader,
+            estimator: MyEstimator,
             data_engineer_pipeline: Pipeline | None = None
         ):
         """A class for training and optimizing various machine learning models.
@@ -36,12 +37,10 @@ class MyOptimizer:
         """
 
         # Validate input
-        """
         assert isinstance(dataset, MyDataLoader), \
             "dataset must be a mymodels.MyDataLoader object"
         assert isinstance(estimator, MyEstimator), \
             "estimator must be a mymodels.MyEstimator object"
-        """
         # Check data_engineer_pipeline validity
         if data_engineer_pipeline is not None:
             assert isinstance(data_engineer_pipeline, Pipeline), \
@@ -55,13 +54,14 @@ class MyOptimizer:
         self.data_engineer_pipeline = data_engineer_pipeline
 
         # Global variables statement
-        # Input fit()
+        self.stratify = None
         self.strategy = None
         self.cv = None
         self.trials = None
         self.n_jobs = None
         self.direction = None
         self.eval_function = None
+        self.random_state = None
 
     
 
