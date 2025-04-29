@@ -2,7 +2,7 @@ import pandas as pd
 import logging
 
 
-
+from .core import MyDataLoader
 from .plotting import Plotter
 
 
@@ -10,24 +10,22 @@ from .plotting import Plotter
 class MyDataDiagnoser:
     def __init__(
             self,
-            x_data: pd.DataFrame,
-            y_data: pd.Series,
+            dataset: MyDataLoader,
+            plotter: Plotter,
         ):
-        self.x_data = x_data.copy()
-        self.y_data = y_data.copy()
+        self.x_data = dataset.x_train.copy()
+        self.y_data = dataset.y_train.copy()
 
-        self._check_input()
+        self.plotter = plotter
 
-        plotter = Plotter(
-            show = False,
-            plot_format = "png",
-            plot_dpi = 300,
-            results_dir = "./results/test_plotting_plot_diagnosed_data"
-        )
+        return None
+    
 
 
+    def diagnose(self, sample_k: int | float | None = None):
+        """Diagnose the data"""
 
-    def _check_input(self):
+        # Validation
         assert isinstance(self.x_data, pd.DataFrame), \
             "x_data must be a pandas DataFrame"
         assert isinstance(self.y_data, pd.Series), \
@@ -39,17 +37,27 @@ class MyDataDiagnoser:
 
         print(f"""
 =========================================================
-Data diagnosis should be performed on TRAINING DATA ONLY.
+Data diagnosis is performed on TRAINING DATASET ONLY.
 =========================================================
 """)
-        return None
-    
 
+        ###########################################################################################
+        # Sample the data
+        ###########################################################################################
+        assert sample_k is None or isinstance(sample_k, int) or isinstance(sample_k, float), \
+            "sample_k must be an integer or float or None"
+        if sample_k is not None:
+            if isinstance(sample_k, float):
+                sample_k = int(sample_k * len(self._x_train))
 
-    def diagnose(self):
-        """Diagnose the data"""
-        self._describe_data()
-        self._diagnose_missing_values()
+            diagnose_data = diagnose_x_data.merge(diagnose_y_data,
+                                                  left_index=True,
+                                                  right_index=True).sample(sample_k,
+                                                                           random_state=self.random_state)
+            diagnose_x_data = diagnose_data.iloc[:, :-1]
+            diagnose_y_data = diagnose_data.iloc[:, -1]
+        ###########################################################################################
+
         self._diagnose_categorical_features()
         self._diagnose_numerical_features()
 
@@ -57,79 +65,29 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
     
 
 
-    def _describe_data(self):
-        """Describe the data
-            - Shape of dataframe       
-        """
-        print("==========================================")
-        print("DATA DESCRIPTION")
-        print(f"\nX_train shape: {self.x_data.shape}")
-        print(f"\nY_train shape: {self.y_data.shape}")
-        print("==========================================")
-        return None
-    
-
-
-    def _diagnose_missing_values(self):
-        """Diagnose the missing values
-        
-        Returns:
-            pd.DataFrame: Table with missing values information for each column
-        """
-        print("==========================================")
-        print("MISSING VALUES DIAGNOSIS")
-        print(f"\nX_train info:")
-        print(self.x_data.info())
-
-        print(f"\nY_train info:")
-        print(self.y_data.info())
-        print("==========================================")
-
-        return None
-    
-
-
     def _diagnose_categorical_features(self):
         """Diagnose the categorical features
-            - Count unique values
         """
+
+        # Identify categorical features
         _categorical_features = []
         for col, dtype in self.x_data.dtypes.items():
             if pd.api.types.is_categorical_dtype(dtype) or pd.api.types.is_object_dtype(dtype):
                 _categorical_features.append(col)
         
-        logging.info(f"\nCategorical features: {_categorical_features}")
+        print(f"\nCategorical features: {_categorical_features}")
         if _categorical_features:
             for _cat_col in _categorical_features:
-                plot_category(
+                self.plotter.plot_category(
                     data=self.x_data[_cat_col],
                     name=_cat_col,
-                    save_dir=self.results_dir / "data_categorical",
-                    plot_format=self.plot_format,
-                    plot_dpi=self.plot_dpi,
-                    show=self.show
                 )
-            logging.info(f"\nCategorical features visualization saved to: {self.results_dir / 'data_categorical'}")
-
 
         return None
     
 
     def _diagnose_numerical_features(self):
         """Diagnose the numerical features
-        
-        This method analyzes and visualizes the numerical features in the dataset:
-        1. Identifies all numerical features in the dataset
-        2. Creates distribution plots for each numerical feature using _vis_data_distribution
-           - Each plot shows the distribution pattern, outliers, and central tendency
-           - Plots are saved to results_dir/data_distribution/
-        3. Generates correlation heatmaps (Pearson and Spearman) using _vis_correlation
-           - Shows relationships and dependency between numerical features
-           - Highlights potentially problematic high correlations
-           - Maps are saved to results_dir/data_correlation/
-           
-        All visualizations use the format and DPI settings specified during initialization.
-        Interactive display of plots depends on the 'show' parameter setting.
         """
         _numeric_features = []
         for col, dtype in self.x_data.dtypes.items():
@@ -138,36 +96,19 @@ Data diagnosis should be performed on TRAINING DATA ONLY.
         
         logging.info(f"\nNumerical features: {_numeric_features}")
         
-        # Create subdirectories for visualizations
-        dist_dir = self.results_dir / "data_distribution"
-        corr_dir = self.results_dir / "data_correlation"
-        
         # Visualize the distribution of each numerical feature
         if _numeric_features:
             for col in _numeric_features:
-                plot_data_distribution(
+                self.plotter.plot_data_distribution(
                     data=self.x_data[col],
                     name=col,
-                    save_dir=dist_dir,
-                    plot_format=self.plot_format,
-                    plot_dpi=self.plot_dpi,
-                    show=self.show
                 )
             
             # Visualize correlations between numerical features
-            plot_correlation(
+            self.plotter.plot_correlation(
                 data=self.x_data[_numeric_features],
                 name="numerical_features",
-                save_dir=corr_dir,
-                plot_format=self.plot_format,
-                plot_dpi=self.plot_dpi,
-                show=self.show
             )
-            
-            logging.info(f"\nDistribution plots saved to: {dist_dir}")
-            logging.info(f"Correlation plots saved to: {corr_dir}")
-        else:
-            logging.info("\nNo numerical features found for visualization.")
 
         return None
 

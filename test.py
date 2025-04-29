@@ -116,6 +116,9 @@ mymodel.format(
     # output_shap_values = True
 )
 
+# Data diagnosis
+mymodel.diagnose(sample_k = None)
+
 # Optimize
 mymodel.optimize(
     strategy = "tpe",
@@ -125,7 +128,6 @@ mymodel.optimize(
     direction = "maximize",
     eval_function = None
 )
-
 
 # Evaluate
 mymodel.evaluate(

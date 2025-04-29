@@ -138,33 +138,15 @@ class MyModel:
         """Diagnose the dataset
 
         Args:
-            sample_k (int | float | None, optional): The number of samples to use for diagnosis. Defaults to None.`
-        """
-        
-        """
-        diagnose_x_data = self._x_train.copy(deep=True)
-        diagnose_y_data = self._y_train.copy(deep=True)
-
-        # Sample diagnosis data
-        assert sample_k is None or isinstance(sample_k, int) or isinstance(sample_k, float), \
-            "sample_k must be an integer or float or None"
-        if sample_k is not None:
-            if isinstance(sample_k, float):
-                sample_k = int(sample_k * len(self._x_train))
-
-            diagnose_data = diagnose_x_data.merge(diagnose_y_data,
-                                                  left_index=True,
-                                                  right_index=True).sample(sample_k,
-                                                                           random_state=self.random_state)
-            diagnose_x_data = diagnose_data.iloc[:, :-1]
-            diagnose_y_data = diagnose_data.iloc[:, -1]
+            sample_k (int | float | None, optional): 
+                The number of samples to use for diagnosis. Defaults to None.`
         """
 
         diagnoser = MyDataDiagnoser(
             dataset = self.dataset,
             plotter = self.plotter,
-            output = self.output
         )
+        
         diagnoser.diagnose(sample_k = sample_k)
         
         return None
