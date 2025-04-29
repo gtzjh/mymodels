@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def _label_y(y_data, verbose=False):
+def _label_y(y_data, verbose = False):
     """Encode non-numeric target variable to integers.
     
     Args:
@@ -24,29 +24,27 @@ def _label_y(y_data, verbose=False):
     """
     from sklearn.preprocessing import LabelEncoder
 
-    # If y_data is already numeric, return original data and empty dictionary
-    if pd.api.types.is_numeric_dtype(y_data.dtype):
-        return y_data, {}
+    # If y_data is already float, return original data and empty dictionary
+    if pd.api.types.is_float_dtype(y_data.dtype):
+        return y_data, None
     
-    # Handle boolean series (create mapping manually and transform data)
-    if pd.api.types.is_bool_dtype(y_data.dtype) or y_data.isin([True, False]).all():
-        y_mapping_dict = {False: 0, True: 1}
-        encoded_y_data = y_data.map(y_mapping_dict)
-        if verbose:
-            print("Label Encoding Mapping:\n")
-            for _original, _encoded in y_mapping_dict.items():
-                print(f"  {_original} -> {_encoded}")
-        return encoded_y_data, y_mapping_dict
     
-    # Handle categorical/string data
+    # Handle categorical/string y_data
     label_encoder = LabelEncoder()
     encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
     
-    # Create mapping dictionary from original categories to encoded integers
-    y_mapping_dict = {
+    # Create mapping dictionary from original categories to encoded values
+    _y_mapping_dict_keys = {
         original: encoded for original, encoded in \
             zip(label_encoder.classes_, range(len(label_encoder.classes_)))
     }
+    _keys = _y_mapping_dict_keys.keys()
+    y_mapping_dict = dict((_k, _y_mapping_dict_keys[_k]) for _k in _keys)
+
+    if verbose:
+        print("Label Encoding Mapping:\n")
+        for _original, _encoded in y_mapping_dict.items():
+            print(f"  {_original} -> {_encoded}")
 
     return encoded_y_data, y_mapping_dict
 

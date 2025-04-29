@@ -61,8 +61,8 @@ class Output:
             optimal_model: The trained model to save
             model_name: String identifier of the model type (e.g., "xgbr", "lgbc")
         """
-        assert optimal_model is callable, \
-            "optimal_model must be a callable model object"
+        # assert optimal_model is callable, \
+        #     "optimal_model must be a callable model object"
 
         model_path = self.results_dir.joinpath("optimal_model")
         
@@ -96,12 +96,12 @@ class Output:
     ###########################################################################################
     def output_evaluation(
             self,
-            accuracy_dict, 
-            save_raw_data=False,
-            y_test=None, 
-            y_test_pred=None,
-            y_train=None,
-            y_train_pred=None,
+            accuracy_dict: dict, 
+            # save_raw_data: bool = False,
+            # y_test: pd.Series | pd.DataFrame | None = None, 
+            # y_test_pred: pd.Series | pd.DataFrame | None = None,
+            # y_train: pd.Series | pd.DataFrame | None = None,
+            # y_train_pred: pd.Series | pd.DataFrame | None = None,
         ):
         """
         Handles saving results to files, printing to console, generating plots,
@@ -110,6 +110,8 @@ class Output:
 
         assert isinstance(accuracy_dict, dict), \
             "accuracy_dict must be a dictionary"
+        
+        """
         assert isinstance(save_raw_data, bool), \
             "save_raw_data must be a boolean"
         assert isinstance(y_test, (pd.Series, pd.DataFrame)) or y_test is None, \
@@ -120,6 +122,7 @@ class Output:
             "y_train must be a pandas Series or DataFrame or None"
         assert isinstance(y_train_pred, (pd.Series, pd.DataFrame)) or y_train_pred is None, \
             "y_train_pred must be a pandas Series or DataFrame or None"
+        """
         
         
         # Save results to files
@@ -127,6 +130,7 @@ class Output:
             yaml.dump(accuracy_dict, file)
 
 
+        """
         # Output train and test results
         if save_raw_data:
             y_test_pred_1d = y_test_pred
@@ -144,6 +148,7 @@ class Output:
                                                "y_train_pred": y_train_pred_1d})
             test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = True)
             train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = True)
+        """
 
         return None
     ###########################################################################################
@@ -153,21 +158,25 @@ class Output:
     ###########################################################################################
     # Output SHAP values
     ###########################################################################################
-    def output_shap_values(self, shap_explanation):
+    def output_shap_values(self, shap_explanation, data, _y_mapping_dict = None):
         """
         Output SHAP values to files and console.
         
         Args:
             shap_explanation: SHAP explanation object
-            classes_: List of class names for multi-class classification models
+            data: The data used to calculate the SHAP values
+            _y_mapping_dict: The mapping dictionary of the target variable
         """
 
         assert isinstance(shap_explanation, shap.Explanation), \
             "shap_explanation must be a shap.Explanation object"
+        assert isinstance(data, pd.DataFrame), \
+            "data must be a pandas DataFrame"
+        assert isinstance(_y_mapping_dict, dict) or _y_mapping_dict is None, \
+            "_y_mapping_dict must be a dictionary or None"
         
         shap_values = shap_explanation.values
         feature_names = shap_explanation.feature_names
-        shap_data = shap_explanation.data
         
         # Create a DataFrame from SHAP values with feature names as columns
         if shap_values.ndim == 2:
@@ -175,10 +184,9 @@ class Output:
             shap_values_dataframe = pd.DataFrame(
                 data=shap_values,
                 columns=feature_names,
-                index=shap_data.index
+                index=data.index
             )
-            # Output the raw data
-            shap_data.to_csv(self.results_dir.joinpath("shap_data.csv"), index = True)
+            # Output the shap values
             shap_values_dataframe.to_csv(self.results_dir.joinpath("shap_values.csv"), index = True)
 
         elif shap_values.ndim == 3:
@@ -187,13 +195,12 @@ class Output:
             # Create a dictionary of DataFrames, one for each class
             _shap_values_dir = self.results_dir.joinpath("shap_values/")
             _shap_values_dir.mkdir(parents = True, exist_ok = True)
-            shap_data.to_csv(_shap_values_dir.joinpath("shap_data.csv"), index = True)
-            shap_values_dataframe = {}
-            for i, class_name in enumerate(classes_):
+            shap_values_dataframe = dict()
+            for class_name, i in _y_mapping_dict.items():
                 shap_values_dataframe[class_name] = pd.DataFrame(
                     data=shap_values[:, :, i],
                     columns=feature_names,
-                    index=shap_data.index
+                    index=data.index
                 )
             # Output the raw data
             for _class_name, _df in shap_values_dataframe.items():

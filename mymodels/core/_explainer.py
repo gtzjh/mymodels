@@ -1,157 +1,150 @@
 import numpy as np
 import pandas as pd
+from sklearn.pipeline import Pipeline
 import shap
 import logging
 
 
+from ._data_loader import MyDataLoader
+from ._estimator import MyEstimator
+from ..plotting import Plotter
+from ..output import Output
+
 
 class MyExplainer:
     def __init__(
+        self,
+        optimized_estimator: MyEstimator,
+        optimized_dataset: MyDataLoader,
+        optimized_data_engineer_pipeline: Pipeline | None = None,
+        plotter: Plotter | None = None,
+        output: Output | None = None
+    ):
+    
+        """A class for evaluating machine learning models.
+
+        This class handles the evaluation of machine learning models, computing various 
+        accuracy metrics (R², RMSE, MAE, F1, Kappa, etc.), visualizing actual vs predicted values, 
+        and saving/printing results.
+        
+        Args:
+            optimized_dataset: Dataset containing the train and test data.
+            optimized_estimator: Trained estimator to evaluate.
+            optimized_data_engineer_pipeline: Optional data engineering pipeline to transform data.
+            plotter: The plotter to use.
+            output: The output object.
+        """
+
+        # Validate input
+        assert isinstance(optimized_dataset, MyDataLoader), \
+            "optimized_dataset must be a mymodels.MyDataLoader object"
+        assert isinstance(optimized_estimator, MyEstimator), \
+            "optimized_estimator must be a mymodels.MyEstimator object"
+        # Check data_engineer_pipeline validity
+        if optimized_data_engineer_pipeline is not None:
+            assert isinstance(optimized_data_engineer_pipeline, Pipeline), \
+                "optimized_data_engineer_pipeline must be a `sklearn.pipeline.Pipeline` object"
+        else:
+            logging.warning("No data engineering will be implemented, the raw data will be used.")
+
+        # Initialize attributes
+        self.optimized_dataset = optimized_dataset
+        self.optimized_estimator = optimized_estimator
+        self.optimized_data_engineer_pipeline = optimized_data_engineer_pipeline
+        self.optimal_model_object = self.optimized_estimator.optimal_model_object
+
+        self.plotter = plotter
+        self.output = output
+
+        self._shap_explanation = None
+    
+
+    def explain(
             self,
-            background_data: pd.DataFrame,
-            shap_data: pd.DataFrame,
+            select_background_data: str = "train",
+            select_shap_data: str = "test",
             sample_background_data_k: int | float | None = None,
             sample_shap_data_k:  int | float | None = None,
         ):
-        """Initialize the MyExplainer with model and data.
+        """Use training set to build the explainer, use test set to calculate SHAP values.
 
         Args:
-
-        """
-    
-        self.model_object = model_object
-        self.model_name = model_name
-        self.background_data = background_data
-        self.shap_data = shap_data
-        self.sample_background_data_k = sample_background_data_k
-        self.sample_shap_data_k = sample_shap_data_k
-
-        # After checking input
-        self.classes_ = None
-
-        # After explain()
-        self.shap_values = None
-        self.shap_base_values = None
-        self.feature_names = None
-        self.shap_values_dataframe = None
-        self.numeric_features = None
-
-        self._check_input()
-
-    
-    def _check_input(self):
-        """Check the input data and model object."""
-
-        if not callable(self.model_object):
-            raise ValueError("model_object must be callable")
-        
-        # Check input parameters
-        assert self.select_background_data in ["train", "test", "all"], \
-            "select_background_data must be one of the following: train, test, all"
-        assert self.select_shap_data in ["train", "test", "all"], \
-            "select_shap_data must be one of the following: train, test, all"
-            
-        # Validate sample sizes
-        if self.sample_background_data_k:
-            if not isinstance(self.sample_background_data_k, (int, float)) or self.sample_background_data_k < 0:
-                raise ValueError("sample_background_data_k must be a positive integer or float")
-                
-        if self.sample_shap_data_k:
-            if not isinstance(self.sample_shap_data_k, (int, float)) or self.sample_shap_data_k < 0:
-                raise ValueError("sample_shap_data_k must be a positive integer or float")
-            if self.sample_shap_data_k > len(self.shap_data):
-                raise ValueError("sample_shap_data_k cannot be larger than shap_data set size")
-
-        # For classification tasks, the model's classes_ attribute contains names of all classes,
-        # SHAP will output shap_values in corresponding order
-        if hasattr(self.model_obj, "classes_"):
-            self.classes_ = self.model_obj.classes_
-        
-        return None
-
-    
-
-    def explain(self):
-        """Calculate SHAP values and generate explanations.
+            select_background_data (str): The data to use to build the explainer.
+            select_shap_data (str): The data to use to calculate SHAP values.
+            sample_background_data_k (int | float | None): The number of samples to use to build the explainer.
+            sample_shap_data_k (int | float | None): The number of samples to use to calculate SHAP values.
         """
 
-        
         # Transform X data
-        if self.data_engineer_pipeline:
-            _used_x_train = self.data_engineer_pipeline.transform(self._x_train)
-            _used_x_test = self.data_engineer_pipeline.transform(self._x_test)
+        if self.optimized_data_engineer_pipeline:
+            _transformed_x_train = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_train)
+            _transformed_x_test = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_test)
         else:
-            _used_x_train = self._x_train
-            _used_x_test = self._x_test
+            _transformed_x_train = self.optimized_dataset.x_train
+            _transformed_x_test = self.optimized_dataset.x_test
 
 
-
+        ###########################################################################################
         # Background data for building the explainer
         if select_background_data == "train":
-            _background_data = _used_x_train
+            _background_data = _transformed_x_train
         elif select_background_data == "test":
-            _background_data = _used_x_test
+            _background_data = _transformed_x_test
         elif select_background_data == "all":
-            _background_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
+            _background_data = pd.concat([_transformed_x_train, _transformed_x_test]).sort_index()
 
         # SHAP data for calculating SHAP values
         if select_shap_data == "train":
-            _shap_data = _used_x_train
+            _shap_data = _transformed_x_train
         elif select_shap_data == "test":
-            _shap_data = _used_x_test
+            _shap_data = _transformed_x_test
         elif select_shap_data == "all":
-            _shap_data = pd.concat([_used_x_train, _used_x_test]).sort_index()
-
-
-
-
-        # Check if the model is a multi-class GBDT model
-        if self.model_name == "gbdtc" and len(self.classes_) > 2:
-            logging.error("SHAP currently does not support explanation for multi-class GBDT models")
-            return None
-
-        ###########################################################################################
-        # Sampling for reducing the size of the background data and shap data
-        if self.sample_background_data_k:
-            if isinstance(self.sample_background_data_k, float):
-                self.background_data = shap.sample(self.background_data,
-                                                   int(self.sample_background_data_k * len(self.background_data)))
-            elif isinstance(self.sample_background_data_k, int):
-                self.background_data = shap.sample(self.background_data, 
-                                                   self.sample_background_data_k)
-
-        if self.sample_shap_data_k:
-            if isinstance(self.sample_shap_data_k, float):
-                self.shap_data = shap.sample(self.shap_data,
-                                             int(self.sample_shap_data_k * len(self.shap_data)))
-            elif isinstance(self.sample_shap_data_k, int):
-                self.shap_data = shap.sample(self.shap_data,
-                                             self.sample_shap_data_k)
+            _shap_data = pd.concat([_transformed_x_train, _transformed_x_test]).sort_index()
         ###########################################################################################
 
+        ###########################################################################################
+        # Sampling the background data and shap data
+        if sample_background_data_k:
+            if isinstance(sample_background_data_k, float):
+                _background_data = shap.sample(_background_data,
+                                               int(sample_background_data_k * len(_background_data)))
+            elif isinstance(sample_background_data_k, int):
+                _background_data = shap.sample(_background_data, 
+                                               sample_background_data_k)
+
+        if sample_shap_data_k:
+            if isinstance(sample_shap_data_k, float):
+                _shap_data = shap.sample(_shap_data,
+                                         int(sample_shap_data_k * len(_shap_data)))
+            elif isinstance(sample_shap_data_k, int):
+                _shap_data = shap.sample(_shap_data,
+                                         sample_shap_data_k)
+        ###########################################################################################
 
         ###########################################################################################
-        # Set the explainer
-        # Here we do not use shap.Explainer, because for xgboost and random forest, it does not choose TreeExplainer by default
-        if self.model_name in ["lr", "svr", "knr", "mlpr", "adar"]:
-            _explainer = shap.KernelExplainer(self.model_obj.predict, self.background_data)
-        elif self.model_name in ["lc", "svc", "knc", "mlpc", "adac"]:
-            _explainer = shap.KernelExplainer(self.model_obj.predict_proba, self.background_data)
-        elif self.model_name in ["dtr", "rfr", "gbdtr", "xgbr", "lgbr", "catr",
-                                 "dtc", "rfc", "gbdtc", "xgbc", "lgbc", "catc"]:
-            # For sklearn's decision tree and random forest, since their internal decision mechanisms are probability-based
-            # when using TreeExplainer to explain them, the output shap_values are probability values
-            # For sklearn's gbdt, as well as xgboost, lightgbm, catboost mentioned below, since their internal decision mechanisms are based on log-odds space
-            # when using TreeExplainer to explain them, the output shap_values are log-odds values
-            _explainer = shap.TreeExplainer(self.model_obj)
+        # Build the explainer
+        if self.optimized_estimator.shap_explainer_type == "kernel":
+            _explainer = shap.KernelExplainer(self.optimized_estimator.optimal_model_object.predict,
+                                              _background_data)
+        elif self.optimized_estimator.shap_explainer_type == "tree":
+            _explainer = shap.TreeExplainer(self.optimized_estimator.optimal_model_object)
         else:
-            raise ValueError(f"Unsupported model: {self.model_name}")
+            raise ValueError(f"Unregistered SHAP explainer type: {self.optimized_estimator.shap_explainer_type}")
+
+        # Calculate
+        _shap_explanation = _explainer(_shap_data)
         ###########################################################################################
+
+        ###########################################################################################
+        # Plot
+        self.plotter.plot_shap_summary(_shap_explanation)
+        self.plotter.plot_shap_dependence(_shap_explanation)
         
-        # Calculate SHAP values
-        _explanation = _explainer(self.shap_data)
-        self.shap_values = _explanation.values
-        self.shap_base_values = _explanation.base_values
-        self.feature_names = _explanation.feature_names
-    
+        # Output
+        self.output.output_shap_values(_shap_explanation,
+                                       _shap_data,
+                                       self.optimized_dataset.y_mapping_dict)
+        ###########################################################################################
+
         return None
+

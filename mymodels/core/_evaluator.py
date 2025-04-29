@@ -13,6 +13,8 @@ import logging
 
 from ._data_loader import MyDataLoader
 from ._estimator import MyEstimator
+from ..plotting import Plotter
+from ..output import Output
 
 
 def _get_accuracy_for_regression_task(y, y_pred, eval_metric = None):
@@ -105,7 +107,9 @@ class MyEvaluator:
             self,
             optimized_estimator: MyEstimator,
             optimized_dataset: MyDataLoader,
-            optimized_data_engineer_pipeline: Pipeline | None = None
+            optimized_data_engineer_pipeline: Pipeline | None = None,
+            plotter: Plotter | None = None,
+            output: Output | None = None
         ):
         """A class for evaluating machine learning models.
 
@@ -117,7 +121,9 @@ class MyEvaluator:
             optimized_dataset: Dataset containing the train and test data.
             optimized_estimator: Trained estimator to evaluate.
             optimized_data_engineer_pipeline: Optional data engineering pipeline to transform data.
-        
+            plotter: The plotter to use.
+            output: The output object.
+
         Attributes:
             optimized_dataset (MyDataLoader): Dataset containing train and test splits.
             optimized_estimator (MyEstimator): Trained estimator to evaluate.
@@ -149,25 +155,30 @@ class MyEvaluator:
         self.optimized_estimator = optimized_estimator
         self.optimized_data_engineer_pipeline = optimized_data_engineer_pipeline
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
+
+        self.plotter = plotter
+        self.output = output
         
         # Initialize attributes to be set in evaluate()
         self.show_train = False
         self.eval_metric = None
-        self.accuracy_dict = {}
+        self.accuracy_dict = dict()
         
         # Private attributes for data
         self._x_train = None
         self._x_test = None
         self._y_train = None
         self._y_test = None
-   
+        self._y_test_pred = None
+        self._y_train_pred = None
+
 
 
     def evaluate(
             self,
             show_train: bool,
             dummy: bool,
-            eval_metric: dict | None,
+            eval_metric: dict | None = None,
         ):
 
         """Evaluate the model on test and training data.
@@ -231,6 +242,11 @@ class MyEvaluator:
         # Evaluate the dummy estimator
         if dummy:
             self._evaluate_dummy()
+        
+
+        # Plot and output
+        self._plot(self.plotter)
+        self._output(self.output)
 
         return self.accuracy_dict
     
@@ -247,8 +263,8 @@ class MyEvaluator:
         """
         
         # Predict
-        _y_test_pred = self.optimal_model_object.predict(self._x_test)
-        _y_train_pred = self.optimal_model_object.predict(self._x_train)
+        self._y_test_pred = self.optimal_model_object.predict(self._x_test)
+        self._y_train_pred = self.optimal_model_object.predict(self._x_train)
 
         # Initialize model accuracy dictionary
         self.accuracy_dict["model"] = dict()
@@ -256,22 +272,22 @@ class MyEvaluator:
         # Evaluate on the test data
         if is_regressor(self.optimal_model_object):
             self.accuracy_dict["model"]["test"] = _get_accuracy_for_regression_task(
-                self._y_test, _y_test_pred, self.eval_metric
+                self._y_test, self._y_test_pred, self.eval_metric
             )
         elif is_classifier(self.optimal_model_object):
             self.accuracy_dict["model"]["test"] = _get_accuracy_for_classification_task(
-                self._y_test, _y_test_pred, self.eval_metric
+                self._y_test, self._y_test_pred, self.eval_metric
             )
         
         # Evaluate on the training data
         if self.show_train:
             if is_regressor(self.optimal_model_object):
                 self.accuracy_dict["model"]["train"] = _get_accuracy_for_regression_task(
-                    self._y_train, _y_train_pred, self.eval_metric
+                    self._y_train, self._y_train_pred, self.eval_metric
                 )
             elif is_classifier(self.optimal_model_object):
                 self.accuracy_dict["model"]["train"] = _get_accuracy_for_classification_task(
-                    self._y_train, _y_train_pred, self.eval_metric
+                    self._y_train, self._y_train_pred, self.eval_metric
                 )
         
         logging.info(f"Accuracy: \n", \
@@ -326,5 +342,38 @@ class MyEvaluator:
 
         logging.info(f"Dummy Accuracy: \n", \
             json.dumps(self.accuracy_dict["dummy"], indent=4))
+
+        return None
+    
+
+    def _plot(self, _plotter: Plotter):
+        """Plot the evaluation results.
+        
+        Args:
+            _plotter: The plotter to use.
+        """
+
+        if is_classifier(self.optimal_model_object):
+            _plotter.plot_roc_curve(self._y_test, self._x_test, self.optimal_model_object)
+            _plotter.plot_pr_curve(self._y_test, self._x_test, self.optimal_model_object)
+            _plotter.plot_confusion_matrix(self._y_test, self._y_test_pred)
+        
+        elif is_regressor(self.optimal_model_object):
+            _plotter.plot_regression_scatter(self._y_test, self._y_test_pred)
+        
+        else:
+            raise ValueError("The model is not a classifier or regressor")
+
+        return None
+    
+
+    def _output(self, _output: Output):
+        """Output the evaluation results.
+        
+        Args:
+            _output: The output object.
+        """
+        _output.output_evaluation(accuracy_dict = self.accuracy_dict)
+
 
         return None

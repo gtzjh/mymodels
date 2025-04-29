@@ -1,8 +1,9 @@
+import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging
 import shap
-import numpy as np
+
 
 from ._plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
 from ._plot_optimizer import _plot_optimize_history

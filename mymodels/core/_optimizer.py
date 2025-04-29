@@ -13,6 +13,8 @@ import logging
 
 from ._data_loader import MyDataLoader
 from ._estimator import MyEstimator
+from ..plotting import Plotter
+from ..output import Output
 
 
 class MyOptimizer:
@@ -20,7 +22,9 @@ class MyOptimizer:
             self,
             dataset: MyDataLoader,
             estimator: MyEstimator,
-            data_engineer_pipeline: Pipeline | None = None
+            data_engineer_pipeline: Pipeline | None = None,
+            plotter: Plotter | None = None,
+            output: Output | None = None
         ):
         """A class for training and optimizing various machine learning models.
         
@@ -30,7 +34,10 @@ class MyOptimizer:
         Args:
             dataset: MyDataLoader,
             estimator: MyEstimator,
-            data_engineer_pipeline: Pipeline | None = None
+            data_engineer_pipeline: Pipeline | None = None,
+            plotter: Plotter | None = None,
+            output: Output | None = None
+        ):
         
         Returns:
             Optimized dataset, optimized estimator, and optimized data engineer pipeline.
@@ -53,6 +60,9 @@ class MyOptimizer:
         self.estimator = estimator
         self.data_engineer_pipeline = data_engineer_pipeline
 
+        self.plotter = plotter
+        self.output = output
+
         # Global variables statement
         self.stratify = None
         self.strategy = None
@@ -62,6 +72,8 @@ class MyOptimizer:
         self.direction = None
         self.eval_function = None
         self.random_state = None
+        
+        self.optuna_study = None
 
     
 
@@ -173,6 +185,11 @@ class MyOptimizer:
         else:
             _optimized_data_engineer_pipeline = None
 
+        
+        # Plot and output
+        self._plot(self.plotter)
+        self._output(self.output)
+
         return (
             _optimized_dataset,
             _optimized_estimator,
@@ -203,13 +220,13 @@ class MyOptimizer:
             "tpe": TPESampler,
             "random": RandomSampler,
         }
-        _study = optuna.create_study(
+        self.optuna_study = optuna.create_study(
             direction = self.direction,
             sampler = _strategy_dict[self.strategy](seed = self.random_state),
         )
 
         # Execute the optimization
-        _study.optimize(
+        self.optuna_study.optimize(
             partial(
                 self._objective,
                 param_space = param_space,
@@ -220,7 +237,7 @@ class MyOptimizer:
             show_progress_bar = True
         )
         
-        return _study
+        return self.optuna_study
 
 
 
@@ -327,3 +344,26 @@ class MyOptimizer:
             elif is_regressor(_validator):
                 # Use R2 score for regression task
                 return r2_score(_y_fold_val, _predicted_values)
+    
+    
+    def _plot(self, _plotter: Plotter):
+        """Plot the optimization results.
+        
+        Args:
+            plotter: The plotter to use.
+        """
+        _plotter.plot_optimize_history(self.optuna_study)
+        
+        return None
+    
+
+    def _output(self, _output: Output):
+        """Output the optimization results.
+        
+        Args:
+            output: The output object.
+        """
+        _output.save_optimal_params(self.estimator.optimal_params)
+        _output.save_optimal_model(self.estimator.optimal_model_object, self.estimator.model_name)
+
+        return None

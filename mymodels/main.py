@@ -4,10 +4,12 @@ from sklearn.pipeline import Pipeline
 
 from .core import MyDataLoader
 from .core import MyEstimator
-from .data_diagnoser import MyDataDiagnoser
 from .core import MyOptimizer
 from .core import MyEvaluator
 from .core import MyExplainer
+from .data_diagnoser import MyDataDiagnoser
+from .plotting import Plotter
+from .output import Output
 
 
 class MyModel:
@@ -27,6 +29,9 @@ class MyModel:
         self.estimator = None
         self.data_engineer_pipeline = None
         self.stratify = None
+
+        self.plotter = None
+        self.output = None
 
         # After optimization
         self.optimized_estimator = None
@@ -85,6 +90,48 @@ class MyModel:
         self.data_engineer_pipeline = data_engineer_pipeline
     
         return None
+    
+
+    def format(
+            self,
+            results_dir: str = "results/",
+            # Plot
+            show: bool = False,
+            plot_format: str = "jpg",
+            plot_dpi: int = 500,
+            # Output
+            # save_optimal_params: bool = True,
+            # save_optimal_model: bool = True,
+            # output_evaluation: bool = True,
+            # save_raw_data: bool = True,
+            # output_shap_values: bool = True
+        ):
+        """Format the plotting and output
+
+        Args:
+            results_dir (str): The directory to save the results.
+            show (bool): Whether to show the plots.
+            plot_format (str): The format of the plots.
+            plot_dpi (int): The DPI of the plots.
+        """
+
+        self.plotter = Plotter(
+            show = show,
+            plot_format = plot_format,
+            plot_dpi = plot_dpi,
+            results_dir = results_dir,
+        )
+
+        self.output = Output(
+            results_dir = results_dir,
+            # save_optimal_params = save_optimal_params,
+            # save_optimal_model = save_optimal_model,
+            # output_evaluation = output_evaluation,
+            # save_raw_data = save_raw_data,
+            # output_shap_values = output_shap_values,
+        )
+
+        return None
 
 
     def diagnose(self, sample_k: int | float | None = None):
@@ -113,7 +160,11 @@ class MyModel:
             diagnose_y_data = diagnose_data.iloc[:, -1]
         """
 
-        diagnoser = MyDataDiagnoser(dataset = self.dataset)
+        diagnoser = MyDataDiagnoser(
+            dataset = self.dataset,
+            plotter = self.plotter,
+            output = self.output
+        )
         diagnoser.diagnose(sample_k = sample_k)
         
         return None
@@ -147,6 +198,8 @@ class MyModel:
             dataset = self.dataset,
             estimator = self.estimator,
             data_engineer_pipeline = self.data_engineer_pipeline,
+            plotter = self.plotter,
+            output = self.output
         )
 
         # Fit the optimizer
@@ -183,6 +236,8 @@ class MyModel:
             optimized_estimator = self.optimized_estimator,
             optimized_dataset = self.optimized_dataset,
             optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
+            plotter = self.plotter,
+            output = self.output
         )
         self.evaluated_accuracy_dict = evaluator.evaluate(
             show_train = show_train,
@@ -216,7 +271,10 @@ class MyModel:
             optimized_estimator = self.optimized_estimator,
             optimized_dataset = self.optimized_dataset,
             optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
+            plotter = self.plotter,
+            output = self.output
         )
+        
         explainer.explain(
             select_background_data = select_background_data,
             select_shap_data = select_shap_data,
@@ -237,32 +295,6 @@ class MyModel:
         )
         predictor.predict()
         """
-
-        return None
-    
-
-    def plot(self):
-        """Plot everything in the pipeline
-        """
-
-        """
-        plotter = Plotter(
-            optimized_estimator = self.optimized_estimator,
-            optimized_dataset = self.optimized_dataset,
-            optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
-        )
-        plotter.plot()
-
-        """
-        pass
-
-        return None
-
-    
-    def output(self):
-        """Output everything in the pipeline
-        """
-
         pass
 
         return None

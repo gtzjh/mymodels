@@ -113,6 +113,7 @@ class MyEstimator:
             model_configs_path (str): The path to the model configs file. (Default: 'model_configs.yml' in the root directory)
         
         Attributes:
+            model_name: The name of the model. Equivalent to the key in the model_configs.yml file.
             empty_model_object: An empty model object.
             param_space: The parameter space for Optuna tuning.
             static_params: The static parameters.
@@ -131,7 +132,8 @@ class MyEstimator:
         """
 
         # Validate the input
-        assert isinstance(cat_features, (list, tuple, type(None))), "cat_features must be a list, tuple, or None"
+        assert isinstance(cat_features, (list, tuple, type(None))), \
+            "cat_features must be a list, tuple, or None"
 
         # Initialize variables
         self.cat_features = cat_features
