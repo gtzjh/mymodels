@@ -24,29 +24,29 @@ def _label_y(y_data, verbose = False):
     """
     from sklearn.preprocessing import LabelEncoder
 
-    # If y_data is already float, return original data and empty dictionary
+    # For regression tasks, y_data is already float
     if pd.api.types.is_float_dtype(y_data.dtype):
         return y_data, None
     
-    
-    # Handle categorical/string y_data
-    label_encoder = LabelEncoder()
-    encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
-    
-    # Create mapping dictionary from original categories to encoded values
-    _y_mapping_dict_keys = {
-        original: encoded for original, encoded in \
-            zip(label_encoder.classes_, range(len(label_encoder.classes_)))
-    }
-    _keys = _y_mapping_dict_keys.keys()
-    y_mapping_dict = dict((_k, _y_mapping_dict_keys[_k]) for _k in _keys)
+    else:
+        # Handle categorical/string y_data
+        label_encoder = LabelEncoder()
+        encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
+        
+        # Create mapping dictionary from original categories to encoded values
+        _y_mapping_dict_keys = {
+            original: encoded for original, encoded in \
+                zip(label_encoder.classes_, range(len(label_encoder.classes_)))
+        }
+        _keys = _y_mapping_dict_keys.keys()
+        y_mapping_dict = dict((_k, _y_mapping_dict_keys[_k]) for _k in _keys)
 
-    if verbose:
-        print("Label Encoding Mapping:\n")
-        for _original, _encoded in y_mapping_dict.items():
-            print(f"  {_original} -> {_encoded}")
+        if verbose:
+            print("Label Encoding Mapping:\n")
+            for _original, _encoded in y_mapping_dict.items():
+                print(f"  {_original} -> {_encoded}")
 
-    return encoded_y_data, y_mapping_dict
+        return encoded_y_data, y_mapping_dict
 
 
 

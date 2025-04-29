@@ -177,7 +177,11 @@ class Output:
         
         shap_values = shap_explanation.values
         feature_names = shap_explanation.feature_names
-        
+
+        # Save directory
+        _shap_values_dir = self.results_dir.joinpath("SHAP/")
+        _shap_values_dir.mkdir(parents = True, exist_ok = True)
+
         # Create a DataFrame from SHAP values with feature names as columns
         if shap_values.ndim == 2:
             # For regression and binary classification models with 2D SHAP values
@@ -187,14 +191,14 @@ class Output:
                 index=data.index
             )
             # Output the shap values
-            shap_values_dataframe.to_csv(self.results_dir.joinpath("shap_values.csv"), index = True)
+            shap_values_dataframe.to_csv(_shap_values_dir.joinpath("shap_values.csv"),
+                                         encoding = "utf-8",
+                                         index = True)
 
         elif shap_values.ndim == 3:
             # For multi-class classification models with 3D SHAP values, 
             # or 2D SHAP values for binary classification models like SVC, KNC, MLPC, DTC, RFC, GBDTC
             # Create a dictionary of DataFrames, one for each class
-            _shap_values_dir = self.results_dir.joinpath("shap_values/")
-            _shap_values_dir.mkdir(parents = True, exist_ok = True)
             shap_values_dataframe = dict()
             for class_name, i in _y_mapping_dict.items():
                 shap_values_dataframe[class_name] = pd.DataFrame(
@@ -204,7 +208,9 @@ class Output:
                 )
             # Output the raw data
             for _class_name, _df in shap_values_dataframe.items():
-                _df.to_csv(_shap_values_dir.joinpath(f"shap_values_{_class_name}.csv"), index = True)
+                _df.to_csv(_shap_values_dir.joinpath(f"shap_values_{_class_name}.csv"),
+                           encoding = "utf-8",
+                           index = True)
         
         return shap_values_dataframe
     ###########################################################################################

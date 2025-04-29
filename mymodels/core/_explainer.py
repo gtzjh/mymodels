@@ -109,7 +109,7 @@ class MyExplainer:
                 _background_data = shap.sample(_background_data,
                                                int(sample_background_data_k * len(_background_data)))
             elif isinstance(sample_background_data_k, int):
-                _background_data = shap.sample(_background_data, 
+                _background_data = shap.sample(_background_data,
                                                sample_background_data_k)
 
         if sample_shap_data_k:

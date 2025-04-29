@@ -1,3 +1,3 @@
-from .main import Output
+from .output import Output
 
 __all__ = ['Output']
