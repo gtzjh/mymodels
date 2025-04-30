@@ -293,14 +293,14 @@ class Plotter:
         assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
             "y_mapping_dict must be a dictionary or None"
         
-        # Inverse the mapping dict (value → key)
-        _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
-        
         if shap_explanation.values.ndim == 2:
             fig, ax = _plot_shap_summary(shap_explanation)
             self._finalize_plot(fig, sub_dir = f"explanation/SHAP/", saved_file_name = "shap_summary")
 
         elif shap_explanation.values.ndim == 3:
+            # Inverse the mapping dict (value → key)
+            _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+
             _fig_ax_dict = _plot_shap_summary(shap_explanation)
             for class_idx, (fig, ax) in _fig_ax_dict.items():
                 self._finalize_plot(
@@ -329,9 +329,6 @@ class Plotter:
             "shap_explanation must be a shap.Explanation object"
         assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
             "y_mapping_dict must be a dictionary or None"
-        
-        # Inverse the mapping dict (value → key)
-        _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
 
         shap_dp_plots = _plot_shap_dependence(shap_explanation)
         if shap_explanation.values.ndim == 2:
@@ -341,7 +338,11 @@ class Plotter:
                     sub_dir = "explanation/SHAP/shap_dependence/",
                     saved_file_name = str(feature_name)
                 )
+                
         elif shap_explanation.values.ndim == 3:
+            # Inverse the mapping dict (value → key)
+            _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+            
             for class_idx, shap_dp_plots in shap_dp_plots.items():
                 for fig, ax, feature_name in shap_dp_plots:
                     self._finalize_plot(

@@ -66,7 +66,6 @@ Data diagnosis is performed on TRAINING DATASET ONLY.
                 _categorical_features.append(col)
 
         if len(_categorical_features) > 0:
-            print(f"\nCategorical Features: {_categorical_features}")
 
             # Plot
             for _cat_col in _categorical_features:
@@ -95,8 +94,9 @@ Data diagnosis is performed on TRAINING DATASET ONLY.
             
             # Convert to DataFrame and display
             _stats_df = pd.DataFrame(feature_stats)
-            print("\nFeature Statistics:")
-            print(_stats_df.to_string(index=False))
+            with pd.option_context('display.max_rows', None):
+                print("\nCategorical Features Statistics:")
+                print(_stats_df.to_string(index=False))
 
         return None
     
@@ -112,7 +112,6 @@ Data diagnosis is performed on TRAINING DATASET ONLY.
         
         # Visualize the distribution of each numerical feature
         if len(_numeric_features) > 0:
-            print(f"\nNumerical Features: {_numeric_features}")
 
             # Plot the distribution
             for col in _numeric_features:
@@ -153,8 +152,9 @@ Data diagnosis is performed on TRAINING DATASET ONLY.
             
             # Convert to DataFrame and display
             _stats_df = pd.DataFrame(feature_stats)
-            print("\nNumerical Features Statistics:")
-            print(_stats_df.to_string(index=False))
+            with pd.option_context('display.max_rows', None):
+                print("\nNumerical Features Statistics:")
+                print(_stats_df.to_string(index=False))
 
         return None
 
