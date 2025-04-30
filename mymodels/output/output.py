@@ -91,7 +91,7 @@ class Output:
         data: pd.DataFrame,
         _y_mapping_dict: dict | None = None
     ):
-        _results_dir = self.results_dir.joinpath("explanation/SHAP/")
+        _results_dir = self.results_dir.joinpath("explanation/SHAP/shap_values/")
         if self.save_shap_values:
             _output_shap_values(_results_dir, shap_explanation, data, _y_mapping_dict)
         

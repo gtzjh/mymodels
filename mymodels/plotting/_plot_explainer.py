@@ -27,13 +27,36 @@ def _plot_shap_summary(shap_explanation):
 
     assert isinstance(shap_explanation, shap.Explanation), \
         "shap_explanation must be a shap.Explanation object"
+    
+    if shap_explanation.values.ndim == 2:
+        _fig = plt.figure()
+        _ax = _fig.gca()
+        shap.plots.beeswarm(shap_explanation, show = False)
+        plt.tight_layout()
+        return _fig, _ax
 
-    fig = plt.figure()
-    ax = fig.gca()
-    shap.plots.beeswarm(shap_explanation, show = False)
-    plt.tight_layout()
+    elif shap_explanation.values.ndim == 3:
+        _fig_ax_dict = dict()
+        for i in range(shap_explanation.values.shape[2]):
+            _fig = plt.figure()
+            _ax = _fig.gca()
 
-    return fig, ax
+            shap.summary_plot(shap_explanation.values[:, :, i],
+                              shap_explanation.data,
+                              feature_names = shap_explanation.feature_names,
+                              show = False)
+
+            """
+            _shap_dataframe = pd.DataFrame(shap_explanation.values[:, :, i],
+                                           columns = shap_explanation.feature_names)
+            shap.summary_plot(_shap_dataframe, show = False)
+            """
+
+            
+            plt.tight_layout()
+            _fig_ax_dict[i] = (_fig, _ax)
+
+        return _fig_ax_dict
 
 
 
@@ -65,7 +88,8 @@ def _plot_shap_dependence(shap_explanation):
         for class_idx in range(shap_explanation.values.shape[2]):
             shap_dp_plots[class_idx] = []
             for feature_name in shap_explanation.feature_names:
-                ax = shap.plots.scatter(shap_explanation[:, feature_name, class_idx], show=False, color=shap_explanation[:, :, class_idx])
+                ax = shap.plots.scatter(shap_explanation[:, feature_name, class_idx],
+                                        show=False, color=shap_explanation[:, :, class_idx])
                 plt.tight_layout()
                 fig = plt.gcf()
                 ax = plt.gca()

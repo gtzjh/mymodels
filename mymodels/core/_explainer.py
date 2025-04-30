@@ -137,8 +137,10 @@ class MyExplainer:
 
         ###########################################################################################
         # Plot
-        self.plotter.plot_shap_summary(_shap_explanation)
-        self.plotter.plot_shap_dependence(_shap_explanation)
+        self.plotter.plot_shap_summary(_shap_explanation,
+                                       self.optimized_dataset.y_mapping_dict)
+        self.plotter.plot_shap_dependence(_shap_explanation,
+                                          self.optimized_dataset.y_mapping_dict)
         
         # Output
         self.output.output_shap_values(_shap_explanation,

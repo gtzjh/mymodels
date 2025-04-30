@@ -247,9 +247,8 @@ class MyEvaluator:
         # Trans the y data to the original label, for classification tasks
         _y_mapping_dict = self.optimized_dataset.y_mapping_dict
         if _y_mapping_dict is not None:
-            # Inverse the mapping dict (value→key)
+            # Inverse the mapping dict (value → key)
             _inverse_mapping = {v: k for k, v in _y_mapping_dict.items()}
-            # print(json.dumps(_inverse_mapping, indent=4))
             self._y_test = self._y_test.map(lambda x: _inverse_mapping.get(x, x))
             self._y_test_pred = self._y_test_pred.map(lambda x: _inverse_mapping.get(x, x))
             self._y_train = self._y_train.map(lambda x: _inverse_mapping.get(x, x))

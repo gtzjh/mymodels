@@ -276,66 +276,79 @@ class Plotter:
     # saved in the shap_summary directory, and named according to the class
     # Similarly, in the dependence_plots directory, subdirectories are created and named according to the class
 
-    def plot_shap_summary(self, shap_explanation):
+    def plot_shap_summary(
+            self,
+            shap_explanation: shap.Explanation,
+            y_mapping_dict: dict | None = None
+        ):
         """Plot SHAP summary
 
         Args:
             shap_explanation: SHAP explanation object
+            y_mapping_dict: Dictionary mapping class names to their indices
         """
+
         assert isinstance(shap_explanation, shap.Explanation), \
             "shap_explanation must be a shap.Explanation object"
+        assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
+            "y_mapping_dict must be a dictionary or None"
         
-        # If the feature_names is None, generate a new list of feature_names
-        if shap_explanation.feature_names is None:
-            feature_count = shap_explanation.values.shape[1]
-            shap_explanation.feature_names = [f"feature_{i}" for i in range(feature_count)]
-
-        _shap_values = shap_explanation.values
-
-        if _shap_values.ndim == 2:
+        # Inverse the mapping dict (value → key)
+        _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+        
+        if shap_explanation.values.ndim == 2:
             fig, ax = _plot_shap_summary(shap_explanation)
             self._finalize_plot(fig, sub_dir = f"explanation/SHAP/", saved_file_name = "shap_summary")
-        elif _shap_values.ndim == 3:
-            # shap_values.shape[2] is the number of classes
-            for i in range(_shap_values.shape[2]):
-                fig, ax = _plot_shap_summary(_shap_values[:, :, i])
+
+        elif shap_explanation.values.ndim == 3:
+            _fig_ax_dict = _plot_shap_summary(shap_explanation)
+            for class_idx, (fig, ax) in _fig_ax_dict.items():
                 self._finalize_plot(
                     fig,
-                    sub_dir = f"explanation/SHAP/shap_summary/", 
-                    saved_file_name = f"class_{i}"
+                    sub_dir = f"explanation/SHAP/shap_summary/",
+                    saved_file_name = f"{str(_inverse_mapping[class_idx])}"
                 )
 
         return None
     
     
 
-    def plot_shap_dependence(self, shap_explanation):
+    def plot_shap_dependence(
+            self,
+            shap_explanation: shap.Explanation, 
+            y_mapping_dict: dict | None = None
+        ):
         """Plot SHAP dependence
         
         Args:
             shap_explanation: SHAP explanation object
+            y_mapping_dict: Dictionary mapping class names to their indices
         """
 
         assert isinstance(shap_explanation, shap.Explanation), \
             "shap_explanation must be a shap.Explanation object"
-
-        # If the feature_names is None, generate a new list of feature_names
-        if shap_explanation.feature_names is None:
-            feature_count = shap_explanation.values.shape[1]
-            shap_explanation.feature_names = [f"feature_{i}" for i in range(feature_count)]
+        assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
+            "y_mapping_dict must be a dictionary or None"
+        
+        # Inverse the mapping dict (value → key)
+        _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
 
         shap_dp_plots = _plot_shap_dependence(shap_explanation)
-        # shap_explanation.values.ndim == 2
-        if isinstance(shap_dp_plots, list):
+        if shap_explanation.values.ndim == 2:
             for fig, ax, feature_name in shap_dp_plots:
-                self._finalize_plot(fig, sub_dir = "explanation/SHAP/shap_dependence/", saved_file_name = str(feature_name))
-        # shap_explanation.values.ndim == 3s
-        elif isinstance(shap_dp_plots, dict):
+                self._finalize_plot(
+                    fig,
+                    sub_dir = "explanation/SHAP/shap_dependence/",
+                    saved_file_name = str(feature_name)
+                )
+        elif shap_explanation.values.ndim == 3:
             for class_idx, shap_dp_plots in shap_dp_plots.items():
                 for fig, ax, feature_name in shap_dp_plots:
-                    self._finalize_plot(fig, sub_dir = f"explanation/SHAP/shap_dependence/class_{class_idx}/", saved_file_name = str(feature_name))
-        else:
-            raise ValueError(f"Invalid return for _plot_shap_dependence")
+                    self._finalize_plot(
+                        fig, 
+                        sub_dir = f"explanation/SHAP/shap_dependence/{str(_inverse_mapping[class_idx])}/", 
+                        saved_file_name = str(feature_name)
+                    )
         
         return None
 

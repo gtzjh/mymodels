@@ -40,7 +40,7 @@ mymodel.load(
 """
 
 
-"""
+
 data = pd.read_csv("data/obesity.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["id"])
 
@@ -98,7 +98,7 @@ mymodel.load(
     data_engineer_pipeline = data_engineer_pipeline,
     model_configs_path = "model_configs.yml"
 )
-
+"""
 
 
 # Configure the plotting and output
