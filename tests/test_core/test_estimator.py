@@ -17,7 +17,7 @@ from optuna.samplers import TPESampler
 
 
 
-from mymodels import MyEstimator
+from mymodels.core import MyEstimator
 
 
 # --------------------------

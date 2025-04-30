@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-from mymodels.data_engineer import data_engineer
+from mymodels import data_engineer
 from mymodels import MyModel
 
 
@@ -10,9 +10,9 @@ from mymodels import MyModel
 mymodel = MyModel(random_state = 0)
 
 
-"""
-data = pd.read_csv("data/titanic.csv", encoding="utf-8",
-                   na_values=np.nan, index_col = ["PassengerId"])
+
+data = pd.read_csv("data/titanic.zip", encoding="utf-8",
+                   na_values=np.nan, index_col=["PassengerId"])
 
 # Construct the data engineer pipeline
 data_engineer_pipeline = data_engineer(
@@ -38,11 +38,11 @@ mymodel.load(
     cat_features = ["Sex", "Embarked"],
     model_configs_path = "model_configs.yml"
 )
-"""
 
 
 """
-data = pd.read_csv("data/obesity.csv", encoding="utf-8",
+
+data = pd.read_csv("data/obesity.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["id"])
 
 data_engineer_pipeline = data_engineer(
@@ -72,9 +72,8 @@ mymodel.load(
 )
 """
 
-
-
-data = pd.read_csv("data/housing.csv", encoding = "utf-8", 
+"""
+data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
                    na_values = np.nan, index_col = ["ID"])
 
 data_engineer_pipeline = data_engineer(
@@ -100,7 +99,7 @@ mymodel.load(
     data_engineer_pipeline = data_engineer_pipeline,
     model_configs_path = "model_configs.yml"
 )
-
+"""
 
 
 # Configure the plotting and output
@@ -117,7 +116,7 @@ mymodel.format(
 )
 
 # Data diagnosis
-mymodel.diagnose(sample_k = None)
+mymodel.diagnose(sample_k = 100)
 
 # Optimize
 mymodel.optimize(

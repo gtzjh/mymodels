@@ -147,7 +147,7 @@ class MyModel:
             plotter = self.plotter,
         )
         
-        diagnoser.diagnose(sample_k = sample_k)
+        diagnoser.diagnose(sample_k = sample_k, random_state = self.random_state)
         
         return None
 

@@ -1,15 +1,12 @@
-from numpy.testing import assert_almost_equal, assert_array_equal
-
-
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from mymodels.main import MyPipeline
+from mymodels.main import MyModel
 
 
 
 def test_data_diagnoser():
-    mymodel = MyPipeline(
+    mymodel = MyModel(
         results_dir = "results/housing",
         random_state = 0,
         show = False,
@@ -30,10 +27,3 @@ def test_data_diagnoser():
     mymodel.diagnose(sample_k = 0.5)
 
     return None
-
-
-
-
-
-if __name__ == "__main__":
-    test_data_diagnoser()

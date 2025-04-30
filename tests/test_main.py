@@ -6,8 +6,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
 
-from mymodels.data_engineer import data_engineer
-from mymodels import MyPipeline
+from mymodels import data_engineer
+from mymodels import MyModel
 
 
 
@@ -19,7 +19,7 @@ def test_regression():
         # "lgbr",
         # "gbdtr", "xgbr", "adar", "svr", "knr", "mlpr"
     ]:
-        mymodel = MyPipeline(
+        mymodel = MyModel(
             results_dir = f"results/test_{i}_regression",
             random_state = 0,
             stratify = False,

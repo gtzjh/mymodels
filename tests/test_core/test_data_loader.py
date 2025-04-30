@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 
 
-from mymodels._data_loader import MyDataLoader
+from mymodels.core._data_loader import MyDataLoader
 
 
 
