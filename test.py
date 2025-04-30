@@ -10,7 +10,7 @@ from mymodels import MyModel
 mymodel = MyModel(random_state = 0)
 
 
-
+"""
 data = pd.read_csv("data/titanic.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["PassengerId"])
 
@@ -37,9 +37,9 @@ mymodel.load(
     cat_features = ["Sex", "Embarked"],
     model_configs_path = "model_configs.yml"
 )
-
-
 """
+
+
 
 data = pd.read_csv("data/obesity.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["id"])
@@ -69,7 +69,7 @@ mymodel.load(
     data_engineer_pipeline = data_engineer_pipeline,
     model_configs_path = "model_configs.yml"
 )
-"""
+
 
 """
 data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
