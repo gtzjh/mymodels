@@ -95,16 +95,12 @@ class MyModel:
     def format(
             self,
             results_dir: str = "results/",
-            # Plot
             show: bool = False,
             plot_format: str = "jpg",
             plot_dpi: int = 500,
-            # Output
-            # save_optimal_params: bool = True,
-            # save_optimal_model: bool = True,
-            # output_evaluation: bool = True,
-            # save_raw_data: bool = True,
-            # output_shap_values: bool = True
+            save_optimal_model: bool = False,
+            save_raw_data: bool = False,
+            save_shap_values: bool = False
         ):
         """Format the plotting and output
 
@@ -113,6 +109,9 @@ class MyModel:
             show (bool): Whether to show the plots.
             plot_format (str): The format of the plots.
             plot_dpi (int): The DPI of the plots.
+            save_optimal_model (bool): Whether to save the optimal model.
+            save_raw_data (bool): Whether to save the raw data.
+            save_shap_values (bool): Whether to save the SHAP values.
         """
 
         self.plotter = Plotter(
@@ -124,11 +123,9 @@ class MyModel:
 
         self.output = Output(
             results_dir = results_dir,
-            # save_optimal_params = save_optimal_params,
-            # save_optimal_model = save_optimal_model,
-            # output_evaluation = output_evaluation,
-            # save_raw_data = save_raw_data,
-            # output_shap_values = output_shap_values,
+            save_optimal_model = save_optimal_model,
+            save_raw_data = save_raw_data,
+            save_shap_values = save_shap_values,
         )
 
         return None

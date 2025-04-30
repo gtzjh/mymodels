@@ -257,9 +257,6 @@ class MyEvaluator:
         
         Predicts on test and training data (if show_train is True) and calculates accuracy metrics.
         Results are stored in self.accuracy_dict['model'] and also printed to console.
-        
-        Returns:
-            None
         """
         
         # Predict
@@ -339,7 +336,6 @@ class MyEvaluator:
                     self._y_train, _dummy_y_train, self.eval_metric
                 )
         
-
         logging.info(f"Dummy Accuracy: \n", \
             json.dumps(self.accuracy_dict["dummy"], indent=4))
 
@@ -373,7 +369,15 @@ class MyEvaluator:
         Args:
             _output: The output object.
         """
-        _output.output_evaluation(accuracy_dict = self.accuracy_dict)
+        _output.output_evaluation(
+            accuracy_dict = self.accuracy_dict
+        )
+        _output.output_raw_data(
+            y_test = self._y_test,
+            y_test_pred = self._y_test_pred,
+            y_train = self._y_train, 
+            y_train_pred = self._y_train_pred
+        )
 
 
         return None

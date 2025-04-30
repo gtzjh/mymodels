@@ -363,7 +363,8 @@ class MyOptimizer:
         Args:
             output: The output object.
         """
-        _output.save_optimal_params(self.estimator.optimal_params)
-        _output.save_optimal_model(self.estimator.optimal_model_object, self.estimator.model_name)
+        _output.output_optimal_params(self.estimator.optimal_params)
+        _output.output_optimal_model(self.estimator.optimal_model_object,
+                                     self.estimator.model_name)
 
         return None

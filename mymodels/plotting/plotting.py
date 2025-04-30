@@ -144,7 +144,7 @@ class Plotter:
             name: Name of the data
         """
         fig, ax = _plot_category(data, name=name, show=self.show)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "category")
+        self._finalize_plot(fig, sub_dir = "diagnosis/category/", saved_file_name = f"{name}")
 
         return None
     
@@ -157,7 +157,7 @@ class Plotter:
             name: Name of the data
         """
         fig, ax = _plot_data_distribution(data, name=name, show=self.show)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "data_distribution")
+        self._finalize_plot(fig, sub_dir = "diagnosis/distribution/", saved_file_name = f"{name}")
 
         return None
     
@@ -173,8 +173,8 @@ class Plotter:
         pearson_fig, pearson_ax = result["pearson"]
         spearman_fig, spearman_ax = result["spearman"]
 
-        self._finalize_plot(pearson_fig, sub_dir = None, saved_file_name = "correlation_pearson")
-        self._finalize_plot(spearman_fig, sub_dir = None, saved_file_name = "correlation_spearman")
+        self._finalize_plot(pearson_fig, sub_dir = "diagnosis/correlation", saved_file_name = "pearson")
+        self._finalize_plot(spearman_fig, sub_dir = "diagnosis/correlation", saved_file_name = "spearman")
 
         return None
     ###########################################################################################
@@ -191,7 +191,7 @@ class Plotter:
             optuna_study_object: The completed Optuna study containing trial results.
         """
         fig, ax = _plot_optimize_history(optuna_study_object)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "optimization_history")
+        self._finalize_plot(fig, sub_dir = "optimization", saved_file_name = "optimization_history")
 
         return None
     ###########################################################################################
@@ -210,7 +210,7 @@ class Plotter:
             optimal_model_object: Trained model object
         """
         fig, ax = _plot_roc_curve(y_test, x_test, optimal_model_object)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "roc_curve")
+        self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "roc_curve")
 
         return None
 
@@ -224,7 +224,7 @@ class Plotter:
             optimal_model_object: Trained model object
         """
         fig, ax = _plot_pr_curve(y_test, x_test, optimal_model_object)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "pr_curve")
+        self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "pr_curve")
 
         return None
     
@@ -237,7 +237,7 @@ class Plotter:
             y_test_pred: Predicted test target values
         """
         fig, ax = _plot_confusion_matrix(y_test, y_test_pred)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "confusion_matrix")
+        self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "confusion_matrix")
 
         return None
     ###########################################################################################
@@ -255,7 +255,7 @@ class Plotter:
             y_test_pred: Predicted test target values
         """
         fig, ax = _plot_regression_scatter(y_test, y_test_pred)
-        self._finalize_plot(fig, sub_dir = None, saved_file_name = "regression_scatter")
+        self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "scatter")
 
         return None
     ###########################################################################################

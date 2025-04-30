@@ -14,7 +14,6 @@ mymodel = MyModel(random_state = 0)
 data = pd.read_csv("data/titanic.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["PassengerId"])
 
-# Construct the data engineer pipeline
 data_engineer_pipeline = data_engineer(
     outlier_cols = None,
     missing_values_cols = ["Age", "Embarked"],
@@ -108,11 +107,9 @@ mymodel.format(
     show = False,
     plot_format = "jpg",
     plot_dpi = 500,
-    # save_optimal_params = True,
-    # save_optimal_model = True,
-    # output_evaluation = True,
-    # save_raw_data = True,
-    # output_shap_values = True
+    save_optimal_model = True,
+    save_raw_data = True,
+    save_shap_values = True
 )
 
 # Data diagnosis
@@ -135,6 +132,7 @@ mymodel.evaluate(
     eval_metric = None
 )
 
+# Explain
 mymodel.explain(
     select_background_data = "train",
     select_shap_data = "test",

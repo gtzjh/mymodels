@@ -1,21 +1,29 @@
-import numpy as np
-import pandas as pd
 from pathlib import Path
-import yaml, pickle
-from joblib import dump
-import shap
 
+import pandas as pd
+
+from ._output_evaluation import _output_evaluation
+from ._output_optimal_params import _output_optimal_params
+from ._output_optimal_model import _output_optimal_model
+from ._output_raw_data import _output_raw_data
+from ._output_shap_values import _output_shap_values
 
 
 class Output:
     def __init__(
         self,
-        results_dir: str | Path
+        results_dir: str | Path,
+        save_optimal_model: bool = False,
+        save_raw_data: bool = False,
+        save_shap_values: bool = False
     ):
         """Initialize the Output object.
         
         Args:
             results_dir (str or Path, optional): Directory to save results. Defaults to None.
+            save_optimal_model (bool, optional): Whether to save the optimal model. Defaults to False.
+            save_raw_data (bool, optional): Whether to save the raw data. Defaults to False.
+            output_shap_values (bool, optional): Whether to output the SHAP values. Defaults to False.
         """
 
         assert isinstance(results_dir, Path) \
@@ -27,190 +35,65 @@ class Output:
 
         self.results_dir = results_dir
 
-
-
-    ###########################################################################################
-    # Save optimal parameters
-    ###########################################################################################
-    def save_optimal_params(self, optimal_params):
-        """Save the optimal parameters to a YAML file.
-        """
-        assert isinstance(optimal_params, dict), \
-            "optimal_params must be a dictionary"
-        
-        with open(self.results_dir.joinpath("params.yml"), 'w', encoding="utf-8") as file:
-            yaml.dump(optimal_params, file)
-        return None
-    ###########################################################################################
-
-
-
-    ###########################################################################################
-    # Save optimal model
-    ###########################################################################################
-    def save_optimal_model(self, optimal_model, model_name):
-        """Save the optimal model using the recommended export method based on model type.
-        
-        Different models have different recommended export methods:
-        - CatBoost: save_model() method to save in binary format
-        - XGBoost: save_model() method to save in binary format  
-        - LightGBM: booster_.save_model() method to save in text format
-        - Other scikit-learn models: joblib is recommended over pickle
-        
-        Args:
-            optimal_model: The trained model to save
-            model_name: String identifier of the model type (e.g., "xgbr", "lgbc")
-        """
-        # assert optimal_model is callable, \
-        #     "optimal_model must be a callable model object"
-
-        model_path = self.results_dir.joinpath("optimal_model")
-        
-        # XGBoost models
-        if model_name in ["xgbr", "xgbc"]:
-            optimal_model.save_model(f"{model_path}.json")
-            
-        # LightGBM models
-        elif model_name in ["lgbr", "lgbc"]:
-            optimal_model.booster_.save_model(f"{model_path}.txt")
-            
-        # CatBoost models
-        elif model_name in ["catr", "catc"]:
-            optimal_model.save_model(f"{model_path}.cbm")
-        
-        # For scikit-learn based models, use joblib which is more efficient for numpy arrays
-        else:
-            dump(optimal_model, f"{model_path}.joblib")
-            
-        # Also save a pickle version for backward compatibility
-        with open(self.results_dir.joinpath("optimal_model.pkl"), 'wb') as file:
-            pickle.dump(optimal_model, file)
-            
-        return None
-    ###########################################################################################
-
-
-
-    ###########################################################################################
-    # Output evaluation
-    ###########################################################################################
-    def output_evaluation(
-            self,
-            accuracy_dict: dict, 
-            # save_raw_data: bool = False,
-            # y_test: pd.Series | pd.DataFrame | None = None, 
-            # y_test_pred: pd.Series | pd.DataFrame | None = None,
-            # y_train: pd.Series | pd.DataFrame | None = None,
-            # y_train_pred: pd.Series | pd.DataFrame | None = None,
-        ):
-        """
-        Handles saving results to files, printing to console, generating plots,
-        and saving raw prediction data based on the configuration settings.
-        """
-
-        assert isinstance(accuracy_dict, dict), \
-            "accuracy_dict must be a dictionary"
-        
-        """
+        assert isinstance(save_optimal_model, bool), \
+            "save_optimal_model must be a boolean"
         assert isinstance(save_raw_data, bool), \
             "save_raw_data must be a boolean"
-        assert isinstance(y_test, (pd.Series, pd.DataFrame)) or y_test is None, \
-            "y_test must be a pandas Series or DataFrame or None"
-        assert isinstance(y_test_pred, (pd.Series, pd.DataFrame)) or y_test_pred is None, \
-            "y_test_pred must be a pandas Series or DataFrame or None"
-        assert isinstance(y_train, (pd.Series, pd.DataFrame)) or y_train is None, \
-            "y_train must be a pandas Series or DataFrame or None"
-        assert isinstance(y_train_pred, (pd.Series, pd.DataFrame)) or y_train_pred is None, \
-            "y_train_pred must be a pandas Series or DataFrame or None"
-        """
+        assert isinstance(save_shap_values, bool), \
+            "save_shap_values must be a boolean"
+        
+        self.save_optimal_model = save_optimal_model
+        self.save_raw_data = save_raw_data
+        self.save_shap_values = save_shap_values
+    
+
+    def output_evaluation(
+        self,
+        accuracy_dict: dict
+    ):
+        _results_dir = self.results_dir.joinpath("evaluation/")
+        _output_evaluation(_results_dir, accuracy_dict)
+
+
+    def output_optimal_params(
+        self,
+        optimal_params: dict
+    ):
+        _results_dir = self.results_dir.joinpath("optimization/")
+        _output_optimal_params(_results_dir, optimal_params)
+
+    
+    def output_optimal_model(
+        self,
+        optimal_model: object,
+        model_name: str
+    ):
+        _results_dir = self.results_dir.joinpath("optimization/")
+        if self.save_optimal_model:
+            _output_optimal_model(_results_dir, optimal_model, model_name)
+
+    
+    def output_raw_data(
+        self,
+        y_test: pd.Series | pd.DataFrame | None, 
+        y_test_pred: pd.Series | pd.DataFrame | None,
+        y_train: pd.Series | pd.DataFrame | None,
+        y_train_pred: pd.Series | pd.DataFrame | None,
+    ):
+        _results_dir = self.results_dir.joinpath("evaluation/raw_data/")
+        if self.save_raw_data:
+            _output_raw_data(_results_dir, y_test, y_test_pred, y_train, y_train_pred)
+
+
+    def output_shap_values(
+        self,
+        shap_explanation: object,
+        data: pd.DataFrame,
+        _y_mapping_dict: dict | None = None
+    ):
+        _results_dir = self.results_dir.joinpath("explanation/SHAP/")
+        if self.save_shap_values:
+            _output_shap_values(_results_dir, shap_explanation, data, _y_mapping_dict)
         
         
-        # Save results to files
-        with open(self.results_dir.joinpath("accuracy.yml"), 'w', encoding = "utf-8") as file:
-            yaml.dump(accuracy_dict, file)
 
-
-        """
-        # Output train and test results
-        if save_raw_data:
-            y_test_pred_1d = y_test_pred
-            y_train_pred_1d = y_train_pred
-            
-            # Flatten predictions if they are 2D with second dimension of 1
-            if len(y_test_pred_1d.shape) > 1 and y_test_pred_1d.shape[1] == 1:
-                y_test_pred_1d = y_test_pred_1d.flatten()
-            if len(y_train_pred_1d.shape) > 1 and y_train_pred_1d.shape[1] == 1:
-                y_train_pred_1d = y_train_pred_1d.flatten()
-            
-            test_results = pd.DataFrame(data={"y_test": y_test,
-                                              "y_test_pred": y_test_pred_1d})
-            train_results = pd.DataFrame(data={"y_train": y_train,
-                                               "y_train_pred": y_train_pred_1d})
-            test_results.to_csv(self.results_dir.joinpath("test_results.csv"), index = True)
-            train_results.to_csv(self.results_dir.joinpath("train_results.csv"), index = True)
-        """
-
-        return None
-    ###########################################################################################
-
-
-
-    ###########################################################################################
-    # Output SHAP values
-    ###########################################################################################
-    def output_shap_values(self, shap_explanation, data, _y_mapping_dict = None):
-        """
-        Output SHAP values to files and console.
-        
-        Args:
-            shap_explanation: SHAP explanation object
-            data: The data used to calculate the SHAP values
-            _y_mapping_dict: The mapping dictionary of the target variable
-        """
-
-        assert isinstance(shap_explanation, shap.Explanation), \
-            "shap_explanation must be a shap.Explanation object"
-        assert isinstance(data, pd.DataFrame), \
-            "data must be a pandas DataFrame"
-        assert isinstance(_y_mapping_dict, dict) or _y_mapping_dict is None, \
-            "_y_mapping_dict must be a dictionary or None"
-        
-        shap_values = shap_explanation.values
-        feature_names = shap_explanation.feature_names
-
-        # Save directory
-        _shap_values_dir = self.results_dir.joinpath("SHAP/")
-        _shap_values_dir.mkdir(parents = True, exist_ok = True)
-
-        # Create a DataFrame from SHAP values with feature names as columns
-        if shap_values.ndim == 2:
-            # For regression and binary classification models with 2D SHAP values
-            shap_values_dataframe = pd.DataFrame(
-                data=shap_values,
-                columns=feature_names,
-                index=data.index
-            )
-            # Output the shap values
-            shap_values_dataframe.to_csv(_shap_values_dir.joinpath("shap_values.csv"),
-                                         encoding = "utf-8",
-                                         index = True)
-
-        elif shap_values.ndim == 3:
-            # For multi-class classification models with 3D SHAP values, 
-            # or 2D SHAP values for binary classification models like SVC, KNC, MLPC, DTC, RFC, GBDTC
-            # Create a dictionary of DataFrames, one for each class
-            shap_values_dataframe = dict()
-            for class_name, i in _y_mapping_dict.items():
-                shap_values_dataframe[class_name] = pd.DataFrame(
-                    data=shap_values[:, :, i],
-                    columns=feature_names,
-                    index=data.index
-                )
-            # Output the raw data
-            for _class_name, _df in shap_values_dataframe.items():
-                _df.to_csv(_shap_values_dir.joinpath(f"shap_values_{_class_name}.csv"),
-                           encoding = "utf-8",
-                           index = True)
-        
-        return shap_values_dataframe
-    ###########################################################################################
