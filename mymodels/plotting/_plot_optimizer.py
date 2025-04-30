@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import optuna
 import matplotlib
-# 设置后端为Agg，这是一个非交互式后端，避免线程相关问题
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 

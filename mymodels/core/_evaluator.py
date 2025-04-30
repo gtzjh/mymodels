@@ -135,6 +135,8 @@ class MyEvaluator:
             _x_test: Test features.
             _y_train: Training target values.
             _y_test: Test target values.
+            _y_train_pred: Predicted training target values.
+            _y_test_pred: Predicted test target values.
             accuracy_dict (dict): Stores evaluation results after calling evaluate().
         """
 
@@ -143,6 +145,8 @@ class MyEvaluator:
             "optimized_dataset must be a mymodels.MyDataLoader object"
         assert isinstance(optimized_estimator, MyEstimator), \
             "optimized_estimator must be a mymodels.MyEstimator object"
+        assert optimized_estimator.optimal_model_object is not None, \
+            "The estimator has not been fitted yet"
         # Check data_engineer_pipeline validity
         if optimized_data_engineer_pipeline is not None:
             assert isinstance(optimized_data_engineer_pipeline, Pipeline), \
@@ -236,6 +240,21 @@ class MyEvaluator:
         # Get the optimal model object
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
 
+        # Predict
+        self._y_test_pred = pd.Series(self.optimal_model_object.predict(self._x_test))
+        self._y_train_pred = pd.Series(self.optimal_model_object.predict(self._x_train))
+
+        # Trans the y data to the original label, for classification tasks
+        _y_mapping_dict = self.optimized_dataset.y_mapping_dict
+        if _y_mapping_dict is not None:
+            # Inverse the mapping dict (value→key)
+            _inverse_mapping = {v: k for k, v in _y_mapping_dict.items()}
+            # print(json.dumps(_inverse_mapping, indent=4))
+            self._y_test = self._y_test.map(lambda x: _inverse_mapping.get(x, x))
+            self._y_test_pred = self._y_test_pred.map(lambda x: _inverse_mapping.get(x, x))
+            self._y_train = self._y_train.map(lambda x: _inverse_mapping.get(x, x))
+            self._y_train_pred = self._y_train_pred.map(lambda x: _inverse_mapping.get(x, x))
+
         # Evaluate the model
         self._evaluate_model()
 
@@ -258,10 +277,6 @@ class MyEvaluator:
         Predicts on test and training data (if show_train is True) and calculates accuracy metrics.
         Results are stored in self.accuracy_dict['model'] and also printed to console.
         """
-        
-        # Predict
-        self._y_test_pred = self.optimal_model_object.predict(self._x_test)
-        self._y_train_pred = self.optimal_model_object.predict(self._x_train)
 
         # Initialize model accuracy dictionary
         self.accuracy_dict["model"] = dict()
@@ -286,9 +301,6 @@ class MyEvaluator:
                 self.accuracy_dict["model"]["train"] = _get_accuracy_for_classification_task(
                     self._y_train, self._y_train_pred, self.eval_metric
                 )
-        
-        logging.info(f"Accuracy: \n", \
-            json.dumps(self.accuracy_dict["model"], indent=4))
 
         return None
 
@@ -335,9 +347,6 @@ class MyEvaluator:
                 self.accuracy_dict["dummy"]["train"] = _get_accuracy_for_classification_task(
                     self._y_train, _dummy_y_train, self.eval_metric
                 )
-        
-        logging.info(f"Dummy Accuracy: \n", \
-            json.dumps(self.accuracy_dict["dummy"], indent=4))
 
         return None
     
@@ -356,9 +365,6 @@ class MyEvaluator:
         
         elif is_regressor(self.optimal_model_object):
             _plotter.plot_regression_scatter(self._y_test, self._y_test_pred)
-        
-        else:
-            raise ValueError("The model is not a classifier or regressor")
 
         return None
     

@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import numpy as np
 import pandas as pd
 
 from ._output_evaluation import _output_evaluation
@@ -75,10 +75,10 @@ class Output:
     
     def output_raw_data(
         self,
-        y_test: pd.Series | pd.DataFrame | None, 
-        y_test_pred: pd.Series | pd.DataFrame | None,
-        y_train: pd.Series | pd.DataFrame | None,
-        y_train_pred: pd.Series | pd.DataFrame | None,
+        y_test: pd.Series | pd.DataFrame, 
+        y_test_pred: pd.Series | pd.DataFrame,
+        y_train: pd.Series | pd.DataFrame,
+        y_train_pred: pd.Series | pd.DataFrame,
     ):
         _results_dir = self.results_dir.joinpath("evaluation/raw_data/")
         if self.save_raw_data:

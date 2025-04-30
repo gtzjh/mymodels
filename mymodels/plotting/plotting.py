@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib
-# 设置后端为Agg，这是一个非交互式后端，避免线程相关问题
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -291,23 +290,20 @@ class Plotter:
             feature_count = shap_explanation.values.shape[1]
             shap_explanation.feature_names = [f"feature_{i}" for i in range(feature_count)]
 
-        shap_values = shap_explanation.values
+        _shap_values = shap_explanation.values
 
-
-        if shap_values.ndim == 2:
-            fig, ax = _plot_shap_summary(shap_values)
+        if _shap_values.ndim == 2:
+            fig, ax = _plot_shap_summary(shap_explanation)
             self._finalize_plot(fig, sub_dir = f"explanation/SHAP/", saved_file_name = "shap_summary")
-        elif shap_values.ndim == 3:
+        elif _shap_values.ndim == 3:
             # shap_values.shape[2] is the number of classes
-            for i in range(shap_values.shape[2]):
-                fig, ax = _plot_shap_summary(shap_values[:, :, i])
+            for i in range(_shap_values.shape[2]):
+                fig, ax = _plot_shap_summary(_shap_values[:, :, i])
                 self._finalize_plot(
                     fig,
                     sub_dir = f"explanation/SHAP/shap_summary/", 
                     saved_file_name = f"class_{i}"
                 )
-        else:
-            raise ValueError(f"Invalid SHAP values dimension: {shap_values.ndim}")
 
         return None
     

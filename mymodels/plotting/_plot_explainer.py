@@ -2,14 +2,13 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib
-# 设置后端为Agg，这是一个非交互式后端，避免线程相关问题
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.inspection import partial_dependence
 
 
 
-def _plot_shap_summary(shap_values):
+def _plot_shap_summary(shap_explanation):
     """SHAP summary plot
 
     Args:
@@ -18,14 +17,20 @@ def _plot_shap_summary(shap_values):
     Returns:
         fig_ax_list: list of tuple (fig, ax)
     """
+
+    """
     assert isinstance(shap_values, (np.ndarray, pd.DataFrame)), \
         "shap_values must be a ndarray or pd.DataFrame"
     assert hasattr(shap_values, 'ndim'), "shap_values must have the attribute 'ndim'"
     assert shap_values.ndim == 2
+    """
+
+    assert isinstance(shap_explanation, shap.Explanation), \
+        "shap_explanation must be a shap.Explanation object"
 
     fig = plt.figure()
     ax = fig.gca()
-    shap.summary_plot(shap_values, show=False)
+    shap.plots.beeswarm(shap_explanation, show = False)
     plt.tight_layout()
 
     return fig, ax
