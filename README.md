@@ -6,8 +6,6 @@
 
 Feel free to contact me: [gtzjh86@outlook.com](mailto:gtzjh86@outlook.com)
 
-**4/2/2025: Support for <code>LabelEncoder</code>, <code>TargetEncoder</code>, and <code>FrequencyEncoder</code> is under developing.**
-
 
 ## 🤔 Why `mymodels`?
 
@@ -85,4 +83,4 @@ conda activate mymodels
 
 [Supported models](https://github.com/gtzjh/mymodels/wiki#supported-models)
 
-[Some thing you should know before implementation](https://github.com/gtzjh/mymodels/wiki#the-users-should-know)
+[Something you should know before implementation](https://github.com/gtzjh/mymodels/wiki#the-users-should-know)

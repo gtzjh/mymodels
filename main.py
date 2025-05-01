@@ -10,41 +10,40 @@ from mymodels import MyModel
 mymodel = MyModel(random_state = 0)
 
 
+# Data engineering
 data_engineer_pipeline = data_engineer(
     outlier_cols = None,
-    missing_values_cols = ["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
-    impute_method = ["median", "median", "median", "median", "median", "median"],
-    cat_features = None,
-    encode_method = None,
-    # scale_cols = ["CRIM", "ZN"],
-    # scale_method = ["standard", "minmax"],
-    n_jobs = -1,
+    missing_values_cols = ["Age", "Embarked"],
+    impute_method = ["mean", "most_frequent"],
+    cat_features = ["Sex", "Embarked"],
+    encode_method = ["onehot", "onehot"],
+    # scale_cols = ["Fare"],
+    # scale_method = ["standard"],
+    n_jobs = 5,
     verbose = False
 )
 
-print(data_engineer_pipeline)
 
-
-data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
-                   na_values = np.nan, index_col = ["ID"])
-
+# Load data
+data = pd.read_csv("data/titanic.zip", encoding="utf-8",
+                   na_values=np.nan, index_col=["PassengerId"])
 
 mymodel.load(
-    model_name = "rfr",
+    model_name = "rfc",
     input_data = data,
-    y = "MEDV",
-    x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", \
-              "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
+    y = "Survived",
+    x_list = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
     test_ratio = 0.3,
     stratify = False,
     data_engineer_pipeline = data_engineer_pipeline,
+    cat_features = ["Sex", "Embarked"],
     model_configs_path = "model_configs.yml"
 )
 
 
 # Configure the plotting and output
 mymodel.format(
-    results_dir = "results/",
+    results_dir = "results/titanic",
     show = False,
     plot_format = "jpg",
     plot_dpi = 500,
@@ -81,3 +80,12 @@ mymodel.explain(
     sample_shap_data_k = 50
 )
 
+
+# Predict
+data_pred = pd.read_csv("data/titanic_test.csv", encoding = "utf-8",
+                        na_values = np.nan, index_col = ["PassengerId"])
+
+data_pred = data_pred.loc[:, ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]]
+
+y_pred = mymodel.predict(data = data_pred)
+y_pred.to_csv("results/titanic/prediction.csv", encoding = "utf-8", index = True)

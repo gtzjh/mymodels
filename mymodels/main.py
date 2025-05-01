@@ -7,6 +7,7 @@ from .core import MyEstimator
 from .core import MyOptimizer
 from .core import MyEvaluator
 from .core import MyExplainer
+from .core import MyPredictor
 from .data_diagnoser import MyDataDiagnoser
 from .plotting import Plotter
 from .output import Output
@@ -264,16 +265,21 @@ class MyModel:
         return None
     
 
-    def predict(self):
+    def predict(self, data: pd.DataFrame):
         """Predict the model
+
+        Args:
+            data (pd.DataFrame): The data to predict.
         
+        Returns:
+            y_pred (pd.Series): The predicted data.
+        """
+
         predictor = MyPredictor(
-            optimized_estimator = self.optimized_estimator,
             optimized_dataset = self.optimized_dataset,
+            optimized_estimator = self.optimized_estimator,
             optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
         )
-        predictor.predict()
-        """
-        pass
+        y_pred = predictor.predict(data = data)
 
-        return None
+        return y_pred

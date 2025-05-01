@@ -3,6 +3,7 @@ from ._estimator import MyEstimator
 from ._optimizer import MyOptimizer
 from ._evaluator import MyEvaluator
 from ._explainer import MyExplainer
+from ._predictor import MyPredictor
 
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     'MyEstimator',
     'MyOptimizer',
     'MyEvaluator',
-    'MyExplainer'
+    'MyExplainer',
+    'MyPredictor'
 ]
