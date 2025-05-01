@@ -4,7 +4,7 @@ import pandas as pd
 import shap
 
 
-def _output_shap_values(results_dir,shap_explanation, data, _y_mapping_dict = None):
+def _output_shap_values(results_dir, shap_explanation, data, _y_mapping_dict = None):
     """
     Output SHAP values to files and console.
     
@@ -45,9 +45,14 @@ def _output_shap_values(results_dir,shap_explanation, data, _y_mapping_dict = No
 
     elif shap_values.ndim == 3:
         # For multi-class classification models with 3D SHAP values, 
-        # or 2D SHAP values for binary classification models like SVC, KNC, MLPC, DTC, RFC, GBDTC
-        # Create a dictionary of DataFrames, one for each class
+
+        # For 2D SHAP values for binary classification models like SVC, KNC, MLPC, DTC, RFC, GBDTC
+        if _y_mapping_dict is None:
+            _y_mapping_dict = {i: i for i in range(shap_values.shape[2])}
+
+        # Create a dictionary for storing DataFrames, one for each class
         shap_values_dataframe = dict()
+
         for class_name, i in _y_mapping_dict.items():
             shap_values_dataframe[class_name] = pd.DataFrame(
                 data=shap_values[:, :, i],

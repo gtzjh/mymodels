@@ -9,7 +9,7 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 
 - Onehot
 - Ordinal
-- Label
+- Binary
 
 # Supported models
 

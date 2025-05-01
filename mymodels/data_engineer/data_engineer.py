@@ -73,10 +73,10 @@ class MyEngineer:
         self.VALID_ENCODE_METHOD = {
             "onehot": OneHotEncoder(handle_unknown="ignore", sparse_output=False),
             "binary": ce.BinaryEncoder(),
-            "label": LabelEncoder(),
+            # "label": LabelEncoder(),
             "ordinal": ce.OrdinalEncoder(),
-            "frequency": "value_counts",
-            "target": ce.TargetEncoder(),
+            # "frequency": "value_counts",
+            # "target": ce.TargetEncoder(),
         }
         self.VALID_SCALE_METHOD = {
             "standard": StandardScaler(),

@@ -16,7 +16,7 @@ data_engineer_pipeline = data_engineer(
     missing_values_cols = ["Age", "Embarked"],
     impute_method = ["mean", "most_frequent"],
     cat_features = ["Sex", "Embarked"],
-    encode_method = ["onehot", "onehot"],
+    encode_method = ["ordinal", "binary"],
     # scale_cols = ["Fare"],
     # scale_method = ["standard"],
     n_jobs = 5,
@@ -29,7 +29,7 @@ data = pd.read_csv("data/titanic.zip", encoding="utf-8",
                    na_values=np.nan, index_col=["PassengerId"])
 
 mymodel.load(
-    model_name = "rfc",
+    model_name = "lgbc",
     input_data = data,
     y = "Survived",
     x_list = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
@@ -46,7 +46,7 @@ mymodel.format(
     results_dir = "results/titanic",
     show = False,
     plot_format = "jpg",
-    plot_dpi = 500,
+    plot_dpi = 300,
     save_optimal_model = True,
     save_raw_data = True,
     save_shap_values = True
@@ -59,7 +59,7 @@ mymodel.diagnose(sample_k = 100)
 mymodel.optimize(
     strategy = "tpe",
     cv = 5,
-    trials = 10,
+    trials = 200,
     n_jobs = 5,
     direction = "maximize",
     eval_function = None
@@ -88,4 +88,6 @@ data_pred = pd.read_csv("data/titanic_test.csv", encoding = "utf-8",
 data_pred = data_pred.loc[:, ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]]
 
 y_pred = mymodel.predict(data = data_pred)
+
+y_pred.name = "Survived"
 y_pred.to_csv("results/titanic/prediction.csv", encoding = "utf-8", index = True)
