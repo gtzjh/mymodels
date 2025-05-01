@@ -298,8 +298,13 @@ class Plotter:
             self._finalize_plot(fig, sub_dir = f"explanation/SHAP/", saved_file_name = "shap_summary")
 
         elif shap_explanation.values.ndim == 3:
-            # Inverse the mapping dict (value → key)
-            _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+            if y_mapping_dict is not None:
+                # Inverse the mapping dict (value → key)
+                _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+            else:
+                # If y_mapping_dict is not provided, use the index of the class
+                _num_classes = shap_explanation.values.shape[2]
+                _inverse_mapping = {i: str(i) for i in range(_num_classes)}
 
             _fig_ax_dict = _plot_shap_summary(shap_explanation)
             for class_idx, (fig, ax) in _fig_ax_dict.items():
@@ -310,7 +315,6 @@ class Plotter:
                 )
 
         return None
-    
     
 
     def plot_shap_dependence(
@@ -340,8 +344,13 @@ class Plotter:
                 )
                 
         elif shap_explanation.values.ndim == 3:
-            # Inverse the mapping dict (value → key)
-            _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+            if y_mapping_dict is not None:
+                # Inverse the mapping dict (value → key)
+                _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
+            else:
+                # If y_mapping_dict is not provided, use the index of the class
+                _num_classes = shap_explanation.values.shape[2]
+                _inverse_mapping = {i: str(i) for i in range(_num_classes)}
             
             for class_idx, shap_dp_plots in shap_dp_plots.items():
                 for fig, ax, feature_name in shap_dp_plots:

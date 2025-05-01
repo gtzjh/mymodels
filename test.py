@@ -22,6 +22,8 @@ data_engineer_pipeline = data_engineer(
     verbose = False
 )
 
+print(data_engineer_pipeline)
+
 
 data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
                    na_values = np.nan, index_col = ["ID"])

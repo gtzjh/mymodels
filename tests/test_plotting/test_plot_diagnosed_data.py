@@ -4,8 +4,16 @@ import pandas as pd
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from mymodels.plotting import Plotter
+
+
+plotter = Plotter(
+    show = False,
+    plot_format = "png",
+    plot_dpi = 300,
+    results_dir = "./results/test_plotting_plot_diagnosed_data"
+)
 
 
 
@@ -410,17 +418,3 @@ def test_plot_category():
         print(f"✗ Pandas Series visualization failed: {e}")
         
     return None
-
-
-
-if __name__ == "__main__":
-    plotter = Plotter(
-        show = False,
-        plot_format = "png",
-        plot_dpi = 300,
-        results_dir = "./results/test_plotting_plot_diagnosed_data"
-    )
-
-    test_plot_category()
-    test_plot_data_distribution()
-    test_plot_correlation()

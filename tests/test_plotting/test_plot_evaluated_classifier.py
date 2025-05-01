@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from mymodels.plotting import Plotter
 
 
@@ -208,9 +208,3 @@ def test_multi_input_case():
         pass  # Expected error behavior
         
     return None
-
-
-if __name__ == "__main__":
-    test_plot_binary_classification()
-    test_plot_multi_classification()
-    test_multi_input_case()

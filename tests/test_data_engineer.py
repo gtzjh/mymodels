@@ -6,16 +6,10 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
 from mymodels.data_engineer import MyEngineer
-
-
-"""
-logging.basicConfig(
-    level = logging.DEBUG,
-    format = "%(asctime)s - %(levelname)s - %(message)s"
-)
-"""
 
 
 
@@ -529,6 +523,7 @@ def test_binary_encoding(sample_data):
                 f"Unseen category {category} has inconsistent encodings"
 
 
+"""
 if __name__ == "__main__":
     import sys
     # Create sample data directly (not using the fixture)
@@ -641,3 +636,5 @@ if __name__ == "__main__":
     else:
         print("\nSome tests FAILED! See above for details.")
         sys.exit(1)  # Exit with non-zero code to indicate test failure
+"""
+

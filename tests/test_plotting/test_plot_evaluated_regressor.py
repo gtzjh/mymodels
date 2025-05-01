@@ -6,9 +6,16 @@ import pytest
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from mymodels.plotting import Plotter
 
+
+plotter = Plotter(
+    show = False,
+    plot_format = "png",
+    plot_dpi = 300,
+    results_dir = "./results/test_plotting_plot_evaluated_regressor"
+)
 
 
 def test_plot_regression():
@@ -72,15 +79,3 @@ def test_plot_regression():
     assert "Input _y must be a 1D" in str(excinfo.value)
     
     return None
-
-
-
-if __name__ == "__main__":
-    plotter = Plotter(
-        show = False,
-        plot_format = "png",
-        plot_dpi = 300,
-        results_dir = "./results/test_plotting_plot_evaluated_regressor"
-    )
-    
-    test_plot_regression()

@@ -4,7 +4,6 @@ import shap
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from sklearn.inspection import partial_dependence
 
 
 
@@ -12,22 +11,19 @@ def _plot_shap_summary(shap_explanation):
     """SHAP summary plot
 
     Args:
-        shap_values: SHAP values
+        shap_explanation: SHAP explanation object
     
     Returns:
         fig_ax_list: list of tuple (fig, ax)
     """
 
-    """
-    assert isinstance(shap_values, (np.ndarray, pd.DataFrame)), \
-        "shap_values must be a ndarray or pd.DataFrame"
-    assert hasattr(shap_values, 'ndim'), "shap_values must have the attribute 'ndim'"
-    assert shap_values.ndim == 2
-    """
-
     assert isinstance(shap_explanation, shap.Explanation), \
         "shap_explanation must be a shap.Explanation object"
     
+    # Sometimes the SHAP explanation object has no feature names
+    if shap_explanation.feature_names is None:
+        shap_explanation.feature_names = [f"x_{i}" for i in range(shap_explanation.values.shape[1])]
+
     if shap_explanation.values.ndim == 2:
         _fig = plt.figure()
         _ax = _fig.gca()
@@ -45,13 +41,6 @@ def _plot_shap_summary(shap_explanation):
                               shap_explanation.data,
                               feature_names = shap_explanation.feature_names,
                               show = False)
-
-            """
-            _shap_dataframe = pd.DataFrame(shap_explanation.values[:, :, i],
-                                           columns = shap_explanation.feature_names)
-            shap.summary_plot(_shap_dataframe, show = False)
-            """
-
             
             plt.tight_layout()
             _fig_ax_dict[i] = (_fig, _ax)
@@ -64,7 +53,7 @@ def _plot_shap_dependence(shap_explanation):
     """SHAP dependence plot
 
     Args:
-        shap_values: SHAP values
+        shap_explanation: SHAP explanation object
     
     Returns:
         shap_dp_plot_list: list of tuple (fig, ax)
@@ -72,7 +61,12 @@ def _plot_shap_dependence(shap_explanation):
     
     assert isinstance(shap_explanation, shap.Explanation), \
         "shap_explanation must be a shap.Explanation object"
-    
+
+
+    # Sometimes the SHAP explanation object has no feature names
+    if shap_explanation.feature_names is None:
+        shap_explanation.feature_names = [f"x_{i}" for i in range(shap_explanation.values.shape[1])]
+
     # For binary classification (except for decision tree and random forest of sklearn)
     if shap_explanation.values.ndim == 2:
         shap_dp_plots = []

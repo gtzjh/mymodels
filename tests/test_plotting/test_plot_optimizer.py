@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from mymodels.plotting import Plotter
 
 
@@ -62,7 +62,3 @@ def test_plot_optimize_history():
     plotter.plot_optimize_history(study)
     
     return study
-
-
-if __name__ == "__main__":
-    test_plot_optimize_history()

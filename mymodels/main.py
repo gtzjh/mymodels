@@ -136,7 +136,7 @@ class MyModel:
 
         Args:
             sample_k (int | float | None, optional): 
-                The number of samples to use for diagnosis. Defaults to None.`
+                The number of samples to use for diagnosis. (Defaults to None)
         """
 
         diagnoser = MyDataDiagnoser(

@@ -1,7 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 
 import pandas as pd
@@ -14,7 +13,6 @@ from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from functools import partial
 from optuna.samplers import TPESampler
-
 
 
 from mymodels.core import MyEstimator

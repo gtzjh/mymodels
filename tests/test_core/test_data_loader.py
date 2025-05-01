@@ -3,11 +3,12 @@ import pandas as pd
 import pytest
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import json
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 
 
-from mymodels.core._data_loader import MyDataLoader
+from mymodels.core import MyDataLoader
 
 
 
@@ -42,7 +43,7 @@ def test_y_string_conversion(sample_data):
 
 
 def test_boolean_y_no_conversion(sample_data):
-    """当y列已经是布尔类型时不应进行编码"""
+    # 当y列已经是布尔类型时不应进行编码
     loader = MyDataLoader(
         input_data=sample_data,
         y='y_bool',
@@ -51,6 +52,7 @@ def test_boolean_y_no_conversion(sample_data):
         random_state=42
     )
     dataset = loader.load()
+
     
     # 验证无编码字典
     assert not dataset.y_mapping_dict
@@ -60,6 +62,8 @@ def test_boolean_y_no_conversion(sample_data):
     # 验证值范围
     assert set(dataset.y_train) <= {True, False}
     assert set(dataset.y_test) <= {True, False}
+
+
 
 def test_string_boolean_y_conversion():
     """当y列是字符串型布尔值时应进行编码"""
@@ -110,9 +114,11 @@ def test_y_numeric_no_conversion(sample_data):
         random_state=42
     )
     dataset = loader.load()
+
     # y已经是数字，无需转换
-    assert dataset.y_mapping_dict == {}
     assert set(dataset.y_train) <= {0, 1}
+    assert dataset.y_mapping_dict == None
+    
 
 def test_x_list_selection(sample_data):
     loader = MyDataLoader(
@@ -211,3 +217,4 @@ def test_missing_values_in_y():
     })
     with pytest.raises(ValueError):
         MyDataLoader(data, y='y', x_list=['x1']).load()
+

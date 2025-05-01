@@ -22,10 +22,15 @@ def _label_y(y_data, verbose = False):
         >>> sorted(mapping.items())
         [('bird', 0), ('cat', 1), ('dog', 2)]
     """
+    assert isinstance(y_data, pd.Series), "y_data must be a pandas Series"
+    
     from sklearn.preprocessing import LabelEncoder
 
     # For regression tasks, y_data is already float
-    if pd.api.types.is_float_dtype(y_data.dtype):
+    # Do not encode when y_data is of boolean type or contains 0 and 1
+    if pd.api.types.is_float_dtype(y_data) \
+        or pd.api.types.is_bool_dtype(y_data) \
+            or set(y_data) <= {0, 1}:
         return y_data, None
     
     else:
