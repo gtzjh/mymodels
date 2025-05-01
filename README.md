@@ -70,7 +70,7 @@ conda activate mymodels
 
 - Multi-class classification: [run_obesity.ipynb](run_obesity.ipynb)
 
-  > Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/datasets/jpkochar/obesity-risk-dataset)
+  > Dataset source: [Obesity Risk Dataset](https://www.kaggle.com/competitions/playground-series-s4e2/data)
 
 - Regression task: [run_housing.ipynb](run_housing.ipynb)
 
