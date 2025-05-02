@@ -113,6 +113,11 @@ class MyEstimator:
             model_configs_path (str): The path to the model configs file. (Default: 'model_configs.yml' in the root directory)
         
         Attributes:
+            # Private properties
+            _config: The model configs.
+            _VALID_MODEL_NAMES: The list of valid model names.
+            
+            # Properties
             model_name: The name of the model. Equivalent to the key in the model_configs.yml file.
             empty_model_object: An empty model object.
             param_space: The parameter space for Optuna tuning.
@@ -145,6 +150,11 @@ class MyEstimator:
                 self._config = yaml.safe_load(file)
         except FileNotFoundError:
             raise FileNotFoundError(f"Model configs file not found: {model_configs_path}")
+        
+        # Validate config structure
+        if not isinstance(self._config, dict):
+            raise TypeError("Model configs must be a dictionary")
+        
 
         # Model attributes
         self.model_name = None
@@ -179,28 +189,37 @@ class MyEstimator:
         # Get parameters from config
         _model_config = self._config[model_name]
 
+
+        # Check if each model config has the mandatory parameters
+        for _param in ['IMPORTS', 'PARAM_SPACE', 'STATIC_PARAMS']:
+            if _param not in _model_config:
+                raise KeyError(f"Config for model '{model_name}' must include '{_param}'")
+
         # Import the emptys model class
         _import_info = _model_config['IMPORTS']
         _module_name = _import_info['module']
-        _module = importlib.import_module(_module_name)
+        try:
+            _module = importlib.import_module(_module_name)
+        except Exception as e:
+            raise ImportError(f"Failed to import module '{_module_name}': \n{e}")
         _class_name = _import_info['class']
         self.empty_model_object = getattr(_module, _class_name)
 
         # The tuning parameters space, unchangeable dictionary
         self.param_space = MappingProxyType(
-            _convert_param_space(
-                _model_config['PARAM_SPACE']
-            )
+            _convert_param_space(_model_config['PARAM_SPACE'])
         )
 
         # The static parameters, unchangeable dictionary
         self.static_params = dict(_model_config['STATIC_PARAMS'])
 
         # The SHAP explainer type
-        self.shap_explainer_type = _model_config['SHAP_EXPLAINER_TYPE']
+        if 'SHAP_EXPLAINER_TYPE' in _model_config:
+            self.shap_explainer_type = _model_config['SHAP_EXPLAINER_TYPE']
 
         # The save type
-        self.save_type = _model_config['SAVE_TYPE']
+        if 'SAVE_TYPE' in _model_config:
+            self.save_type = _model_config['SAVE_TYPE']
 
 
         # For CatBoost models, the `cat_features` parameter can be accepted.

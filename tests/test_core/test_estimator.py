@@ -186,7 +186,8 @@ def test_invalid_param_space(tmp_path):
             },
             'PARAM_SPACE': {
                 'normalize': {'type': 'invalid_type', 'values': [True, False]}
-            }
+            },
+            'STATIC_PARAMS': {}
         }
     }
     config_path = tmp_path / "bad_param_config.yml"
@@ -225,3 +226,40 @@ def test_xgboost_save_format():
     """
     estimator = MyEstimator().load(model_name='xgbr')
     assert estimator.save_type == 'json', "XGBoost模型保存格式配置错误"
+
+def test_no_enough_params(tmp_path):
+    """测试缺少了静态参数的定义"""
+    bad_config = {
+        'lr': {
+            'IMPORTS': {
+                'module': 'sklearn.linear_model',
+                'class': 'LinearRegression'
+            },
+            'PARAM_SPACE': {},
+        }
+    }
+    config_path = tmp_path / "bad_param_config.yml"
+    with open(config_path, 'w') as f:
+        yaml.dump(bad_config, f)
+
+    with pytest.raises(KeyError, match="Config for model 'lr' must include 'STATIC_PARAMS'"):
+        MyEstimator(model_configs_path=str(config_path)).load(model_name='lr')
+
+def test_no_shap_explainer_type(tmp_path):
+    """测试缺少了SHAP解释器类型"""
+    bad_config = {
+        'lr': {
+            'IMPORTS': {
+                'module': 'sklearn.linear_model',
+                'class': 'LinearRegression'
+            },
+            'PARAM_SPACE': {},
+            'STATIC_PARAMS': {}
+        }
+    }
+    config_path = tmp_path / "bad_param_config.yml"
+    with open(config_path, 'w') as f:
+        yaml.dump(bad_config, f)
+    
+    estimator = MyEstimator(model_configs_path=str(config_path)).load(model_name="lr")
+    assert estimator.shap_explainer_type is None

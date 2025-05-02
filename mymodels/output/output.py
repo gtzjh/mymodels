@@ -66,11 +66,11 @@ class Output:
     def output_optimal_model(
         self,
         optimal_model: object,
-        model_name: str
+        save_type: str
     ):
         _results_dir = self.results_dir.joinpath("optimization/")
         if self.save_optimal_model:
-            _output_optimal_model(_results_dir, optimal_model, model_name)
+            _output_optimal_model(_results_dir, optimal_model, save_type)
 
     
     def output_raw_data(

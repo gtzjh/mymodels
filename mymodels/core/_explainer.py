@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
+from sklearn.base import is_classifier, is_regressor
 import shap
 import logging
 
@@ -75,25 +76,33 @@ class MyExplainer:
             sample_shap_data_k (int | float | None): The number of samples to use to calculate SHAP values.
         """
 
+        ###########################################################################################
         # Transform X data
+        ###########################################################################################
         if self.optimized_data_engineer_pipeline:
             _transformed_x_train = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_train)
             _transformed_x_test = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_test)
         else:
             _transformed_x_train = self.optimized_dataset.x_train
             _transformed_x_test = self.optimized_dataset.x_test
+        ###########################################################################################
 
 
         ###########################################################################################
         # Background data for building the explainer
+        ###########################################################################################
         if select_background_data == "train":
             _background_data = _transformed_x_train
         elif select_background_data == "test":
             _background_data = _transformed_x_test
         elif select_background_data == "all":
             _background_data = pd.concat([_transformed_x_train, _transformed_x_test]).sort_index()
+        ###########################################################################################
 
+
+        ###########################################################################################
         # SHAP data for calculating SHAP values
+        ###########################################################################################
         if select_shap_data == "train":
             _shap_data = _transformed_x_train
         elif select_shap_data == "test":
@@ -102,8 +111,10 @@ class MyExplainer:
             _shap_data = pd.concat([_transformed_x_train, _transformed_x_test]).sort_index()
         ###########################################################################################
 
+
         ###########################################################################################
         # Sampling the background data and shap data
+        ###########################################################################################
         if sample_background_data_k:
             if isinstance(sample_background_data_k, float):
                 _background_data = shap.sample(_background_data,
@@ -121,29 +132,43 @@ class MyExplainer:
                                          sample_shap_data_k)
         ###########################################################################################
 
+
         ###########################################################################################
         # Build the explainer
+        ###########################################################################################
         if self.optimized_estimator.shap_explainer_type == "kernel":
             _explainer = shap.KernelExplainer(self.optimized_estimator.optimal_model_object.predict,
                                               _background_data)
         elif self.optimized_estimator.shap_explainer_type == "tree":
             _explainer = shap.TreeExplainer(self.optimized_estimator.optimal_model_object)
         else:
-            raise ValueError(f"Unregistered SHAP explainer type: {self.optimized_estimator.shap_explainer_type}")
+            # For regression, the `predict` function would be called
+            # For classification, the `predict_proba` function would be called
+            if is_regressor(self.optimized_estimator.optimal_model_object):
+                _explainer = shap.Explainer(self.optimized_estimator.optimal_model_object.predict,
+                                            _background_data)
+            elif is_classifier(self.optimized_estimator.optimal_model_object):
+                _explainer = shap.Explainer(self.optimized_estimator.optimal_model_object.predict_proba,
+                                            _background_data)
 
         # Calculate
         _shap_explanation = _explainer(_shap_data)
-
         ###########################################################################################
+
 
         ###########################################################################################
         # Plot
+        ###########################################################################################
         self.plotter.plot_shap_summary(_shap_explanation,
                                        self.optimized_dataset.y_mapping_dict)
         self.plotter.plot_shap_dependence(_shap_explanation,
                                           self.optimized_dataset.y_mapping_dict)
-        
+        ###########################################################################################
+
+
+        ###########################################################################################
         # Output
+        ###########################################################################################
         self.output.output_shap_values(_shap_explanation,
                                        _shap_data,
                                        self.optimized_dataset.y_mapping_dict)

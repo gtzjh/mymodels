@@ -365,6 +365,6 @@ class MyOptimizer:
         """
         _output.output_optimal_params(self.estimator.optimal_params)
         _output.output_optimal_model(self.estimator.optimal_model_object,
-                                     self.estimator.model_name)
+                                     self.estimator.save_type)
 
         return None
