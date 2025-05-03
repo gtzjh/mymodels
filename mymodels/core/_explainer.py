@@ -136,14 +136,9 @@ class MyExplainer:
         ###########################################################################################
         # Build the explainer
         ###########################################################################################
-        if self.optimized_estimator.shap_explainer_type == "kernel":
-            _explainer = shap.KernelExplainer(self.optimized_estimator.optimal_model_object.predict,
-                                              _background_data)
-        elif self.optimized_estimator.shap_explainer_type == "tree":
+        if self.optimized_estimator.shap_explainer_type == "tree":
             _explainer = shap.TreeExplainer(self.optimized_estimator.optimal_model_object)
         else:
-            # For regression, the `predict` function would be called
-            # For classification, the `predict_proba` function would be called
             if is_regressor(self.optimized_estimator.optimal_model_object):
                 _explainer = shap.Explainer(self.optimized_estimator.optimal_model_object.predict,
                                             _background_data)

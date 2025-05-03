@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 
 
@@ -29,12 +30,8 @@ class MyDataDiagnoser:
             "y_data must be a pandas DataFrame"
         assert self.diagnose_x_data.shape[0] == self.diagnose_y_data.shape[0], \
             "x_data and y_data must have the same number of rows"
-        print(f"""
-=========================================================
-Data diagnosis is performed on TRAINING DATASET ONLY.
-=========================================================
-""")
-
+        logging.warning(f"Data diagnosis will be performing on TRAINING DATASET ONLY!!!")
+        
         # Sample the data
         assert sample_k is None or isinstance(sample_k, int) or isinstance(sample_k, float), \
             "sample_k must be an integer or float or None"

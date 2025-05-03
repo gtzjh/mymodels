@@ -7,7 +7,6 @@ from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_err
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import cohen_kappa_score, matthews_corrcoef
 from imblearn.metrics import specificity_score
-import json
 import logging
 
 
@@ -311,10 +310,15 @@ class MyEvaluator:
         Creates a dummy estimator appropriate for the task type (regression or classification)
         and evaluates its performance on the same data as the optimized model.
         Results are stored in self.accuracy_dict['dummy'] and also printed to console.
+
+        When using dummy estimator, a warning about zero division will be printed, just ignore it.
         
         Returns:
             None
         """
+
+        logging.warning("\nWhen using dummy estimator, a warning about zero division will be printed, JUST IGNORE IT.\n")
+
         # Create a dummy estimator
         _dummy_estimator = DummyRegressor() if is_regressor(self.optimal_model_object) else DummyClassifier()
         _dummy_estimator.fit(self._x_train, self._y_train)

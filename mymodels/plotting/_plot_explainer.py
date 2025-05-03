@@ -68,8 +68,9 @@ def _plot_shap_dependence(shap_explanation):
     # For binary classification (except for decision tree and random forest of sklearn)
     if shap_explanation.values.ndim == 2:
         shap_dp_plots = []
-        for feature_name in shap_explanation.feature_names:
-            shap.plots.scatter(shap_explanation[:, feature_name], show=False, color=shap_explanation)
+        for i, feature_name in enumerate(shap_explanation.feature_names):
+            # Use feature index instead of name for direct indexing
+            shap.plots.scatter(shap_explanation[:, i], show=False, color=shap_explanation)
             plt.tight_layout()
             fig = plt.gcf()
             ax = plt.gca()
@@ -79,8 +80,9 @@ def _plot_shap_dependence(shap_explanation):
         shap_dp_plots = dict()
         for class_idx in range(shap_explanation.values.shape[2]):
             shap_dp_plots[class_idx] = []
-            for feature_name in shap_explanation.feature_names:
-                ax = shap.plots.scatter(shap_explanation[:, feature_name, class_idx],
+            for i, feature_name in enumerate(shap_explanation.feature_names):
+                # Use feature index instead of name for direct indexing
+                ax = shap.plots.scatter(shap_explanation[:, i, class_idx],
                                         show=False, color=shap_explanation[:, :, class_idx])
                 plt.tight_layout()
                 fig = plt.gcf()

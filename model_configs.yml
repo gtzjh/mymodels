@@ -23,11 +23,14 @@
 # - integer: whole numbers (min/max range with optional step)
 #
 # SHAP EXPLAINER TYPES:
-# - linear: for linear models (faster for LinearRegression, LogisticRegression)
-# - kernel: model-agnostic explainer (can be used with any model, but slower)
 # - tree: optimized for tree-based models (RandomForest, XGBoost, etc.)
-# - permutation: feature permutation-based approach for black-box models
-#
+# - None: automatically choose the best explainer based on the shap.Explainer() function
+#     - For classification, call shap.Explainer(model.predict_proba)
+#     - For regression, call shap.Explainer(model.predict)
+#   ATTENTION:
+#       - The TreeExplainer is not supported for GradientBoostingClassifier in multi-class classification
+#       - The TreeExplainer must be set explicitly for the tree-based models, otherwise the PermutationExplainer will be used
+# 
 # SAVE TYPES:
 # - joblib: default for scikit-learn models
 # - xgboost: for XGBoost models (saves as .json)
@@ -60,7 +63,6 @@ lc:  # LogisticRegression
     n_jobs: -1
     verbose: 0
     warm_start: false
-  SHAP_EXPLAINER_TYPE: linear
   SAVE_TYPE: joblib
 
 svc:  # SVC
@@ -81,7 +83,6 @@ svc:  # SVC
     class_weight: balanced
     probability: true
     verbose: 0
-  SHAP_EXPLAINER_TYPE: kernel
   SAVE_TYPE: joblib
 
 knc:  # KNeighborsClassifier
@@ -106,7 +107,6 @@ knc:  # KNeighborsClassifier
       values: {min: 1, max: 2}
   STATIC_PARAMS:
     n_jobs: -1
-  SHAP_EXPLAINER_TYPE: permutation
   SAVE_TYPE: joblib
 
 mlpc:  # MLPClassifier
@@ -136,7 +136,6 @@ mlpc:  # MLPClassifier
     early_stopping: true
     n_iter_no_change: 10
     verbose: 0
-  SHAP_EXPLAINER_TYPE: kernel
   SAVE_TYPE: joblib
 
 dtc:  # DecisionTreeClassifier
@@ -202,6 +201,8 @@ rfc:  # RandomForestClassifier
   SAVE_TYPE: joblib
 
 gbdtc:  # GradientBoostingClassifier
+  # The TreeExplainer is not supported GradientBoostingClassifier in multi-class classification
+  # Hence, the SHAP_EXPLAINER_TYPE is set to None
   IMPORTS:
     module: sklearn.ensemble
     class: GradientBoostingClassifier
@@ -235,7 +236,6 @@ gbdtc:  # GradientBoostingClassifier
     validation_fraction: 0.1
     n_iter_no_change: 10
     tol: 1.0e-4
-  SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: joblib
 
 adac:  # AdaBoostClassifier
@@ -251,7 +251,6 @@ adac:  # AdaBoostClassifier
       values: {min: 0.01, max: 1.0, log: true}
   STATIC_PARAMS:
     algorithm: SAMME
-  SHAP_EXPLAINER_TYPE: permutation
   SAVE_TYPE: joblib
 
 xgbc:  # XGBClassifier
@@ -386,7 +385,6 @@ catc:  # CatBoostClassifier
   SAVE_TYPE: cbm
 
 
-
 # Regressors
 lr:  # LinearRegression
   IMPORTS:
@@ -394,7 +392,6 @@ lr:  # LinearRegression
     class: LinearRegression
   PARAM_SPACE: {}
   STATIC_PARAMS: {}
-  SHAP_EXPLAINER_TYPE: linear
   SAVE_TYPE: joblib
 
 svr:  # SVR
@@ -402,18 +399,15 @@ svr:  # SVR
     module: sklearn.svm
     class: SVR
   PARAM_SPACE:
-    kernel:
-      type: categorical
-      values: ["linear", "rbf", "poly", "sigmoid"]
     C:
-      type: integer
-      values: {min: 1, max: 200, step: 1}
+      type: float
+      values: {min: 0.1, max: 100.0, log: true}
     epsilon:
       type: float
-      values: {min: 0.1, max: 10, step: 0.1}
+      values: {min: 0.01, max: 1.0, step: 0.01}
   STATIC_PARAMS:
     verbose: 0
-  SHAP_EXPLAINER_TYPE: kernel
+    cache_size: 1000
   SAVE_TYPE: joblib
 
 knr:  # KNeighborsRegressor
@@ -438,7 +432,6 @@ knr:  # KNeighborsRegressor
       values: {min: 1, max: 5, step: 1}
   STATIC_PARAMS:
     n_jobs: -1
-  SHAP_EXPLAINER_TYPE: permutation
   SAVE_TYPE: joblib
 
 mlpr:  # MLPRegressor
@@ -461,7 +454,6 @@ mlpr:  # MLPRegressor
     solver: adam
     batch_size: auto
     verbose: 0
-  SHAP_EXPLAINER_TYPE: kernel
   SAVE_TYPE: joblib
 
 dtr:  # DecisionTreeRegressor
@@ -557,7 +549,6 @@ adar:  # AdaBoostRegressor
       type: categorical
       values: ["linear", "square", "exponential"]
   STATIC_PARAMS: {}
-  SHAP_EXPLAINER_TYPE: permutation
   SAVE_TYPE: joblib
 
 xgbr:  # XGBRegressor

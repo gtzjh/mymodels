@@ -7,270 +7,351 @@ from mymodels import MyModel
 
 
 def test_binary_classification(model_name: str):
-    try:
-        _results_dir = f"results/titanic_{model_name}"
+    _results_dir = f"results/titanic_{model_name}"
 
-        # Construct the pipeline
-        mymodel = MyModel(random_state = 0)
+    if model_name == "catc" or model_name == "catr":
+        _engineer_cat_features = None
+        _engineer_encode_method = None
+    else:
+        _engineer_cat_features = ["Sex", "Embarked"]
+        _engineer_encode_method = ["ordinal", "binary"]
 
-        # Data engineering
-        data_engineer_pipeline = data_engineer(
-            outlier_cols = None,
-            missing_values_cols = ["Age", "Embarked"],
-            impute_method = ["mean", "most_frequent"],
-            cat_features = ["Sex", "Embarked"],
-            encode_method = ["ordinal", "binary"],
-            # scale_cols = ["Fare"],
-            # scale_method = ["standard"],
-            n_jobs = 5,
-            verbose = False
-        )
+    if model_name in ["lc", "svc", "knc", "mlpc", "adac"]:
+        _scale_cols = ["Fare"]
+        _scale_method = ["standard"]
+    else:
+        _scale_cols = None
+        _scale_method = None
 
-        # Load data
-        data = pd.read_csv("data/titanic.zip", encoding="utf-8",
-                        na_values=np.nan, index_col=["PassengerId"]).sample(300)
+    # Construct the pipeline
+    mymodel = MyModel(random_state = 0)
 
-        mymodel.load(
-            model_name = model_name,
-            input_data = data,
-            y = "Survived",
-            x_list = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
-            test_ratio = 0.3,
-            stratify = False,
-            data_engineer_pipeline = data_engineer_pipeline,
-            cat_features = ["Sex", "Embarked"],
-            model_configs_path = "model_configs.yml"
-        )
+    # Data engineering
+    data_engineer_pipeline = data_engineer(
+        outlier_cols = None,
+        missing_values_cols = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
+        impute_method = ["median", "most_frequent", "median", "median", "median", "median", "most_frequent"],
+        cat_features = _engineer_cat_features,
+        encode_method = _engineer_encode_method,
+        scale_cols = _scale_cols,
+        scale_method = _scale_method,
+        n_jobs = 5,
+        verbose = False
+    )
 
-        # Configure the plotting and output
-        mymodel.format(
-            results_dir = _results_dir,
-            show = False,
-            plot_format = "jpg",
-            plot_dpi = 100,
-            save_optimal_model = True,
-            save_raw_data = True,
-            save_shap_values = True
-        )
+    # Load data
+    data = pd.read_csv("data/titanic.zip", encoding="utf-8",
+                    na_values=np.nan, index_col=["PassengerId"]).sample(300)
 
-        # Data diagnosis
-        mymodel.diagnose(sample_k = 100)
+    mymodel.load(
+        model_name = model_name,
+        input_data = data,
+        y = "Survived",
+        x_list = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
+        test_ratio = 0.3,
+        stratify = False,
+        data_engineer_pipeline = data_engineer_pipeline,
+        cat_features = ["Sex", "Embarked"],
+        model_configs_path = "model_configs.yml"
+    )
 
-        # Optimize
-        mymodel.optimize(
-            strategy = "tpe",
-            cv = 3,
-            trials = 10,
-            n_jobs = 5,
-            direction = "maximize",
-            eval_function = None
-        )
+    # Configure the plotting and output
+    mymodel.format(
+        results_dir = _results_dir,
+        show = False,
+        plot_format = "jpg",
+        plot_dpi = 100,
+        save_optimal_model = True,
+        save_raw_data = True,
+        save_shap_values = True
+    )
 
-        # Evaluate
-        mymodel.evaluate(
-            show_train = True,
-            dummy = True,
-            eval_metric = None
-        )
+    # Data diagnosis
+    mymodel.diagnose(sample_k = None)
 
-        # Explain
-        mymodel.explain(
-            select_background_data = "train",
-            select_shap_data = "test",
-            sample_background_data_k = 50,
-            sample_shap_data_k = 50
-        )
+    # Optimize
+    mymodel.optimize(
+        strategy = "tpe",
+        cv = 3,
+        trials = 10,
+        n_jobs = 5,
+        direction = "maximize",
+        eval_function = None
+    )
 
-        # Predict
-        data_pred = pd.read_csv("data/titanic_test.csv", encoding = "utf-8",
-                                na_values = np.nan, index_col = ["PassengerId"])
+    # Evaluate
+    mymodel.evaluate(
+        show_train = True,
+        dummy = False,
+        eval_metric = None
+    )
 
-        data_pred = data_pred.loc[:, ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]]
+    # Explain
+    mymodel.explain(
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50
+    )
 
-        y_pred = mymodel.predict(data = data_pred)
+    # Predict
+    data_pred = pd.read_csv("data/titanic_test.csv", encoding = "utf-8",
+                            na_values = np.nan, index_col = ["PassengerId"])
 
-        y_pred.name = "Survived"
-        y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
-    
-    except Exception as e:
-        print(e)
+    data_pred = data_pred.loc[:, ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]]
+
+    y_pred = mymodel.predict(data = data_pred)
+
+    y_pred.name = "Survived"
+    y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
+
 
 
 def test_multi_classification(model_name: str):
-    try:
-        _results_dir = f"results/obesity_{model_name}"
+    _results_dir = f"results/obesity_{model_name}"
 
-        # Construct the pipeline
-        mymodel = MyModel(random_state = 0)
+    if model_name == "catc" or model_name == "catr":
+        _engineer_cat_features = None
+        _engineer_encode_method = None
+    else:
+        _engineer_cat_features = ["Gender", "family_history_with_overweight", "FAVC", "CAEC", "SMOKE", "SCC", "CALC", "MTRANS"]
+        _engineer_encode_method = ["ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal"]
 
-        # Data engineering
-        data_engineer_pipeline = data_engineer(
-            outlier_cols = None,
-            missing_values_cols = None,
-            impute_method = None,
-            cat_features = ["Gender", "family_history_with_overweight", "FAVC", "CAEC", "SMOKE", "SCC", "CALC", "MTRANS"],
-            encode_method = ["ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal", "ordinal"],
-            # scale_cols = ["Age", "Height", "Weight"],
-            # scale_method = ["standard", "standard", "standard"],
-            n_jobs = 5,
-            verbose = False
-        )
+    if model_name in ["lc", "svc", "knc", "mlpc", "adac"]:
+        _scale_cols = ["Age", "Height", "Weight"]
+        _scale_method = ["standard", "standard", "standard"]
+    else:
+        _scale_cols = None
+        _scale_method = None
 
-        # Load data
-        data = pd.read_csv("data/obesity.zip", encoding="utf-8",
-                        na_values=np.nan, index_col=["id"]).sample(300)
+    # Construct the pipeline
+    mymodel = MyModel(random_state = 0)
 
-        mymodel.load(
-            model_name = model_name,
-            input_data = data,
-            y = "NObeyesdad",
-            x_list = ["Gender","Age","Height","Weight",\
-                    "family_history_with_overweight",\
-                    "FAVC","FCVC","NCP","CAEC","SMOKE",\
-                    "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
-            test_ratio = 0.3,
-            stratify = False,
-            data_engineer_pipeline = data_engineer_pipeline,
-            model_configs_path = "model_configs.yml"
-        )
+    # Data engineering
+    data_engineer_pipeline = data_engineer(
+        outlier_cols = None,
+        missing_values_cols = None,
+        impute_method = None,
+        cat_features = _engineer_cat_features,
+        encode_method = _engineer_encode_method,
+        scale_cols = _scale_cols,
+        scale_method = _scale_method,
+        n_jobs = 5,
+        verbose = False
+    )
 
-        # Configure the plotting and output
-        mymodel.format(
-            results_dir = _results_dir,
-            show = False,
-            plot_format = "jpg",
-            plot_dpi = 100,
-            save_optimal_model = True,
-            save_raw_data = True,
-            save_shap_values = True
-        )
+    # Load data
+    data = pd.read_csv("data/obesity.zip", encoding="utf-8",
+                       na_values=np.nan, index_col=["id"]).sample(300)
 
-        # Data diagnosis
-        mymodel.diagnose(sample_k = 100)
+    mymodel.load(
+        model_name = model_name,
+        input_data = data,
+        y = "NObeyesdad",
+        x_list = ["Gender","Age","Height","Weight",\
+                  "family_history_with_overweight",\
+                  "FAVC","FCVC","NCP","CAEC","SMOKE",\
+                  "CH2O","SCC","FAF","TUE","CALC","MTRANS"],
+        test_ratio = 0.3,
+        stratify = False,
+        data_engineer_pipeline = data_engineer_pipeline,
+        model_configs_path = "model_configs.yml"
+    )
 
-        # Optimize
-        mymodel.optimize(
-            strategy = "tpe",
-            cv = 3,
-            trials = 10,
-            n_jobs = 5,
-            direction = "maximize",
-            eval_function = None
-        )
+    # Configure the plotting and output
+    mymodel.format(
+        results_dir = _results_dir,
+        show = False,
+        plot_format = "jpg",
+        plot_dpi = 100,
+        save_optimal_model = True,
+        save_raw_data = True,
+        save_shap_values = True
+    )
 
-        # Evaluate
-        mymodel.evaluate(
-            show_train = True,
-            dummy = True,
-            eval_metric = None
-        )
+    # Data diagnosis
+    mymodel.diagnose(sample_k = 100)
 
-        # Explain
-        mymodel.explain(
-            select_background_data = "train",
-            select_shap_data = "test",
-            sample_background_data_k = 50,
-            sample_shap_data_k = 50
-        )
+    # Optimize
+    mymodel.optimize(
+        strategy = "tpe",
+        cv = 3,
+        trials = 10,
+        n_jobs = 5,
+        direction = "maximize",
+        eval_function = None
+    )
 
-        # Predict
-        data_pred = pd.read_csv("data/obesity_test.csv", encoding = "utf-8",
-                                na_values = np.nan, index_col = ["id"])
+    # Evaluate
+    mymodel.evaluate(
+        show_train = True,
+        dummy = True,
+        eval_metric = None
+    )
 
-        data_pred = data_pred.loc[:, ["Gender","Age","Height","Weight",\
-                                    "family_history_with_overweight",\
-                                    "FAVC","FCVC","NCP","CAEC","SMOKE",\
-                                    "CH2O","SCC","FAF","TUE","CALC","MTRANS"]]
+    # Explain
+    mymodel.explain(
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50
+    )
 
-        y_pred = mymodel.predict(data = data_pred)
-        y_pred.name = "NObeyesdad"
-        y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
-    
-    except Exception as e:
-        print(e)
+    # Predict
+    data_pred = pd.read_csv("data/obesity_test.csv", encoding = "utf-8",
+                            na_values = np.nan, index_col = ["id"])
+
+    data_pred = data_pred.loc[:, ["Gender","Age","Height","Weight",\
+                                  "family_history_with_overweight",\
+                                  "FAVC","FCVC","NCP","CAEC","SMOKE",\
+                                  "CH2O","SCC","FAF","TUE","CALC","MTRANS"]]
+
+    y_pred = mymodel.predict(data = data_pred)
+    y_pred.name = "NObeyesdad"
+    y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
+
 
 
 def test_regression(model_name: str):
-    try:
-        _results_dir = f"results/housing_{model_name}"
+    _results_dir = f"results/housing_{model_name}"
 
-        # Construct the pipeline
-        mymodel = MyModel(random_state = 0)
+    if model_name == "catc" or model_name == "catr":
+        _engineer_cat_features = None
+        _engineer_encode_method = None
+    else:
+        _engineer_cat_features = None
+        _engineer_encode_method = None
 
-        # Data engineering
-        data_engineer_pipeline = data_engineer(
-            outlier_cols = None,
-            missing_values_cols = ["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
-            impute_method = ["median", "median", "median", "median", "median", "median"],
-            cat_features = None,
-            encode_method = None,
-            # scale_cols = ["CRIM", "ZN"],
-            # scale_method = ["standard", "minmax"],
-            n_jobs = -1,
-            verbose = False
-        )
+    if model_name in ["lr", "svr", "knr", "mlpr", "adar"]:
+        _scale_cols = ["CRIM", "ZN"]
+        _scale_method = ["standard", "minmax"]
+    else:
+        _scale_cols = None
+        _scale_method = None
 
-        # Load data
-        data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
-                        na_values = np.nan, index_col = ["ID"])
+    # Construct the pipeline
+    mymodel = MyModel(random_state = 0)
 
-        mymodel.load(
-            model_name = model_name,
-            input_data = data,
-            y = "MEDV",
-            x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", \
-                    "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
-            test_ratio = 0.3,
-            stratify = False,
-            data_engineer_pipeline = data_engineer_pipeline,
-            model_configs_path = "model_configs.yml"
-        )
+    # Data engineering
+    data_engineer_pipeline = data_engineer(
+        outlier_cols = None,
+        missing_values_cols = ["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
+        impute_method = ["median", "median", "median", "median", "median", "median"],
+        cat_features = _engineer_cat_features,
+        encode_method = _engineer_encode_method,
+        scale_cols = _scale_cols,
+        scale_method = _scale_method,
+        n_jobs = -1,
+        verbose = False
+    )
 
-        # Configure the plotting and output
-        mymodel.format(
-            results_dir = _results_dir,
-            show = False,
-            plot_format = "jpg",
-            plot_dpi = 100,
-            save_optimal_model = True,
-            save_raw_data = True,
-            save_shap_values = True
-        )
+    # Load data
+    data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
+                        na_values = np.nan, index_col = ["ID"]).sample(300)
 
-        # Data diagnosis
-        mymodel.diagnose(sample_k = 100)
+    mymodel.load(
+        model_name = model_name,
+        input_data = data,
+        y = "MEDV",
+        x_list = ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", \
+                  "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"],
+        test_ratio = 0.3,
+        stratify = False,
+        data_engineer_pipeline = data_engineer_pipeline,
+        model_configs_path = "model_configs.yml"
+    )
 
-        # Optimize
-        mymodel.optimize(
-            strategy = "tpe",
-            cv = 3,
-            trials = 10,
-            n_jobs = 5,
-            direction = "maximize",
-            eval_function = None
-        )
+    # Configure the plotting and output
+    mymodel.format(
+        results_dir = _results_dir,
+        show = False,
+        plot_format = "jpg",
+        plot_dpi = 100,
+        save_optimal_model = True,
+        save_raw_data = True,
+        save_shap_values = True
+    )
 
-        # Evaluate
-        mymodel.evaluate(
-            show_train = True,
-            dummy = True,
-            eval_metric = None
-        )
+    # Data diagnosis
+    mymodel.diagnose(sample_k = 100)
 
-        # Explain
-        mymodel.explain(
-            select_background_data = "train",
-            select_shap_data = "test",
-            sample_background_data_k = 50,
-            sample_shap_data_k = 50
-        )
+    # Optimize
+    mymodel.optimize(
+        strategy = "tpe",
+        cv = 3,
+        trials = 10,
+        n_jobs = 5,
+        direction = "maximize",
+        eval_function = None
+    )
 
-    except Exception as e:
-        print(e)
+    # Evaluate
+    mymodel.evaluate(
+        show_train = True,
+        dummy = True,
+        eval_metric = None
+    )
+
+    # Explain
+    mymodel.explain(
+        select_background_data = "train",
+        select_shap_data = "test",
+        sample_background_data_k = 50,
+        sample_shap_data_k = 50
+    )
 
 
 if __name__ == "__main__":
-    test_binary_classification("lgbc")
-    test_multi_classification("lgbc")
-    test_regression("lgbr")
+    classifiers = [
+        # "lc",
+        # "lgbc",
+        # "xgbc",
+        "catc",
+        # "svc",
+        # "knc",
+        # "mlpc",
+        # "dtc",
+        # "rfc",
+        # "gbdtc",
+        # "adac"
+    ]
 
+    regressors = [
+        # "lr",
+        # "lgbr",
+        # "xgbr",
+        "catr",
+        # "svr",
+        # "knr",
+        # "mlpr",
+        # "dtr",
+        # "rfr",
+        # "gbdtr",
+        # "adar"
+    ]
+
+    for c in classifiers:
+        print(f"""
+=========================================================
+Start testing {c} for binary classification
+=========================================================
+""")
+        test_binary_classification(c)
+
+
+    for c in classifiers:
+        print(f"""
+=========================================================
+Start testing {c} for multi-classification
+=========================================================
+""")
+        test_multi_classification(c)
+
+
+    for r in regressors:
+        print(f"""
+=========================================================
+Start testing {r} for regression
+=========================================================
+""")
+        test_regression(r)
