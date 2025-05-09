@@ -303,31 +303,31 @@ def test_regression(model_name: str):
 
 if __name__ == "__main__":
     classifiers = [
-        # "lc",
-        # "lgbc",
-        # "xgbc",
-        "catc",
-        # "svc",
-        # "knc",
-        # "mlpc",
-        # "dtc",
-        # "rfc",
-        # "gbdtc",
-        # "adac"
+        "lc",
+        "lgbc",
+        "xgbc",
+        # "catc",
+        "svc",
+        "knc",
+        "mlpc",
+        "dtc",
+        "rfc",
+        "gbdtc",
+        "adac"
     ]
 
     regressors = [
-        # "lr",
-        # "lgbr",
-        # "xgbr",
-        "catr",
-        # "svr",
-        # "knr",
-        # "mlpr",
-        # "dtr",
-        # "rfr",
-        # "gbdtr",
-        # "adar"
+        "lr",
+        "lgbr",
+        "xgbr",
+        # "catr",
+        "svr",
+        "knr",
+        "mlpr",
+        "dtr",
+        "rfr",
+        "gbdtr",
+        "adar"
     ]
 
     for c in classifiers:

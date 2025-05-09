@@ -62,11 +62,11 @@ class MyModel:
             input_data (pd.DataFrame): The input data for the model.
             y (str | int): The target (dependent) variable.
             x_list (list[str | int] | tuple[str | int]): The list of independent variables.
-            test_ratio (float, optional): The ratio of the dataset to include in the test split. Defaults to 0.3.
-            stratify (bool, optional): Whether to stratify the dataset. Defaults to False.
-            data_engineer_pipeline (Pipeline | None, optional): The data engineering pipeline to use. Defaults to None.
-            cat_features (list[str] | tuple[str] | None, optional): Categorical features to be used. Defaults to None.
-            model_configs_path (str, optional): Path to the model configuration file. Defaults is 'model_configs.yml'.
+            test_ratio (float, optional): The ratio of the dataset to include in the test split. Default is 0.3.
+            stratify (bool, optional): Whether to stratify the dataset. Default is False.
+            data_engineer_pipeline (Pipeline | None, optional): The data engineering pipeline to use. Default is None.
+            cat_features (list[str] | tuple[str] | None, optional): Categorical features to be used. Default is None.
+            model_configs_path (str, optional): Path to the model configuration file. Default is 'model_configs.yml'.
         """
 
         self.stratify = stratify
