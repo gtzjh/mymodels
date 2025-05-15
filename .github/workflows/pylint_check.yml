@@ -23,7 +23,13 @@ jobs:
         python-version: '3.10'
 
     - name: Install Pylint
-      run: pip install pylint
+      run: pip install pylint==3.3.5
+
+    - name: Clean the cache
+      run: |
+        echo "Clearing Pylint cache..."
+        pylint --clear-cache-post-run=y
+        echo "Pylint cache cleared successfully"
 
     - name: Run Pylint analysis
       id: pylint

@@ -1,0 +1,141 @@
+************* Module mymodels.core
+mymodels\core\__init__.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+************* Module mymodels.core._data_loader
+mymodels\core\_data_loader.py:18:0: C0301: Line too long (127/100) (line-too-long)
+mymodels\core\_data_loader.py:31:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:41:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:45:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:63:0: C0301: Line too long (101/100) (line-too-long)
+mymodels\core\_data_loader.py:65:0: C0301: Line too long (107/100) (line-too-long)
+mymodels\core\_data_loader.py:74:0: C0301: Line too long (106/100) (line-too-long)
+mymodels\core\_data_loader.py:107:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:109:17: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:112:55: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:120:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:144:0: C0301: Line too long (118/100) (line-too-long)
+mymodels\core\_data_loader.py:150:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:157:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:160:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:163:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:166:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:176:0: C0301: Line too long (111/100) (line-too-long)
+mymodels\core\_data_loader.py:180:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:183:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:224:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:234:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_data_loader.py:33:4: C0415: Import outside toplevel (sklearn.preprocessing.LabelEncoder) (import-outside-toplevel)
+mymodels\core\_data_loader.py:57:0: R0902: Too many instance attributes (11/7) (too-many-instance-attributes)
+mymodels\core\_data_loader.py:108:4: R0913: Too many arguments (7/5) (too-many-arguments)
+mymodels\core\_data_loader.py:108:4: R0917: Too many positional arguments (7/5) (too-many-positional-arguments)
+mymodels\core\_data_loader.py:138:4: R0912: Too many branches (16/12) (too-many-branches)
+mymodels\core\_data_loader.py:57:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+************* Module mymodels.core._estimator
+mymodels\core\_estimator.py:20:0: C0301: Line too long (104/100) (line-too-long)
+mymodels\core\_estimator.py:32:0: C0301: Line too long (125/100) (line-too-long)
+mymodels\core\_estimator.py:76:0: C0301: Line too long (106/100) (line-too-long)
+mymodels\core\_estimator.py:83:0: C0301: Line too long (106/100) (line-too-long)
+mymodels\core\_estimator.py:91:0: C0301: Line too long (115/100) (line-too-long)
+mymodels\core\_estimator.py:98:0: C0301: Line too long (104/100) (line-too-long)
+mymodels\core\_estimator.py:106:0: C0301: Line too long (103/100) (line-too-long)
+mymodels\core\_estimator.py:108:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:118:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:121:63: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:127:0: C0301: Line too long (112/100) (line-too-long)
+mymodels\core\_estimator.py:128:0: C0301: Line too long (126/100) (line-too-long)
+mymodels\core\_estimator.py:168:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:182:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:200:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:243:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_estimator.py:13:0: R0912: Too many branches (21/12) (too-many-branches)
+mymodels\core\_estimator.py:112:0: R0902: Too many instance attributes (11/7) (too-many-instance-attributes)
+mymodels\core\_estimator.py:112:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+************* Module mymodels.core._evaluator
+mymodels\core\_evaluator.py:38:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:116:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:172:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:177:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:219:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:223:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:245:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:275:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:297:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:321:0: C0301: Line too long (121/100) (line-too-long)
+mymodels\core\_evaluator.py:324:0: C0301: Line too long (109/100) (line-too-long)
+mymodels\core\_evaluator.py:354:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:367:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:370:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:384:34: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_evaluator.py:53:19: W0718: Catching too general exception Exception (broad-exception-caught)
+mymodels\core\_evaluator.py:101:19: W0718: Catching too general exception Exception (broad-exception-caught)
+mymodels\core\_evaluator.py:109:0: R0902: Too many instance attributes (15/7) (too-many-instance-attributes)
+mymodels\core\_evaluator.py:117:4: R0913: Too many arguments (6/5) (too-many-arguments)
+mymodels\core\_evaluator.py:117:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+mymodels\core\_evaluator.py:109:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+************* Module mymodels.core._explainer
+mymodels\core\_explainer.py:70:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_explainer.py:84:0: C0301: Line too long (111/100) (line-too-long)
+mymodels\core\_explainer.py:85:0: C0301: Line too long (107/100) (line-too-long)
+mymodels\core\_explainer.py:202:0: C0305: Trailing newlines (trailing-newlines)
+mymodels\core\_explainer.py:26:4: R0913: Too many arguments (6/5) (too-many-arguments)
+mymodels\core\_explainer.py:26:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+mymodels\core\_explainer.py:72:4: R0912: Too many branches (18/12) (too-many-branches)
+mymodels\core\_explainer.py:19:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+************* Module mymodels.core._optimizer
+mymodels\core\_optimizer.py:80:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:152:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:214:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:236:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:242:24: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:266:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:268:0: C0301: Line too long (105/100) (line-too-long)
+mymodels\core\_optimizer.py:283:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:327:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:334:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:343:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_optimizer.py:353:0: C0304: Final newline missing (missing-final-newline)
+mymodels\core\_optimizer.py:25:0: C0115: Missing class docstring (missing-class-docstring)
+mymodels\core\_optimizer.py:25:0: R0902: Too many instance attributes (14/7) (too-many-instance-attributes)
+mymodels\core\_optimizer.py:26:4: R0913: Too many arguments (6/5) (too-many-arguments)
+mymodels\core\_optimizer.py:26:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+mymodels\core\_optimizer.py:83:4: R0913: Too many arguments (9/5) (too-many-arguments)
+mymodels\core\_optimizer.py:83:4: R0917: Too many positional arguments (9/5) (too-many-positional-arguments)
+mymodels\core\_optimizer.py:83:4: R0914: Too many local variables (20/15) (too-many-locals)
+mymodels\core\_optimizer.py:328:8: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+mymodels\core\_optimizer.py:286:4: R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+mymodels\core\_optimizer.py:25:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+************* Module mymodels.core._predictor
+mymodels\core\_predictor.py:65:0: C0303: Trailing whitespace (trailing-whitespace)
+mymodels\core\_predictor.py:68:0: C0305: Trailing newlines (trailing-newlines)
+mymodels\core\_predictor.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+mymodels\core\_predictor.py:9:0: C0115: Missing class docstring (missing-class-docstring)
+mymodels\core\_predictor.py:9:0: R0903: Too few public methods (1/2) (too-few-public-methods)
+mymodels\core\_predictor.py:1:0: R0801: Similar lines in 2 files
+==mymodels.core._evaluator:[157:173]
+==mymodels.core._explainer:[53:68]
+        if optimized_data_engineer_pipeline is not None:
+            assert isinstance(optimized_data_engineer_pipeline, Pipeline), \
+                "optimized_data_engineer_pipeline must be a `sklearn.pipeline.Pipeline` object"
+        else:
+            logging.warning("No data engineering will be implemented, the raw data will be used.")
+
+        # Initialize attributes
+        self.optimized_dataset = optimized_dataset
+        self.optimized_estimator = optimized_estimator
+        self.optimized_data_engineer_pipeline = optimized_data_engineer_pipeline
+        self.optimal_model_object = self.optimized_estimator.optimal_model_object
+
+        self.plotter = plotter
+        self.output = output
+ (duplicate-code)
+mymodels\core\_predictor.py:1:0: R0801: Similar lines in 2 files
+==mymodels.core._evaluator:[150:155]
+==mymodels.core._predictor:[24:29]
+        assert isinstance(optimized_dataset, MyDataLoader), \
+            "optimized_dataset must be a mymodels.MyDataLoader object"
+        assert isinstance(optimized_estimator, MyEstimator), \
+            "optimized_estimator must be a mymodels.MyEstimator object"
+        assert optimized_estimator.optimal_model_object is not None, \ (duplicate-code)
+
+------------------------------------------------------------------
+Your code has been rated at 7.98/10 (previous run: 7.98/10, +0.00)
+
