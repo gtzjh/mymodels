@@ -64,5 +64,3 @@ def _output_shap_values(results_dir, shap_explanation, data, _y_mapping_dict = N
             _df.to_csv(results_dir.joinpath(f"shap_values_{_class_name}.csv"),
                        encoding = "utf-8",
                        index = True)
-    
-    return None

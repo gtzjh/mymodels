@@ -1,6 +1,4 @@
 from pathlib import Path
-
-import numpy as np
 import pandas as pd
 
 
@@ -37,6 +35,3 @@ def _output_raw_data(
 
     test_results.to_csv(results_dir.joinpath("test_results.csv"), encoding="utf-8", index = True)
     train_results.to_csv(results_dir.joinpath("train_results.csv"), encoding="utf-8", index = True)
-
-    return None
-

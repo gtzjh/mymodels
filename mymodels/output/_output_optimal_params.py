@@ -16,4 +16,3 @@ def _output_optimal_params(results_dir,
     
     with open(results_dir.joinpath("params.yml"), 'w', encoding="utf-8") as file:
         yaml.dump(optimal_params, file)
-    return None

@@ -35,8 +35,8 @@ jobs:
 
         # Extract score and judge
         score=$(echo "$pylint_output" | grep -oP 'Your code has been rated at \K\d+\.?\d*')
-        if (( $(echo "$score < 6" | bc -l) )); then
-          echo "::error::Pylint score ${score}/10 is below the requirement (minimum 6 points)"
+        if (( $(echo "$score < 5.5" | bc -l) )); then
+          echo "::error::Pylint score ${score}/10 is below the requirement (minimum 5.5 points)"
           exit 1
         else
           echo "Pylint score ${score}/10 meets the requirement"

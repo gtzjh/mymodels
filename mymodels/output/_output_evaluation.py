@@ -2,9 +2,6 @@ import yaml
 from pathlib import Path
 
 
-import pandas as pd
-
-
 def _output_evaluation(
         results_dir: str | Path,
         accuracy_dict: dict, 
@@ -28,6 +25,3 @@ def _output_evaluation(
     # Save results to files
     with open(results_dir.joinpath("accuracy.yml"), 'w', encoding = "utf-8") as file:
         yaml.dump(accuracy_dict, file)
-
-
-    return None

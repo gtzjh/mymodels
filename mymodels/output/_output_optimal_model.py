@@ -43,5 +43,3 @@ def _output_optimal_model(results_dir, optimal_model, save_type: str | None = No
     # Also save a pickle version for backward compatibility
     with open(results_dir.joinpath("optimal_model.pkl"), 'wb') as file:
         pickle.dump(optimal_model, file)
-        
-    return None
