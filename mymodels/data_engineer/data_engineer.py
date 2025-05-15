@@ -198,7 +198,6 @@ class MyEngineer:
                 A column transformer, in sklearn.compose.ColumnTransformer object.
         """
         # Implementation will be added in the future
-        return None
 
     def _imputer(self):
         """Impute the missing values.
