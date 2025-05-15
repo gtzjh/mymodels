@@ -1,0 +1,23 @@
+[MASTER]
+# List of Python file extensions
+init-hook='import sys; sys.path.append(".")'
+extension-pkg-whitelist=
+ignore=CVS
+ignore-patterns=
+persistent=yes
+
+[MESSAGES CONTROL]
+# Disable specific pylint checks
+# C0301: Line too long
+# C0303: Trailing whitespace
+disable=C0301,C0303,C0304,C0305
+
+[FORMAT]
+# Maximum number of characters on a single line (disabled but kept for reference)
+max-line-length=120
+
+[REPORTS]
+# Set the output format
+output-format=text
+# Tells whether to display a full report or only the messages
+reports=yes
