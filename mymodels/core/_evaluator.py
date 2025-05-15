@@ -1,3 +1,9 @@
+"""Evaluator module for machine learning models.
+
+This module provides functionality for evaluating machine learning models,
+computing various metrics, and visualizing results.
+"""
+import logging
 import numpy as np
 import pandas as pd
 from sklearn.base import is_classifier, is_regressor
@@ -7,7 +13,6 @@ from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_err
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import cohen_kappa_score, matthews_corrcoef
 from imblearn.metrics import specificity_score
-import logging
 
 
 from ._data_loader import MyDataLoader
@@ -16,7 +21,7 @@ from ..plotting import Plotter
 from ..output import Output
 
 
-def _get_accuracy_for_regression_task(y, y_pred, eval_metric = None):
+def _get_accuracy_for_regression_task(y, y_pred, eval_metric=None):
     """Calculate regression accuracy metrics.
     
     Computes R2, RMSE, and MAE metrics for regression predictions.
@@ -32,11 +37,11 @@ def _get_accuracy_for_regression_task(y, y_pred, eval_metric = None):
     """
     
     # The major metrics for regression
-    accuracy_dict = dict({
+    accuracy_dict = {
         "R2": float(r2_score(y, y_pred)),
         "RMSE": float(root_mean_squared_error(y, y_pred)),
         "MAE": float(mean_absolute_error(y, y_pred)),
-    })
+    }
 
     # The user-defined evaluation metrics
     if eval_metric is not None:
@@ -46,14 +51,14 @@ def _get_accuracy_for_regression_task(y, y_pred, eval_metric = None):
                 # Ensure result is numeric and can be serialized to JSON
                 accuracy_dict[_key] = float(result)
             except Exception as e:
-                logging.warning(f"Error computing metric '{_key}': {str(e)}")
+                logging.warning("Error computing metric '%s': %s", _key, str(e))
                 accuracy_dict[_key] = None
 
     return accuracy_dict
 
 
 
-def _get_accuracy_for_classification_task(y, y_pred, eval_metric = None):
+def _get_accuracy_for_classification_task(y, y_pred, eval_metric=None):
     """Calculate classification accuracy metrics.
     
     Computes accuracy, precision, recall, F1, and other metrics for classification predictions.
@@ -73,18 +78,18 @@ def _get_accuracy_for_classification_task(y, y_pred, eval_metric = None):
     is_binary = n_classes == 2
 
     # The major metrics for classification
-    accuracy_dict = dict({
+    accuracy_dict = {
         "Overall Accuracy": float(accuracy_score(y, y_pred)),
-        "Precision": float(precision_score(y, y_pred, average = "weighted")),
-        "Recall": float(recall_score(y, y_pred, average = "weighted")),
-        "F1": float(f1_score(y, y_pred, average = "weighted")),
+        "Precision": float(precision_score(y, y_pred, average="weighted")),
+        "Recall": float(recall_score(y, y_pred, average="weighted")),
+        "F1": float(f1_score(y, y_pred, average="weighted")),
         "Kappa": float(cohen_kappa_score(y, y_pred)),
-    })
+    }
 
     # If it's binary, add matthews_corrcoef
     if is_binary:
         accuracy_dict["Matthews Correlation Coefficient"] = float(matthews_corrcoef(y, y_pred))
-        accuracy_dict["Specificity"] = float(specificity_score(y, y_pred, average = "binary"))
+        accuracy_dict["Specificity"] = float(specificity_score(y, y_pred, average="binary"))
 
     # The user-defined evaluation metrics
     if eval_metric is not None:
@@ -94,7 +99,7 @@ def _get_accuracy_for_classification_task(y, y_pred, eval_metric = None):
                 # Ensure result is numeric and can be serialized to JSON
                 accuracy_dict[_key] = float(result)
             except Exception as e:
-                logging.warning(f"Error computing metric '{_key}': {str(e)}")
+                logging.warning("Error computing metric '%s': %s", _key, str(e))
                 accuracy_dict[_key] = None
 
     return accuracy_dict
@@ -102,6 +107,13 @@ def _get_accuracy_for_classification_task(y, y_pred, eval_metric = None):
 
 
 class MyEvaluator:
+    """Class for evaluating machine learning models.
+
+    This class handles the evaluation of machine learning models, computing various 
+    accuracy metrics (R², RMSE, MAE, F1, Kappa, etc.), visualizing actual vs predicted values, 
+    and saving/printing results.
+    """
+    
     def __init__(
             self,
             optimized_estimator: MyEstimator,
@@ -110,12 +122,8 @@ class MyEvaluator:
             plotter: Plotter | None = None,
             output: Output | None = None
         ):
-        """A class for evaluating machine learning models.
+        """Initialize the evaluator.
 
-        This class handles the evaluation of machine learning models, computing various 
-        accuracy metrics (R², RMSE, MAE, F1, Kappa, etc.), visualizing actual vs predicted values, 
-        and saving/printing results.
-        
         Args:
             optimized_dataset: Dataset containing the train and test data.
             optimized_estimator: Trained estimator to evaluate.
@@ -165,7 +173,7 @@ class MyEvaluator:
         # Initialize attributes to be set in evaluate()
         self.show_train = False
         self.eval_metric = None
-        self.accuracy_dict = dict()
+        self.accuracy_dict = {}
         
         # Private attributes for data
         self._x_train = None
@@ -183,7 +191,6 @@ class MyEvaluator:
             dummy: bool,
             eval_metric: dict | None = None,
         ):
-
         """Evaluate the model on test and training data.
         
         Performs model evaluation by computing accuracy metrics for both the
@@ -226,10 +233,10 @@ class MyEvaluator:
         self.accuracy_dict = {}
 
         # Get the test and train data
-        self._x_train = self.optimized_dataset.x_train.copy(deep = True)
-        self._x_test = self.optimized_dataset.x_test.copy(deep = True)
-        self._y_train = self.optimized_dataset.y_train.copy(deep = True)
-        self._y_test = self.optimized_dataset.y_test.copy(deep = True)
+        self._x_train = self.optimized_dataset.x_train.copy(deep=True)
+        self._x_test = self.optimized_dataset.x_test.copy(deep=True)
+        self._y_train = self.optimized_dataset.y_train.copy(deep=True)
+        self._y_test = self.optimized_dataset.y_test.copy(deep=True)
 
         # Transform X data
         if self.optimized_data_engineer_pipeline is not None:
@@ -259,7 +266,6 @@ class MyEvaluator:
         # Evaluate the dummy estimator
         if dummy:
             self._evaluate_dummy()
-        
 
         # Plot and output
         self._plot(self.plotter)
@@ -277,7 +283,7 @@ class MyEvaluator:
         """
 
         # Initialize model accuracy dictionary
-        self.accuracy_dict["model"] = dict()
+        self.accuracy_dict["model"] = {}
 
         # Evaluate on the test data
         if is_regressor(self.optimal_model_object):
@@ -300,8 +306,6 @@ class MyEvaluator:
                     self._y_train, self._y_train_pred, self.eval_metric
                 )
 
-        return None
-
 
 
     def _evaluate_dummy(self):
@@ -312,9 +316,6 @@ class MyEvaluator:
         Results are stored in self.accuracy_dict['dummy'] and also printed to console.
 
         When using dummy estimator, a warning about zero division will be printed, just ignore it.
-        
-        Returns:
-            None
         """
 
         logging.warning("\nWhen using dummy estimator, a warning about zero division will be printed, JUST IGNORE IT.\n")
@@ -328,7 +329,7 @@ class MyEvaluator:
         _dummy_y_train = _dummy_estimator.predict(self._x_train)
 
         # Initialize dummy accuracy dictionary
-        self.accuracy_dict["dummy"] = dict()
+        self.accuracy_dict["dummy"] = {}
 
         # Evaluate on the test data
         if is_regressor(self.optimal_model_object):
@@ -350,8 +351,6 @@ class MyEvaluator:
                 self.accuracy_dict["dummy"]["train"] = _get_accuracy_for_classification_task(
                     self._y_train, _dummy_y_train, self.eval_metric
                 )
-
-        return None
     
 
     def _plot(self, _plotter: Plotter):
@@ -368,8 +367,6 @@ class MyEvaluator:
         
         elif is_regressor(self.optimal_model_object):
             _plotter.plot_regression_scatter(self._y_test, self._y_test_pred)
-
-        return None
     
 
     def _output(self, _output: Output):
@@ -379,14 +376,11 @@ class MyEvaluator:
             _output: The output object.
         """
         _output.output_evaluation(
-            accuracy_dict = self.accuracy_dict
+            accuracy_dict=self.accuracy_dict
         )
         _output.output_raw_data(
-            y_test = self._y_test,
-            y_test_pred = self._y_test_pred,
-            y_train = self._y_train, 
-            y_train_pred = self._y_train_pred
+            y_test=self._y_test,
+            y_test_pred=self._y_test_pred,
+            y_train=self._y_train, 
+            y_train_pred=self._y_train_pred
         )
-
-
-        return None

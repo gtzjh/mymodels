@@ -1,5 +1,12 @@
+"""Module for optimizing machine learning models using Optuna.
+
+This module provides functionality for hyperparameter optimization of machine learning models
+using Optuna. It supports both classification and regression tasks.
+"""
+import logging
+from functools import partial
+
 import numpy as np
-import pandas as pd
 import optuna
 from optuna.samplers import TPESampler, RandomSampler
 from sklearn.model_selection import KFold, StratifiedKFold
@@ -7,8 +14,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.base import clone, is_classifier, is_regressor
 from sklearn.metrics import accuracy_score, r2_score
 from joblib import Parallel, delayed
-from functools import partial
-import logging
 
 
 from ._data_loader import MyDataLoader
@@ -75,8 +80,6 @@ class MyOptimizer:
         
         self.optuna_study = None
 
-    
-
     def fit(
         self,
         stratify: bool,
@@ -109,7 +112,6 @@ class MyOptimizer:
                 - If None, the default evaluation function will be used
             random_state: The random state to use. Default is 0.
         """
-    
         # Validate input
         assert isinstance(stratify, bool), \
             "stratify must be a boolean"
@@ -137,7 +139,6 @@ class MyOptimizer:
         self.direction = direction
         self.eval_function = eval_function
         self.random_state = random_state
-
 
         ###########################################################################################
         # Optimize
@@ -180,12 +181,10 @@ class MyOptimizer:
         # Return the optimized dataset, estimator, and data engineer pipeline
         _optimized_dataset = self.dataset
         _optimized_estimator = self.estimator
+        _optimized_data_engineer_pipeline = None
         if self.data_engineer_pipeline is not None:
             _optimized_data_engineer_pipeline = self.data_engineer_pipeline
-        else:
-            _optimized_data_engineer_pipeline = None
 
-        
         # Plot and output
         self._plot(self.plotter)
         self._output(self.output)
@@ -195,8 +194,6 @@ class MyOptimizer:
             _optimized_estimator,
             _optimized_data_engineer_pipeline
         )
-
-
 
     def _study(
             self,
@@ -221,25 +218,23 @@ class MyOptimizer:
             "random": RandomSampler,
         }
         self.optuna_study = optuna.create_study(
-            direction = self.direction,
-            sampler = _strategy_dict[self.strategy](seed = self.random_state),
+            direction=self.direction,
+            sampler=_strategy_dict[self.strategy](seed=self.random_state),
         )
 
         # Execute the optimization
         self.optuna_study.optimize(
             partial(
                 self._objective,
-                param_space = param_space,
-                static_params = static_params,
+                param_space=param_space,
+                static_params=static_params,
             ),
-            n_trials = self.trials,
-            n_jobs = 1,  # It is not recommended to use n_jobs > 1 in Optuna
-            show_progress_bar = True
+            n_trials=self.trials,
+            n_jobs=1,  # It is not recommended to use n_jobs > 1 in Optuna
+            show_progress_bar=True
         )
         
         return self.optuna_study
-
-
 
     def _objective(
             self,
@@ -247,7 +242,6 @@ class MyOptimizer:
             param_space, 
             static_params
         ) -> float:
-
         """Objective function for the Optuna study.
 
             1. Creates model parameters by combining static and trial parameters
@@ -263,7 +257,6 @@ class MyOptimizer:
             float: The evaluation metric (R2 for regression, accuracy for classification)
                   adjusted by standard deviation.
         """
-
         # Get parameters for model training
         # Make the param immutable
         _param = {
@@ -276,95 +269,85 @@ class MyOptimizer:
         if self.stratify:
             assert is_classifier(self.estimator.empty_model_object(**{})), \
                 "StratifiedKFold can only be used for classification tasks."
-            _kf = StratifiedKFold(n_splits = self.cv, random_state = self.random_state, shuffle = True)
-            _cv_scores = Parallel(n_jobs = self.n_jobs)(
+            _kf = StratifiedKFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+            _cv_scores = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._single_fold)(train_idx, val_idx, _param, self.eval_function)
-                for train_idx, val_idx in _kf.split(X = self.dataset.x_train, y = self.dataset.y_train)
+                for train_idx, val_idx in _kf.split(X=self.dataset.x_train, y=self.dataset.y_train)
             )
         else:
-            _kf = KFold(n_splits = self.cv, random_state = self.random_state, shuffle = True)
-            _cv_scores = Parallel(n_jobs = self.n_jobs)(
+            _kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=True)
+            _cv_scores = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._single_fold)(train_idx, val_idx, _param, self.eval_function)
                 for train_idx, val_idx in _kf.split(self.dataset.x_train)
             )
         
         return np.mean(_cv_scores)
 
-
-    # Single fold execution
-    def _single_fold(self, _train_idx, _val_idx, _param, _eval_function) -> float:
+    def _single_fold(self, train_idx, val_idx, param, eval_function) -> float:
         """Single fold execution.
         
         Args:
-            _train_idx: The training index.
-            _val_idx: The validation index.
-            _param: The parameters for the model.
-            _eval_function: The user-defined evaluation function to use.
+            train_idx: The training index.
+            val_idx: The validation index.
+            param: The parameters for the model.
+            eval_function: The user-defined evaluation function to use.
         
         Returns:
             float: The evaluation metric (R2 for regression, accuracy for classification)
         """
-
         # Create a validator
-        _validator = clone(self.estimator.empty_model_object(**_param))
+        validator = clone(self.estimator.empty_model_object(**param))
 
         # Get the training and validation data
-        _X_fold_train = self.dataset.x_train.iloc[_train_idx].copy(deep=True)
-        _y_fold_train = self.dataset.y_train.iloc[_train_idx].copy(deep=True)
-        _X_fold_val = self.dataset.x_train.iloc[_val_idx].copy(deep=True)
-        _y_fold_val = self.dataset.y_train.iloc[_val_idx].copy(deep=True)
-
+        x_fold_train = self.dataset.x_train.iloc[train_idx].copy(deep=True)
+        y_fold_train = self.dataset.y_train.iloc[train_idx].copy(deep=True)
+        x_fold_val = self.dataset.x_train.iloc[val_idx].copy(deep=True)
+        y_fold_val = self.dataset.y_train.iloc[val_idx].copy(deep=True)
 
         if self.data_engineer_pipeline:
             # Use the deep clone to make sure the seperate operation
-            _k_fold_data_engineer_pipeline = clone(self.data_engineer_pipeline)
-            _transformed_X_fold_train = _k_fold_data_engineer_pipeline.fit_transform(_X_fold_train)
-            _transformed_X_fold_val = _k_fold_data_engineer_pipeline.transform(_X_fold_val)
+            k_fold_data_engineer_pipeline = clone(self.data_engineer_pipeline)
+            transformed_x_fold_train = k_fold_data_engineer_pipeline.fit_transform(x_fold_train)
+            transformed_x_fold_val = k_fold_data_engineer_pipeline.transform(x_fold_val)
 
             # Fit in a single fold
-            _validator.fit(_transformed_X_fold_train, _y_fold_train)
-            _predicted_values = _validator.predict(_transformed_X_fold_val)
-
+            validator.fit(transformed_x_fold_train, y_fold_train)
+            predicted_values = validator.predict(transformed_x_fold_val)
         else:
             # Fit in a single fold
-            _validator.fit(_X_fold_train, _y_fold_train)
-            _predicted_values = _validator.predict(_X_fold_val)
-        
+            validator.fit(x_fold_train, y_fold_train)
+            predicted_values = validator.predict(x_fold_val)
 
-        if _eval_function is not None:
-            score = _eval_function(_y_fold_val, _predicted_values)
+        if eval_function is not None:
+            score = eval_function(y_fold_val, predicted_values)
             # Verify that the evaluation function returns a float
             if not isinstance(score, (int, float)):
                 raise TypeError(f"Evaluation function must return a float, got {type(score)}")
             return float(score)
-        else:
-            if is_classifier(_validator):
-                # Use the overall accuracy score for classification task
-                return accuracy_score(_y_fold_val, _predicted_values)
-            elif is_regressor(_validator):
-                # Use R2 score for regression task
-                return r2_score(_y_fold_val, _predicted_values)
+        
+        if is_classifier(validator):
+            # Use the overall accuracy score for classification task
+            return accuracy_score(y_fold_val, predicted_values)
+        elif is_regressor(validator):
+            # Use R2 score for regression task
+            return r2_score(y_fold_val, predicted_values)
     
-    
-    def _plot(self, _plotter: Plotter):
+    def _plot(self, plotter: Plotter):
         """Plot the optimization results.
         
         Args:
             plotter: The plotter to use.
         """
-        _plotter.plot_optimize_history(self.optuna_study)
-        
-        return None
+        if plotter:
+            plotter.plot_optimize_history(self.optuna_study)
     
-
-    def _output(self, _output: Output):
+    def _output(self, output: Output):
         """Output the optimization results.
         
         Args:
             output: The output object.
         """
-        _output.output_optimal_params(self.estimator.optimal_params)
-        _output.output_optimal_model(self.estimator.optimal_model_object,
-                                     self.estimator.save_type)
-
-        return None
+        if output:
+            output.output_optimal_params(self.estimator.optimal_params)
+            output.output_optimal_model(self.estimator.optimal_model_object,
+                                       self.estimator.save_type)

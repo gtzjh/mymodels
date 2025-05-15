@@ -1,3 +1,9 @@
+"""Machine Learning Pipeline module for model training, evaluation and explanation.
+
+This module provides the MyModel class which integrates data loading, model training,
+optimization, evaluation and explanation with SHAP analysis.
+"""
+import json
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
@@ -47,7 +53,7 @@ class MyModel:
         self,
         model_name: str,
         input_data: pd.DataFrame,
-        y: str | int, 
+        y: str | int,
         x_list: list[str | int] | tuple[str | int],
         test_ratio: float = 0.3,
         stratify: bool = False,
@@ -58,40 +64,46 @@ class MyModel:
         """Load the estimator, (train/test) dataset, and data engineer pipeline
         
         Args:
-            model_name (str): The name of the model to load.
-            input_data (pd.DataFrame): The input data for the model.
-            y (str | int): The target (dependent) variable.
-            x_list (list[str | int] | tuple[str | int]): The list of independent variables.
-            test_ratio (float, optional): The ratio of the dataset to include in the test split. Default is 0.3.
-            stratify (bool, optional): Whether to stratify the dataset. Default is False.
-            data_engineer_pipeline (Pipeline | None, optional): The data engineering pipeline to use. Default is None.
-            cat_features (list[str] | tuple[str] | None, optional): Categorical features to be used. Default is None.
-            model_configs_path (str, optional): Path to the model configuration file. Default is 'model_configs.yml'.
+            model_name (str):
+                The name of the model to load.
+            input_data (pd.DataFrame):
+                The input data for the model.
+            y (str | int): 
+                The target (dependent) variable.
+            x_list (list[str | int] | tuple[str | int]):
+                The list of independent variables.
+            test_ratio (float, optional):
+                The ratio of the dataset to include in the test split. Default is 0.3.
+            stratify (bool, optional):
+                Whether to stratify the dataset. Default is False.
+            data_engineer_pipeline (Pipeline | None, optional):
+                The data engineering pipeline to use. Default is None.
+            cat_features (list[str] | tuple[str] | None, optional):
+                Categorical features to be used. Default is None.
+            model_configs_path (str, optional):
+                Path to the model configuration file. Default is 'model_configs.yml'.
         """
-
         self.stratify = stratify
 
         # Load the estimator
         self.estimator = MyEstimator(
-            cat_features = cat_features,
-            model_configs_path = model_configs_path
-        ).load(model_name = model_name)
+            cat_features=cat_features,
+            model_configs_path=model_configs_path
+        ).load(model_name=model_name)
 
         # Load the dataset
         self.dataset = MyDataLoader(
-            input_data = input_data,
-            y = y,
-            x_list = x_list,
-            test_ratio = test_ratio,
-            random_state = self.random_state,
-            stratify = self.stratify
+            input_data=input_data,
+            y=y,
+            x_list=x_list,
+            test_ratio=test_ratio,
+            random_state=self.random_state,
+            stratify=self.stratify
         ).load()
 
         # Load the data engineer pipeline
         self.data_engineer_pipeline = data_engineer_pipeline
-    
-        return None
-    
+
 
     def format(
             self,
@@ -114,22 +126,19 @@ class MyModel:
             save_raw_data (bool): Whether to save the raw data.
             save_shap_values (bool): Whether to save the SHAP values.
         """
-
         self.plotter = Plotter(
-            show = show,
-            plot_format = plot_format,
-            plot_dpi = plot_dpi,
-            results_dir = results_dir,
+            show=show,
+            plot_format=plot_format,
+            plot_dpi=plot_dpi,
+            results_dir=results_dir,
         )
 
         self.output = Output(
-            results_dir = results_dir,
-            save_optimal_model = save_optimal_model,
-            save_raw_data = save_raw_data,
-            save_shap_values = save_shap_values,
+            results_dir=results_dir,
+            save_optimal_model=save_optimal_model,
+            save_raw_data=save_raw_data,
+            save_shap_values=save_shap_values,
         )
-
-        return None
 
 
     def diagnose(self, sample_k: int | float | None = None):
@@ -139,15 +148,12 @@ class MyModel:
             sample_k (int | float | None, optional): 
                 The number of samples to use for diagnosis. (Defaults to None)
         """
-
         diagnoser = MyDataDiagnoser(
-            dataset = self.dataset,
-            plotter = self.plotter,
+            dataset=self.dataset,
+            plotter=self.plotter,
         )
-        
-        diagnoser.diagnose(sample_k = sample_k, random_state = self.random_state)
-        
-        return None
+
+        diagnoser.diagnose(sample_k=sample_k, random_state=self.random_state)
 
 
     def optimize(
@@ -157,7 +163,7 @@ class MyModel:
         trials: int = 100,
         n_jobs: int = 5,
         direction: str = "maximize",
-        eval_function = None ,
+        eval_function = None,
     ):
         """Optimization
         
@@ -168,34 +174,32 @@ class MyModel:
             n_jobs (int): The number of jobs to run in parallel. Default is 5.
             direction (str): The direction of the optimization. Default is "maximize".
             eval_function: The evaluation function to use. Default is None.
-
-        Returns:
-            The optimized estimator, dataset, and data engineer pipeline.
         """
-        
         # Initialize optimizer
         optimizer = MyOptimizer(
-            dataset = self.dataset,
-            estimator = self.estimator,
-            data_engineer_pipeline = self.data_engineer_pipeline,
-            plotter = self.plotter,
-            output = self.output
+            dataset=self.dataset,
+            estimator=self.estimator,
+            data_engineer_pipeline=self.data_engineer_pipeline,
+            plotter=self.plotter,
+            output=self.output
         )
 
         # Fit the optimizer
-        self.optimized_dataset, self.optimized_estimator, self.optimized_data_engineer_pipeline = optimizer.fit(
-            stratify = self.stratify,
-            strategy = strategy,
-            cv = cv,
-            trials = trials,
-            n_jobs = n_jobs,
-            direction = direction,
-            eval_function = eval_function,
-            random_state = self.random_state,
+        (
+            self.optimized_dataset,
+            self.optimized_estimator,
+            self.optimized_data_engineer_pipeline
+        ) = optimizer.fit(
+            stratify=self.stratify,
+            strategy=strategy,
+            cv=cv,
+            trials=trials,
+            n_jobs=n_jobs,
+            direction=direction,
+            eval_function=eval_function,
+            random_state=self.random_state,
         )
 
-        return None
-    
 
     def evaluate(
             self,
@@ -206,29 +210,28 @@ class MyModel:
         """Evaluate the model
 
         Args:
-            show_train (bool): Whether to show the training set evaluation results. Default is True.
-            dummy (bool): Whether to use a dummy estimator for comparison. Default is True.
-            eval_metric (None): The self-defined evaluation metric to use. 
-                It must be None or a dictionary where each item is a callable function. Default is None.
+            show_train (bool): Default is True.
+                Whether to show the training set evaluation results. 
+            dummy (bool): Default is True.
+                Whether to use a dummy estimator for comparison. 
+            eval_metric (dict | None): Default is None.
+                The self-defined evaluation metric to use.
+                It must be None or a dictionary where each item is a callable function.
         """
-
         evaluator = MyEvaluator(
-            optimized_estimator = self.optimized_estimator,
-            optimized_dataset = self.optimized_dataset,
-            optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
-            plotter = self.plotter,
-            output = self.output
+            optimized_estimator=self.optimized_estimator,
+            optimized_dataset=self.optimized_dataset,
+            optimized_data_engineer_pipeline=self.optimized_data_engineer_pipeline,
+            plotter=self.plotter,
+            output=self.output
         )
         self.evaluated_accuracy_dict = evaluator.evaluate(
-            show_train = show_train,
-            dummy = dummy,
-            eval_metric = eval_metric,
+            show_train=show_train,
+            dummy=dummy,
+            eval_metric=eval_metric,
         )
 
-        import json
         print(json.dumps(self.evaluated_accuracy_dict, indent=4))
-
-        return None
 
 
     def explain(
@@ -236,50 +239,49 @@ class MyModel:
             select_background_data: str = "train",
             select_shap_data: str = "test",
             sample_background_data_k: int | float | None = None,
-            sample_shap_data_k:  int | float | None = None,
+            sample_shap_data_k: int | float | None = None,
         ):
         """Use training set to build the explainer, use test set to calculate SHAP values.
 
         Args:
-            select_background_data (str): The data to use to build the explainer.
-            select_shap_data (str): The data to use to calculate SHAP values.
-            sample_background_data_k (int | float | None): The number of samples to use to build the explainer.
-            sample_shap_data_k (int | float | None): The number of samples to use to calculate SHAP values.
+            select_background_data (str):
+                The data to use to build the explainer.
+            select_shap_data (str):
+                The data to use to calculate SHAP values.
+            sample_background_data_k (int | float | None):
+                The number of samples to use to build the explainer.
+            sample_shap_data_k (int | float | None):
+                The number of samples to use to calculate SHAP values.
         """
-
         explainer = MyExplainer(
-            optimized_estimator = self.optimized_estimator,
-            optimized_dataset = self.optimized_dataset,
-            optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
-            plotter = self.plotter,
-            output = self.output
+            optimized_estimator=self.optimized_estimator,
+            optimized_dataset=self.optimized_dataset,
+            optimized_data_engineer_pipeline=self.optimized_data_engineer_pipeline,
+            plotter=self.plotter,
+            output=self.output
         )
-        
+
         explainer.explain(
-            select_background_data = select_background_data,
-            select_shap_data = select_shap_data,
-            sample_background_data_k = sample_background_data_k,
-            sample_shap_data_k = sample_shap_data_k
+            select_background_data=select_background_data,
+            select_shap_data=select_shap_data,
+            sample_background_data_k=sample_background_data_k,
+            sample_shap_data_k=sample_shap_data_k
         )
-        
-        return None
-    
+
 
     def predict(self, data: pd.DataFrame):
-        """Predict the model
+        """Predict using the optimized model
 
         Args:
             data (pd.DataFrame): The data to predict.
-        
+
         Returns:
-            y_pred (pd.Series): The predicted data.
+            The predicted values.
         """
-
         predictor = MyPredictor(
-            optimized_dataset = self.optimized_dataset,
-            optimized_estimator = self.optimized_estimator,
-            optimized_data_engineer_pipeline = self.optimized_data_engineer_pipeline,
+            optimized_dataset=self.optimized_dataset,
+            optimized_estimator=self.optimized_estimator,
+            optimized_data_engineer_pipeline=self.optimized_data_engineer_pipeline,
         )
-        y_pred = predictor.predict(data = data)
 
-        return y_pred
+        return predictor.predict(data)

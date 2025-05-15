@@ -1,5 +1,13 @@
+"""Module for model estimation and hyperparameter tuning functionality.
+
+This module provides classes and functions for loading model configurations,
+converting parameter spaces, and handling model estimation.
+"""
+import importlib
+import logging
 from types import MappingProxyType
-import yaml, importlib, logging
+
+import yaml
 
 
 def _convert_param_space(param_space_config):
@@ -53,7 +61,7 @@ def _convert_param_space(param_space_config):
         if 'type' not in param_config:
             raise KeyError(f"Configuration for '{param_name}' must include a 'type'")
         if param_config['type'] not in ['categorical', 'integer', 'float']:
-            raise ValueError(f"Unsupported parameter type")
+            raise ValueError("Unsupported parameter type")
         if param_config['type'] == 'categorical':
             if 'values' not in param_config:
                 raise KeyError(f"Configuration for '{param_name}' must include 'values'")
@@ -87,20 +95,27 @@ def _convert_param_space(param_space_config):
             min_val = values['min']
             max_val = values['max']
             step = values.get('step', 1)
-            param_space[param_name] = lambda t, name=param_name, min_v=min_val, max_v=max_val, s=step: t.suggest_int(name, min_v, max_v, step=s)
+            param_space[param_name] = lambda t, name=param_name, min_v=min_val, max_v=max_val, s=step: \
+                t.suggest_int(name, min_v, max_v, step=s)
         elif param_config.get('type') == 'float':
             # Float parameter
             values = param_config['values']
             min_val = values['min']
             max_val = values['max']
             log = values.get('log', False)
-            param_space[param_name] = lambda t, name=param_name, min_v=min_val, max_v=max_val, l=log: t.suggest_float(name, min_v, max_v, log=l)
+            param_space[param_name] = lambda t, name=param_name, min_v=min_val, max_v=max_val, l=log: \
+                t.suggest_float(name, min_v, max_v, log=l)
     
     return param_space
 
 
-
 class MyEstimator:
+    """Class for model estimation and hyperparameter management.
+    
+    This class handles loading model configurations, managing parameter spaces,
+    and providing model estimation functionality.
+    """
+    
     def __init__(
             self,
             cat_features: list[str] | tuple[str] | None = None, 
@@ -115,7 +130,7 @@ class MyEstimator:
         Attributes:
             # Private properties
             _config: The model configs.
-            _VALID_MODEL_NAMES: The list of valid model names.
+            valid_model_names: The list of valid model names.
             
             # Properties
             model_name: The name of the model. Equivalent to the key in the model_configs.yml file.
@@ -146,15 +161,14 @@ class MyEstimator:
         # Load model configs
         self._config = None
         try:
-            with open(model_configs_path, 'r') as file:
+            with open(model_configs_path, 'r', encoding='utf-8') as file:
                 self._config = yaml.safe_load(file)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Model configs file not found: {model_configs_path}")
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Model configs file not found: {model_configs_path}") from exc
         
         # Validate config structure
         if not isinstance(self._config, dict):
             raise TypeError("Model configs must be a dictionary")
-        
 
         # Model attributes
         self.model_name = None
@@ -167,9 +181,7 @@ class MyEstimator:
         self.optimal_params = None
         
         # List all available model names, and validate the input model name
-        self._VALID_MODEL_NAMES = list(self._config.keys())
-
-
+        self.valid_model_names = list(self._config.keys())
 
     def load(self, model_name: str = None):
         """Load model
@@ -182,13 +194,12 @@ class MyEstimator:
         """
 
         # Validate the model name
-        if model_name not in self._VALID_MODEL_NAMES:
+        if model_name not in self.valid_model_names:
             raise ValueError(f"Model '{model_name}' not found")
         self.model_name = model_name
         
         # Get parameters from config
         _model_config = self._config[model_name]
-
 
         # Check if each model config has the mandatory parameters
         for _param in ['IMPORTS', 'PARAM_SPACE', 'STATIC_PARAMS']:
@@ -201,7 +212,7 @@ class MyEstimator:
         try:
             _module = importlib.import_module(_module_name)
         except Exception as e:
-            raise ImportError(f"Failed to import module '{_module_name}': \n{e}")
+            raise ImportError(f"Failed to import module '{_module_name}': \n{e}") from e
         _class_name = _import_info['class']
         self.empty_model_object = getattr(_module, _class_name)
 
@@ -221,14 +232,13 @@ class MyEstimator:
         if 'SAVE_TYPE' in _model_config:
             self.save_type = _model_config['SAVE_TYPE']
 
-
         # For CatBoost models, the `cat_features` parameter can be accepted.
         if self.cat_features is not None:
-            if self.empty_model_object.__name__ == 'CatBoostClassifier' \
-                or self.empty_model_object.__name__ == 'CatBoostRegressor':
-                    self.static_params['cat_features'] = self.cat_features
+            if self.empty_model_object.__name__ in ('CatBoostClassifier', 'CatBoostRegressor'):
+                self.static_params['cat_features'] = self.cat_features
             else:
-                logging.warning(f"Model {str(self.empty_model_object)} does not accept cat_features parameter. "
-                                 "The provided cat_features value will be ignored.")
+                logging.warning("Model %s does not accept cat_features parameter. "
+                               "The provided cat_features value will be ignored.",
+                               str(self.empty_model_object))
         
         return self

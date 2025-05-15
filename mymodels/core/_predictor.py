@@ -66,5 +66,3 @@ class MyPredictor:
         return _y_pred
 
 
-
-            

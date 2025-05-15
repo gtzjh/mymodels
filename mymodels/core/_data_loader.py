@@ -1,8 +1,13 @@
+"""Data loading utilities for machine learning models.
+
+This module provides functionality for loading, preprocessing, and splitting datasets
+for machine learning tasks, with support for categorical target encoding.
+"""
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-def _label_y(y_data, verbose = False):
+def _label_y(y_data, verbose=False):
     """Encode non-numeric target variable to integers.
     
     Args:
@@ -24,35 +29,29 @@ def _label_y(y_data, verbose = False):
     """
     assert isinstance(y_data, pd.Series), "y_data must be a pandas Series"
     
+    # Import inside function as recommended by pylint
     from sklearn.preprocessing import LabelEncoder
 
     # For regression tasks, y_data is already float
     # Do not encode when y_data is of boolean type or contains 0 and 1
-    if pd.api.types.is_float_dtype(y_data) \
-        or pd.api.types.is_bool_dtype(y_data) \
-            or set(y_data) <= {0, 1}:
+    if (pd.api.types.is_float_dtype(y_data) or
+            pd.api.types.is_bool_dtype(y_data) or
+            set(y_data) <= {0, 1}):
         return y_data, None
     
-    else:
-        # Handle categorical/string y_data
-        label_encoder = LabelEncoder()
-        encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
-        
-        # Create mapping dictionary from original categories to encoded values
-        _y_mapping_dict_keys = {
-            original: encoded for original, encoded in \
-                zip(label_encoder.classes_, range(len(label_encoder.classes_)))
-        }
-        _keys = _y_mapping_dict_keys.keys()
-        y_mapping_dict = dict((_k, _y_mapping_dict_keys[_k]) for _k in _keys)
+    # Handle categorical/string y_data
+    label_encoder = LabelEncoder()
+    encoded_y_data = pd.Series(label_encoder.fit_transform(y_data), index=y_data.index)
+    
+    # Create mapping dictionary from original categories to encoded values
+    y_mapping_dict = dict(zip(label_encoder.classes_, range(len(label_encoder.classes_))))
 
-        if verbose:
-            print("Label Encoding Mapping:\n")
-            for _original, _encoded in y_mapping_dict.items():
-                print(f"  {_original} -> {_encoded}")
+    if verbose:
+        print("Label Encoding Mapping:\n")
+        for _original, _encoded in y_mapping_dict.items():
+            print(f"  {_original} -> {_encoded}")
 
-        return encoded_y_data, y_mapping_dict
-
+    return encoded_y_data, y_mapping_dict
 
 
 class MyDataLoader:
@@ -119,7 +118,7 @@ class MyDataLoader:
         if not isinstance(input_data, pd.DataFrame):
             raise TypeError("input_data must be a pandas DataFrame")
         
-        self.input_data = input_data.copy(deep = True)
+        self.input_data = input_data.copy(deep=True)
         self.y = y
         self.x_list = x_list
         self.test_ratio = test_ratio
@@ -136,8 +135,6 @@ class MyDataLoader:
         # Validate input parameters
         self._check_input()
 
-
-
     def _check_input(self):
         """Validate all input parameters.
         
@@ -147,9 +144,6 @@ class MyDataLoader:
             TypeError: If input_data is not a DataFrame, random_state is not an integer, or stratify is not a boolean.
             ValueError: If test_ratio is not between 0 and 1, or x_list is empty.
             KeyError: If y column or x columns don't exist in input_data.
-        
-        Returns:
-            None
         """
         if not isinstance(self.y, (str, int)):
             raise TypeError("y must be either a string or index in the input dataframe")
@@ -189,10 +183,6 @@ class MyDataLoader:
             
         if not isinstance(self.stratify, bool):
             raise TypeError("stratify must be a boolean")
-        
-        return None
-
-
 
     def load(self):
         """Process data and split into training and testing sets.
@@ -222,6 +212,7 @@ class MyDataLoader:
             True
         """
         # Extract the target variable
+        _y_data = None
         if isinstance(self.y, str):
             _y_data = self.input_data.loc[:, self.y]
         elif isinstance(self.y, int):
@@ -232,9 +223,10 @@ class MyDataLoader:
             raise ValueError("Missing values are not allowed in the target variable")
             
         # Extract the feature variables
-        if all([isinstance(i, str) for i in list(self.x_list)]):
+        _x_data = None
+        if all(isinstance(i, str) for i in self.x_list):
             _x_data = self.input_data.loc[:, list(self.x_list)]
-        elif all([isinstance(i, int) for i in list(self.x_list)]):
+        elif all(isinstance(i, int) for i in self.x_list):
             _x_data = self.input_data.iloc[:, list(self.x_list)]
 
         # Encode non-numeric target variables and get mapping dictionary
@@ -244,10 +236,10 @@ class MyDataLoader:
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             _x_data,
             encoded_y_data,
-            test_size = self.test_ratio,
-            random_state = self.random_state,
-            shuffle = True,
-            stratify = encoded_y_data if self.stratify else None
+            test_size=self.test_ratio,
+            random_state=self.random_state,
+            shuffle=True,
+            stratify=encoded_y_data if self.stratify else None
         )
 
         return self

@@ -1,9 +1,13 @@
-import numpy as np
+"""
+This module provides functionality for explaining machine learning models
+using SHAP (SHapley Additive exPlanations) values.
+"""
+
+import logging
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.base import is_classifier, is_regressor
 import shap
-import logging
 
 
 from ._data_loader import MyDataLoader
@@ -13,6 +17,12 @@ from ..output import Output
 
 
 class MyExplainer:
+    """A class for explaining machine learning models using SHAP values.
+
+    This class handles the calculation and visualization of SHAP values for
+    machine learning models, providing insights into feature importance and
+    model decisions.
+    """
     def __init__(
         self,
         optimized_estimator: MyEstimator,
@@ -21,7 +31,6 @@ class MyExplainer:
         plotter: Plotter | None = None,
         output: Output | None = None
     ):
-    
         """A class for evaluating machine learning models.
 
         This class handles the evaluation of machine learning models, computing various 
@@ -80,8 +89,12 @@ class MyExplainer:
         # Transform X data
         ###########################################################################################
         if self.optimized_data_engineer_pipeline:
-            _transformed_x_train = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_train)
-            _transformed_x_test = self.optimized_data_engineer_pipeline.transform(self.optimized_dataset.x_test)
+            _transformed_x_train = self.optimized_data_engineer_pipeline.transform(
+                self.optimized_dataset.x_train
+            )
+            _transformed_x_test = self.optimized_data_engineer_pipeline.transform(
+                self.optimized_dataset.x_test
+            )
         else:
             _transformed_x_train = self.optimized_dataset.x_train
             _transformed_x_test = self.optimized_dataset.x_test
@@ -117,19 +130,27 @@ class MyExplainer:
         ###########################################################################################
         if sample_background_data_k:
             if isinstance(sample_background_data_k, float):
-                _background_data = shap.sample(_background_data,
-                                               int(sample_background_data_k * len(_background_data)))
+                _background_data = shap.sample(
+                    _background_data,
+                    int(sample_background_data_k * len(_background_data))
+                )
             elif isinstance(sample_background_data_k, int):
-                _background_data = shap.sample(_background_data,
-                                               sample_background_data_k)
+                _background_data = shap.sample(
+                    _background_data,
+                    sample_background_data_k
+                )
 
         if sample_shap_data_k:
             if isinstance(sample_shap_data_k, float):
-                _shap_data = shap.sample(_shap_data,
-                                         int(sample_shap_data_k * len(_shap_data)))
+                _shap_data = shap.sample(
+                    _shap_data,
+                    int(sample_shap_data_k * len(_shap_data))
+                )
             elif isinstance(sample_shap_data_k, int):
-                _shap_data = shap.sample(_shap_data,
-                                         sample_shap_data_k)
+                _shap_data = shap.sample(
+                    _shap_data,
+                    sample_shap_data_k
+                )
         ###########################################################################################
 
 
@@ -138,36 +159,44 @@ class MyExplainer:
         ###########################################################################################
         if self.optimized_estimator.shap_explainer_type == "tree":
             _explainer = shap.TreeExplainer(self.optimized_estimator.optimal_model_object)
+            _shap_explanation = _explainer(_shap_data)
         else:
             if is_regressor(self.optimized_estimator.optimal_model_object):
-                _explainer = shap.Explainer(self.optimized_estimator.optimal_model_object.predict,
-                                            _background_data)
+                _explainer = shap.Explainer(
+                    self.optimized_estimator.optimal_model_object.predict,
+                    _background_data
+                )
             elif is_classifier(self.optimized_estimator.optimal_model_object):
-                _explainer = shap.Explainer(self.optimized_estimator.optimal_model_object.predict_proba,
-                                            _background_data)
-
-        # Calculate
-        _shap_explanation = _explainer(_shap_data)
+                _explainer = shap.Explainer(
+                    self.optimized_estimator.optimal_model_object.predict_proba,
+                    _background_data
+                )
+            # Calculate
+            _shap_explanation = _explainer(_shap_data)
         ###########################################################################################
 
 
         ###########################################################################################
         # Plot
         ###########################################################################################
-        self.plotter.plot_shap_summary(_shap_explanation,
-                                       self.optimized_dataset.y_mapping_dict)
-        self.plotter.plot_shap_dependence(_shap_explanation,
-                                          self.optimized_dataset.y_mapping_dict)
+        self.plotter.plot_shap_summary(
+            _shap_explanation,
+            self.optimized_dataset.y_mapping_dict
+        )
+        self.plotter.plot_shap_dependence(
+            _shap_explanation,
+            self.optimized_dataset.y_mapping_dict
+        )
         ###########################################################################################
 
 
         ###########################################################################################
         # Output
         ###########################################################################################
-        self.output.output_shap_values(_shap_explanation,
-                                       _shap_data,
-                                       self.optimized_dataset.y_mapping_dict)
+        self.output.output_shap_values(
+            _shap_explanation,
+            _shap_data,
+            self.optimized_dataset.y_mapping_dict
+        )
         ###########################################################################################
-
-        return None
 
