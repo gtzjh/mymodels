@@ -35,7 +35,7 @@ def _get_accuracy_for_regression_task(y, y_pred, eval_metric=None):
     Returns:
         dict: Dictionary of regression metrics.
     """
-    
+
     # The major metrics for regression
     accuracy_dict = {
         "R2": float(r2_score(y, y_pred)),
@@ -113,7 +113,7 @@ class MyEvaluator:
     accuracy metrics (R², RMSE, MAE, F1, Kappa, etc.), visualizing actual vs predicted values, 
     and saving/printing results.
     """
-    
+
     def __init__(
             self,
             optimized_estimator: MyEstimator,
@@ -169,12 +169,12 @@ class MyEvaluator:
 
         self.plotter = plotter
         self.output = output
-        
+
         # Initialize attributes to be set in evaluate()
         self.show_train = False
         self.eval_metric = None
         self.accuracy_dict = {}
-        
+
         # Private attributes for data
         self._x_train = None
         self._x_test = None
@@ -216,11 +216,11 @@ class MyEvaluator:
             results = evaluator.evaluate(show_train=True, dummy=True, eval_metric=custom_metrics)
             ```
         """
-        
+
         # Assert show_train and dummy are boolean
         assert isinstance(show_train, bool), "show_train must be a boolean"
         assert isinstance(dummy, bool), "dummy must be a boolean"
-        
+
         # Assert eval_metric is a dictionary and every item inside is callable
         if eval_metric is not None:
             assert isinstance(eval_metric, dict), "eval_metric must be a dictionary"
@@ -242,7 +242,7 @@ class MyEvaluator:
         if self.optimized_data_engineer_pipeline is not None:
             self._x_test = self.optimized_data_engineer_pipeline.transform(self._x_test)
             self._x_train = self.optimized_data_engineer_pipeline.transform(self._x_train)
-        
+
         # Get the optimal model object
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
 
@@ -272,7 +272,7 @@ class MyEvaluator:
         self._output(self.output)
 
         return self.accuracy_dict
-    
+
 
 
     def _evaluate_model(self):
@@ -294,7 +294,7 @@ class MyEvaluator:
             self.accuracy_dict["model"]["test"] = _get_accuracy_for_classification_task(
                 self._y_test, self._y_test_pred, self.eval_metric
             )
-        
+
         # Evaluate on the training data
         if self.show_train:
             if is_regressor(self.optimal_model_object):
@@ -318,7 +318,9 @@ class MyEvaluator:
         When using dummy estimator, a warning about zero division will be printed, just ignore it.
         """
 
-        logging.warning("\nWhen using dummy estimator, a warning about zero division will be printed, JUST IGNORE IT.\n")
+        logging.warning("\nWhen using dummy estimator, \
+                        a warning about zero division will be printed, \
+                        JUST IGNORE IT.\n")
 
         # Create a dummy estimator
         _dummy_estimator = DummyRegressor() if is_regressor(self.optimal_model_object) else DummyClassifier()
@@ -351,7 +353,7 @@ class MyEvaluator:
                 self.accuracy_dict["dummy"]["train"] = _get_accuracy_for_classification_task(
                     self._y_train, _dummy_y_train, self.eval_metric
                 )
-    
+
 
     def _plot(self, _plotter: Plotter):
         """Plot the evaluation results.
@@ -364,10 +366,10 @@ class MyEvaluator:
             _plotter.plot_roc_curve(self._y_test, self._x_test, self.optimal_model_object)
             _plotter.plot_pr_curve(self._y_test, self._x_test, self.optimal_model_object)
             _plotter.plot_confusion_matrix(self._y_test, self._y_test_pred)
-        
+
         elif is_regressor(self.optimal_model_object):
             _plotter.plot_regression_scatter(self._y_test, self._y_test_pred)
-    
+
 
     def _output(self, _output: Output):
         """Output the evaluation results.
@@ -381,6 +383,6 @@ class MyEvaluator:
         _output.output_raw_data(
             y_test=self._y_test,
             y_test_pred=self._y_test_pred,
-            y_train=self._y_train, 
+            y_train=self._y_train,
             y_train_pred=self._y_train_pred
         )

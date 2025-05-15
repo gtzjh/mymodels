@@ -62,7 +62,5 @@ class MyPredictor:
         if self._y_mapping_dict is not None:
             _inverse_y_mapping_dict = {v: k for k, v in self._y_mapping_dict.items()}
             _y_pred = _y_pred.map(lambda x: _inverse_y_mapping_dict.get(x, x))
-        
+
         return _y_pred
-
-

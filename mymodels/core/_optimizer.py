@@ -77,7 +77,7 @@ class MyOptimizer:
         self.direction = None
         self.eval_function = None
         self.random_state = None
-        
+
         self.optuna_study = None
 
     def fit(
@@ -149,7 +149,7 @@ class MyOptimizer:
 
         # Optimizing
         _optuna_study = self._study(_param_space, _static_params)
-        
+
         # Save optimal parameters and model
         _optimal_params = {**_optuna_study.best_trial.params, **_static_params}
         ###########################################################################################
@@ -211,7 +211,7 @@ class MyOptimizer:
         """
         # Set log level to WARNING to avoid excessive output
         optuna.logging.set_verbosity(optuna.logging.WARNING)
-        
+
         # Choose the sampler
         _strategy_dict = {
             "tpe": TPESampler,
@@ -233,13 +233,13 @@ class MyOptimizer:
             n_jobs=1,  # It is not recommended to use n_jobs > 1 in Optuna
             show_progress_bar=True
         )
-        
+
         return self.optuna_study
 
     def _objective(
             self,
             trial,
-            param_space, 
+            param_space,
             static_params
         ) -> float:
         """Objective function for the Optuna study.
@@ -263,7 +263,7 @@ class MyOptimizer:
             **{k: v(trial) for k, v in param_space.items()},
             **static_params
         }
-        
+
         # Parallel processing for validation. Initialize KFold cross validator
         # StratifiedKFold is recommended for classification tasks especially when the class is imbalanced
         if self.stratify:
@@ -280,7 +280,7 @@ class MyOptimizer:
                 delayed(self._single_fold)(train_idx, val_idx, _param, self.eval_function)
                 for train_idx, val_idx in _kf.split(self.dataset.x_train)
             )
-        
+
         return np.mean(_cv_scores)
 
     def _single_fold(self, train_idx, val_idx, param, eval_function) -> float:
@@ -324,14 +324,14 @@ class MyOptimizer:
             if not isinstance(score, (int, float)):
                 raise TypeError(f"Evaluation function must return a float, got {type(score)}")
             return float(score)
-        
+
         if is_classifier(validator):
             # Use the overall accuracy score for classification task
             return accuracy_score(y_fold_val, predicted_values)
         elif is_regressor(validator):
             # Use R2 score for regression task
             return r2_score(y_fold_val, predicted_values)
-    
+
     def _plot(self, plotter: Plotter):
         """Plot the optimization results.
         
@@ -340,7 +340,7 @@ class MyOptimizer:
         """
         if plotter:
             plotter.plot_optimize_history(self.optuna_study)
-    
+
     def _output(self, output: Output):
         """Output the optimization results.
         

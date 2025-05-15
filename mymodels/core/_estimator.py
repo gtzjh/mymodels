@@ -15,7 +15,7 @@ def _convert_param_space(param_space_config):
     
     Args:
         param_space_config (dict): The parameter space configuration.
-        
+
     Returns:
         dict: A parameter space dictionary that can be used with Optuna for hyperparameter optimization.
 
@@ -73,14 +73,18 @@ def _convert_param_space(param_space_config):
             if not isinstance(param_config['values'], dict):
                 raise TypeError(f"Values for '{param_name}' must be a dictionary")
             if 'min' not in param_config['values'] or 'max' not in param_config['values']:
-                raise KeyError(f"Configuration for '{param_name}' must include 'min' and 'max' in values")
+                raise KeyError(
+                    f"Configuration for '{param_name}' must include 'min' and 'max' in values"
+                )
         elif param_config['type'] == 'float':
             if 'values' not in param_config:
                 raise KeyError(f"Configuration for '{param_name}' must include 'values'")
             if not isinstance(param_config['values'], dict):
                 raise TypeError(f"Values for '{param_name}' must be a dictionary")
             if 'min' not in param_config['values'] or 'max' not in param_config['values']:
-                raise KeyError(f"Configuration for '{param_name}' must include 'min' and 'max' in values")
+                raise KeyError(
+                    f"Configuration for '{param_name}' must include 'min' and 'max' in values"
+                )
 
     # Convert the parameter space configuration to a parameter space dictionary
     param_space = {}
@@ -88,7 +92,8 @@ def _convert_param_space(param_space_config):
         if param_config.get('type') == 'categorical':
             # Categorical parameter
             values = param_config['values']
-            param_space[param_name] = lambda t, name=param_name, values=values: t.suggest_categorical(name, values)
+            param_space[param_name] = lambda t, name=param_name, values=values: \
+                t.suggest_categorical(name, values)
         elif param_config.get('type') == 'integer':
             # Integer parameter
             values = param_config['values']
@@ -105,7 +110,7 @@ def _convert_param_space(param_space_config):
             log = values.get('log', False)
             param_space[param_name] = lambda t, name=param_name, min_v=min_val, max_v=max_val, l=log: \
                 t.suggest_float(name, min_v, max_v, log=l)
-    
+
     return param_space
 
 
@@ -115,17 +120,19 @@ class MyEstimator:
     This class handles loading model configurations, managing parameter spaces,
     and providing model estimation functionality.
     """
-    
+
     def __init__(
             self,
-            cat_features: list[str] | tuple[str] | None = None, 
+            cat_features: list[str] | tuple[str] | None = None,
             model_configs_path: str = 'model_configs.yml'
         ):
         """Initialize the Models class.
         
         Args:
-            cat_features (list[str] | tuple[str] | None): The categorical features to use for the CatBoost ONLY.
-            model_configs_path (str): The path to the model configs file. (Default: 'model_configs.yml' in the root directory)
+            cat_features (list[str] | tuple[str] | None): The categorical features to use 
+                for the CatBoost ONLY.
+            model_configs_path (str): The path to the model configs file. 
+                (Default: 'model_configs.yml' in the root directory)
         
         Attributes:
             # Private properties
@@ -164,8 +171,10 @@ class MyEstimator:
             with open(model_configs_path, 'r', encoding='utf-8') as file:
                 self._config = yaml.safe_load(file)
         except FileNotFoundError as exc:
-            raise FileNotFoundError(f"Model configs file not found: {model_configs_path}") from exc
-        
+            raise FileNotFoundError(
+                f"Model configs file not found: {model_configs_path}"
+            ) from exc
+
         # Validate config structure
         if not isinstance(self._config, dict):
             raise TypeError("Model configs must be a dictionary")
@@ -179,7 +188,7 @@ class MyEstimator:
         self.save_type = None
         self.optimal_model_object = None
         self.optimal_params = None
-        
+
         # List all available model names, and validate the input model name
         self.valid_model_names = list(self._config.keys())
 
@@ -197,7 +206,7 @@ class MyEstimator:
         if model_name not in self.valid_model_names:
             raise ValueError(f"Model '{model_name}' not found")
         self.model_name = model_name
-        
+
         # Get parameters from config
         _model_config = self._config[model_name]
 
@@ -237,8 +246,10 @@ class MyEstimator:
             if self.empty_model_object.__name__ in ('CatBoostClassifier', 'CatBoostRegressor'):
                 self.static_params['cat_features'] = self.cat_features
             else:
-                logging.warning("Model %s does not accept cat_features parameter. "
-                               "The provided cat_features value will be ignored.",
-                               str(self.empty_model_object))
-        
+                logging.warning(
+                    "Model %s does not accept cat_features parameter. "
+                    "The provided cat_features value will be ignored.",
+                    str(self.empty_model_object)
+                )
+
         return self

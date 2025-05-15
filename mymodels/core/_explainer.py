@@ -67,7 +67,7 @@ class MyExplainer:
         self.output = output
 
         self._shap_explanation = None
-    
+
 
     def explain(
             self,
@@ -79,10 +79,14 @@ class MyExplainer:
         """Use training set to build the explainer, use test set to calculate SHAP values.
 
         Args:
-            select_background_data (str): The data to use to build the explainer.
-            select_shap_data (str): The data to use to calculate SHAP values.
-            sample_background_data_k (int | float | None): The number of samples to use to build the explainer.
-            sample_shap_data_k (int | float | None): The number of samples to use to calculate SHAP values.
+            select_background_data (str):
+                The data to use to build the explainer.
+            select_shap_data (str):
+                The data to use to calculate SHAP values.
+            sample_background_data_k (int | float | None):
+                The number of samples to use to build the explainer.
+            sample_shap_data_k (int | float | None):
+                The number of samples to use to calculate SHAP values.
         """
 
         ###########################################################################################
