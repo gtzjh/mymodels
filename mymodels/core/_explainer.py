@@ -51,7 +51,7 @@ class MyExplainer:
         self.optimized_estimator = optimized_estimator
         self.optimized_data_engineer_pipeline = optimized_data_engineer_pipeline
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
-
+        
         self.plotter = plotter
         self.output = output
 
@@ -148,7 +148,7 @@ class MyExplainer:
 
 
         ###########################################################################################
-        # Build the explainer
+        # Build the SHAP explainer
         ###########################################################################################
         if self.optimized_estimator.shap_explainer_type == "tree":
             _explainer = shap.TreeExplainer(self.optimized_estimator.optimal_model_object)

@@ -80,6 +80,7 @@ class MyModel:
                 The data engineering pipeline to use. Default is None.
             cat_features (list[str] | tuple[str] | None, optional):
                 Categorical features to be used. Default is None.
+                For CatBoost ONLY.
             model_configs_path (str, optional):
                 Path to the model configuration file. Default is 'model_configs.yml'.
         """

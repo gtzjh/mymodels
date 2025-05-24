@@ -18,36 +18,6 @@ def _convert_param_space(param_space_config):
 
     Returns:
         dict: A parameter space dictionary that can be used with Optuna for hyperparameter optimization.
-
-    Example:
-    To assess the results of the parameter space configuration, the following example can be used:
-    >>> param_space_config = {
-    ...     'learning_rate': {
-    ...         'type': 'float',
-    ...         'values': {
-    ...             'min': 0.01,
-    ...             'max': 0.1,
-    ...             'log': True
-    ...         },
-    ...         'description': 'Controls the step size at each iteration while moving toward a minimum of the loss function.'
-    ...     },
-    ...     'n_estimators': {
-    ...         'type': 'integer',
-    ...         'values': {
-    ...             'min': 50,
-    ...             'max': 200,
-    ...             'step': 10
-    ...         },
-    ...         'description': 'The number of trees in the ensemble.'
-    ...     },
-    ...     'max_depth': {
-    ...         'type': 'categorical',
-    ...         'values': [3, 5, 7, 9],
-    ...         'description': 'The maximum depth of the tree, controlling overfitting.'
-    ...     }
-    ... }
-    >>> param_space = _convert_param_space(param_space_config)
-    >>> print(param_space)  # Assess the generated parameter space
     """
 
     # Check the input
