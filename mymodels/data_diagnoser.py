@@ -2,19 +2,14 @@ import logging
 import pandas as pd
 
 
-from .core import MyDataLoader
-from .plotting import Plotter
-
-
 class MyDataDiagnoser:
     def __init__(
             self,
-            dataset: MyDataLoader,
-            plotter: Plotter,
+            dataset,
+            plotter,
         ):
         self.diagnose_x_data = dataset.x_train
         self.diagnose_y_data = dataset.y_train.to_frame()
-
         self.plotter = plotter
 
         return None

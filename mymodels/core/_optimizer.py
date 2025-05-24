@@ -16,20 +16,14 @@ from sklearn.metrics import accuracy_score, r2_score
 from joblib import Parallel, delayed
 
 
-from ._data_loader import MyDataLoader
-from ._estimator import MyEstimator
-from ..plotting import Plotter
-from ..output import Output
-
-
 class MyOptimizer:
     def __init__(
             self,
-            dataset: MyDataLoader,
-            estimator: MyEstimator,
+            dataset,
+            estimator,
             data_engineer_pipeline: Pipeline | None = None,
-            plotter: Plotter | None = None,
-            output: Output | None = None
+            plotter = None,
+            output = None
         ):
         """A class for training and optimizing various machine learning models.
         
@@ -48,11 +42,6 @@ class MyOptimizer:
             Optimized dataset, optimized estimator, and optimized data engineer pipeline.
         """
 
-        # Validate input
-        assert isinstance(dataset, MyDataLoader), \
-            "dataset must be a mymodels.MyDataLoader object"
-        assert isinstance(estimator, MyEstimator), \
-            "estimator must be a mymodels.MyEstimator object"
         # Check data_engineer_pipeline validity
         if data_engineer_pipeline is not None:
             assert isinstance(data_engineer_pipeline, Pipeline), \
@@ -64,7 +53,6 @@ class MyOptimizer:
         self.dataset = dataset
         self.estimator = estimator
         self.data_engineer_pipeline = data_engineer_pipeline
-
         self.plotter = plotter
         self.output = output
 
@@ -77,7 +65,6 @@ class MyOptimizer:
         self.direction = None
         self.eval_function = None
         self.random_state = None
-
         self.optuna_study = None
 
     def fit(
@@ -332,7 +319,7 @@ class MyOptimizer:
             # Use R2 score for regression task
             return r2_score(y_fold_val, predicted_values)
 
-    def _plot(self, plotter: Plotter):
+    def _plot(self, plotter):
         """Plot the optimization results.
         
         Args:
@@ -341,7 +328,7 @@ class MyOptimizer:
         if plotter:
             plotter.plot_optimize_history(self.optuna_study)
 
-    def _output(self, output: Output):
+    def _output(self, output):
         """Output the optimization results.
         
         Args:

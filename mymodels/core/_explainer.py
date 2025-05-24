@@ -10,12 +10,6 @@ from sklearn.base import is_classifier, is_regressor
 import shap
 
 
-from ._data_loader import MyDataLoader
-from ._estimator import MyEstimator
-from ..plotting import Plotter
-from ..output import Output
-
-
 class MyExplainer:
     """A class for explaining machine learning models using SHAP values.
 
@@ -25,11 +19,11 @@ class MyExplainer:
     """
     def __init__(
         self,
-        optimized_estimator: MyEstimator,
-        optimized_dataset: MyDataLoader,
+        optimized_estimator,
+        optimized_dataset,
         optimized_data_engineer_pipeline: Pipeline | None = None,
-        plotter: Plotter | None = None,
-        output: Output | None = None
+        plotter = None,
+        output = None
     ):
         """A class for evaluating machine learning models.
 
@@ -45,11 +39,6 @@ class MyExplainer:
             output: The output object.
         """
 
-        # Validate input
-        assert isinstance(optimized_dataset, MyDataLoader), \
-            "optimized_dataset must be a mymodels.MyDataLoader object"
-        assert isinstance(optimized_estimator, MyEstimator), \
-            "optimized_estimator must be a mymodels.MyEstimator object"
         # Check data_engineer_pipeline validity
         if optimized_data_engineer_pipeline is not None:
             assert isinstance(optimized_data_engineer_pipeline, Pipeline), \

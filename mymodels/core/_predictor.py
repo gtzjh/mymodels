@@ -3,15 +3,11 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 
-from ._data_loader import MyDataLoader
-from ._estimator import MyEstimator
-
-
 class MyPredictor:
     def __init__(
             self,
-            optimized_dataset: MyDataLoader,
-            optimized_estimator: MyEstimator,
+            optimized_dataset,
+            optimized_estimator,
             optimized_data_engineer_pipeline: Pipeline | None = None
         ):
         """A class for predicting the model.
@@ -21,18 +17,6 @@ class MyPredictor:
             optimized_estimator: MyEstimator,
             optimized_data_engineer_pipeline: Pipeline | None = None
         """
-
-        # Validate input
-        assert isinstance(optimized_dataset, MyDataLoader), \
-            "optimized_dataset must be a mymodels.MyDataLoader object"
-        assert isinstance(optimized_estimator, MyEstimator), \
-            "optimized_estimator must be a mymodels.MyEstimator object"
-        assert optimized_estimator.optimal_model_object is not None, \
-            "optimized_estimator has not been fitted yet"
-        assert isinstance(optimized_data_engineer_pipeline, Pipeline) \
-            or optimized_data_engineer_pipeline is None, \
-            "optimized_data_engineer_pipeline must be a sklearn.pipeline.Pipeline object or None"
-
         self._y_mapping_dict = optimized_dataset.y_mapping_dict
         self._optimized_estimator = optimized_estimator.optimal_model_object
         self._optimized_data_engineer_pipeline = optimized_data_engineer_pipeline

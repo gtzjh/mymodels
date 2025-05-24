@@ -15,12 +15,6 @@ from sklearn.metrics import cohen_kappa_score, matthews_corrcoef
 from imblearn.metrics import specificity_score
 
 
-from ._data_loader import MyDataLoader
-from ._estimator import MyEstimator
-from ..plotting import Plotter
-from ..output import Output
-
-
 def _get_accuracy_for_regression_task(y, y_pred, eval_metric=None):
     """Calculate regression accuracy metrics.
     
@@ -116,11 +110,11 @@ class MyEvaluator:
 
     def __init__(
             self,
-            optimized_estimator: MyEstimator,
-            optimized_dataset: MyDataLoader,
+            optimized_estimator,
+            optimized_dataset,
             optimized_data_engineer_pipeline: Pipeline | None = None,
-            plotter: Plotter | None = None,
-            output: Output | None = None
+            plotter = None,
+            output = None
         ):
         """Initialize the evaluator.
 
@@ -147,13 +141,6 @@ class MyEvaluator:
             accuracy_dict (dict): Stores evaluation results after calling evaluate().
         """
 
-        # Validate input
-        assert isinstance(optimized_dataset, MyDataLoader), \
-            "optimized_dataset must be a mymodels.MyDataLoader object"
-        assert isinstance(optimized_estimator, MyEstimator), \
-            "optimized_estimator must be a mymodels.MyEstimator object"
-        assert optimized_estimator.optimal_model_object is not None, \
-            "The estimator has not been fitted yet"
         # Check data_engineer_pipeline validity
         if optimized_data_engineer_pipeline is not None:
             assert isinstance(optimized_data_engineer_pipeline, Pipeline), \
@@ -360,7 +347,7 @@ class MyEvaluator:
                 )
 
 
-    def _plot(self, _plotter: Plotter):
+    def _plot(self, _plotter):
         """Plot the evaluation results.
         
         Args:
@@ -376,7 +363,7 @@ class MyEvaluator:
             _plotter.plot_regression_scatter(self._y_test, self._y_test_pred)
 
 
-    def _output(self, _output: Output):
+    def _output(self, _output):
         """Output the evaluation results.
         
         Args:
