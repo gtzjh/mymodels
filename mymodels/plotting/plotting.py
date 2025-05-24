@@ -1,9 +1,14 @@
-import numpy as np
+"""Module for plotting functionalities in mymodels.
+
+This module provides plotting utilities for data visualization,
+model evaluation, and explainability through the Plotter class.
+"""
+import logging
+from pathlib import Path
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from pathlib import Path
-import logging
 import shap
 
 
@@ -12,7 +17,6 @@ from ._plot_optimizer import _plot_optimize_history
 from ._plot_evaluated_classifier import _plot_roc_curve, _plot_pr_curve, _plot_confusion_matrix
 from ._plot_evaluated_regressor import _plot_regression_scatter
 from ._plot_explainer import _plot_shap_summary, _plot_shap_dependence
-
 
 
 class Plotter:
@@ -50,8 +54,7 @@ class Plotter:
         #     "plot_format must be one of the following: jpg, png, jpeg, tiff, pdf, svg, eps"
         assert isinstance(plot_dpi, int), "plot_dpi must be an integer"
 
-        assert isinstance(results_dir, Path) \
-            or isinstance(results_dir, str), \
+        assert isinstance(results_dir, (Path, str)), \
             "results_dir must be a valid directory path"
         if isinstance(results_dir, str):
             results_dir = Path(results_dir)
@@ -84,6 +87,7 @@ class Plotter:
         assert isinstance(sub_dir, str) or sub_dir is None, "sub_dir must be a string or None"
         assert isinstance(saved_file_name, str) or saved_file_name is None, "saved_file_name must be a string or None"
 
+        saved_path = None
         # Save figure if filename is provided
         if saved_file_name is not None:
             saved_path = self._save_figure(fig, sub_dir, saved_file_name)
@@ -145,10 +149,8 @@ class Plotter:
             data: Data to plot
             name: Name of the data
         """
-        fig, ax = _plot_category(data, name=name, show=self.show)
+        fig, _ = _plot_category(data, name=name, show=self.show)
         self._finalize_plot(fig, sub_dir = "diagnosis/category/", saved_file_name = f"{name}")
-
-        return None
     
 
     def plot_data_distribution(self, data, name=None):
@@ -158,10 +160,8 @@ class Plotter:
             data: Data to plot
             name: Name of the data
         """
-        fig, ax = _plot_data_distribution(data, name=name, show=self.show)
+        fig, _ = _plot_data_distribution(data, name=name, show=self.show)
         self._finalize_plot(fig, sub_dir = "diagnosis/distribution/", saved_file_name = f"{name}")
-
-        return None
     
 
     def plot_correlation(self, data, corr_threshold=0.8, name=None):
@@ -172,13 +172,11 @@ class Plotter:
             name: Name of the data
         """
         result = _plot_correlation(data, name=name, corr_threshold=corr_threshold, show=self.show)
-        pearson_fig, pearson_ax = result["pearson"]
-        spearman_fig, spearman_ax = result["spearman"]
+        pearson_fig, _ = result["pearson"]
+        spearman_fig, _ = result["spearman"]
 
         self._finalize_plot(pearson_fig, sub_dir = "diagnosis/correlation", saved_file_name = "pearson")
         self._finalize_plot(spearman_fig, sub_dir = "diagnosis/correlation", saved_file_name = "spearman")
-
-        return None
     ###########################################################################################
 
 
@@ -192,10 +190,8 @@ class Plotter:
         Args:
             optuna_study_object: The completed Optuna study containing trial results.
         """
-        fig, ax = _plot_optimize_history(optuna_study_object)
+        fig, _ = _plot_optimize_history(optuna_study_object)
         self._finalize_plot(fig, sub_dir = "optimization", saved_file_name = "optimization_history")
-
-        return None
     ###########################################################################################
 
 
@@ -211,10 +207,8 @@ class Plotter:
             x_test: Test feature data
             optimal_model_object: Trained model object
         """
-        fig, ax = _plot_roc_curve(y_test, x_test, optimal_model_object)
+        fig, _ = _plot_roc_curve(y_test, x_test, optimal_model_object)
         self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "roc_curve")
-
-        return None
 
 
     def plot_pr_curve(self, y_test, x_test, optimal_model_object):
@@ -225,10 +219,8 @@ class Plotter:
             x_test: Test feature data
             optimal_model_object: Trained model object
         """
-        fig, ax = _plot_pr_curve(y_test, x_test, optimal_model_object)
+        fig, _ = _plot_pr_curve(y_test, x_test, optimal_model_object)
         self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "pr_curve")
-
-        return None
     
 
     def plot_confusion_matrix(self, y_test, y_test_pred):
@@ -238,10 +230,8 @@ class Plotter:
             y_test: Actual test target values
             y_test_pred: Predicted test target values
         """
-        fig, ax = _plot_confusion_matrix(y_test, y_test_pred)
+        fig, _ = _plot_confusion_matrix(y_test, y_test_pred)
         self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "confusion_matrix")
-
-        return None
     ###########################################################################################
 
 
@@ -256,10 +246,8 @@ class Plotter:
             y_test: Actual test target values
             y_test_pred: Predicted test target values
         """
-        fig, ax = _plot_regression_scatter(y_test, y_test_pred)
+        fig, _ = _plot_regression_scatter(y_test, y_test_pred)
         self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "scatter")
-
-        return None
     ###########################################################################################
 
 
@@ -294,8 +282,8 @@ class Plotter:
             "y_mapping_dict must be a dictionary or None"
         
         if shap_explanation.values.ndim == 2:
-            fig, ax = _plot_shap_summary(shap_explanation)
-            self._finalize_plot(fig, sub_dir = f"explanation/SHAP/", saved_file_name = "shap_summary")
+            fig, _ = _plot_shap_summary(shap_explanation)
+            self._finalize_plot(fig, sub_dir = "explanation/SHAP/", saved_file_name = "shap_summary")
 
         elif shap_explanation.values.ndim == 3:
             if y_mapping_dict is not None:
@@ -307,14 +295,12 @@ class Plotter:
                 _inverse_mapping = {i: str(i) for i in range(_num_classes)}
 
             _fig_ax_dict = _plot_shap_summary(shap_explanation)
-            for class_idx, (fig, ax) in _fig_ax_dict.items():
+            for class_idx, (fig, _) in _fig_ax_dict.items():
                 self._finalize_plot(
                     fig,
-                    sub_dir = f"explanation/SHAP/shap_summary/",
+                    sub_dir = "explanation/SHAP/shap_summary/",
                     saved_file_name = f"{str(_inverse_mapping[class_idx])}"
                 )
-
-        return None
     
 
     def plot_shap_dependence(
@@ -336,7 +322,7 @@ class Plotter:
 
         shap_dp_plots = _plot_shap_dependence(shap_explanation)
         if shap_explanation.values.ndim == 2:
-            for fig, ax, feature_name in shap_dp_plots:
+            for fig, _, feature_name in shap_dp_plots:
                 self._finalize_plot(
                     fig,
                     sub_dir = "explanation/SHAP/shap_dependence/",
@@ -353,15 +339,12 @@ class Plotter:
                 _inverse_mapping = {i: str(i) for i in range(_num_classes)}
             
             for class_idx, shap_dp_plots in shap_dp_plots.items():
-                for fig, ax, feature_name in shap_dp_plots:
+                for fig, _, feature_name in shap_dp_plots:
                     self._finalize_plot(
                         fig, 
-                        sub_dir = f"explanation/SHAP/shap_dependence/{str(_inverse_mapping[class_idx])}/", 
+                        sub_dir = f"explanation/SHAP/shap_dependence/{_inverse_mapping[class_idx]}/", 
                         saved_file_name = str(feature_name)
                     )
-        
-        return None
-
 
 
     def plot_partial_dependence(self, optimal_model_object, x_data):
@@ -372,14 +355,11 @@ class Plotter:
                 If the data engineering was implemented, the data should be the data after the data engineering.
             optimal_model_object: Trained model object
         """
-        pass
-
+        # Implementation to be added later
         # The _plot_partial_dependence() will return a list, every element in the list is a tuple of (fig, ax).
         # fig_ax_list = _plot_partial_dependence(optimal_model_object, x_data)
         # for fig, ax in fig_ax_list:
         #     self._finalize_plot(fig, filename = "partial_dependence")
-
-        return None
     ###########################################################################################
     
 

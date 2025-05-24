@@ -1,3 +1,4 @@
+"""Module for exporting SHAP values to CSV files for model interpretability."""
 from pathlib import Path
 
 import pandas as pd
@@ -51,7 +52,7 @@ def _output_shap_values(results_dir, shap_explanation, data, _y_mapping_dict = N
             _y_mapping_dict = {i: i for i in range(shap_values.shape[2])}
 
         # Create a dictionary for storing DataFrames, one for each class
-        shap_values_dataframe = dict()
+        shap_values_dataframe = {}
 
         for class_name, i in _y_mapping_dict.items():
             shap_values_dataframe[class_name] = pd.DataFrame(

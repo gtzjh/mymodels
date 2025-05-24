@@ -1,3 +1,7 @@
+"""Model explainability visualization module.
+
+This module provides functions for visualizing SHAP (SHapley Additive exPlanations) values.
+"""
 import shap
 import matplotlib
 matplotlib.use('Agg')
@@ -12,7 +16,7 @@ def _plot_shap_summary(shap_explanation):
         shap_explanation: SHAP explanation object
     
     Returns:
-        fig_ax_list: list of tuple (fig, ax)
+        tuple or dict: Either (fig, ax) tuple for 2D values or dict mapping class indices to (fig, ax) tuples for 3D values
     """
 
     assert isinstance(shap_explanation, shap.Explanation), \
@@ -29,21 +33,21 @@ def _plot_shap_summary(shap_explanation):
         plt.tight_layout()
         return _fig, _ax
 
-    elif shap_explanation.values.ndim == 3:
-        _fig_ax_dict = dict()
-        for i in range(shap_explanation.values.shape[2]):
-            _fig = plt.figure()
-            _ax = _fig.gca()
+    # For 3D values (multi-class)
+    _fig_ax_dict = dict()
+    for i in range(shap_explanation.values.shape[2]):
+        _fig = plt.figure()
+        _ax = _fig.gca()
 
-            shap.summary_plot(shap_explanation.values[:, :, i],
-                              shap_explanation.data,
-                              feature_names = shap_explanation.feature_names,
-                              show = False)
-            
-            plt.tight_layout()
-            _fig_ax_dict[i] = (_fig, _ax)
+        shap.summary_plot(shap_explanation.values[:, :, i],
+                          shap_explanation.data,
+                          feature_names = shap_explanation.feature_names,
+                          show = False)
+        
+        plt.tight_layout()
+        _fig_ax_dict[i] = (_fig, _ax)
 
-        return _fig_ax_dict
+    return _fig_ax_dict
 
 
 
@@ -54,7 +58,8 @@ def _plot_shap_dependence(shap_explanation):
         shap_explanation: SHAP explanation object
     
     Returns:
-        shap_dp_plot_list: list of tuple (fig, ax)
+        list or dict: Either list of (fig, ax, feature_name) tuples for 2D values or 
+                      dict mapping class indices to lists of (fig, ax, feature_name) tuples for 3D values
     """
     
     assert isinstance(shap_explanation, shap.Explanation), \
@@ -75,18 +80,19 @@ def _plot_shap_dependence(shap_explanation):
             fig = plt.gcf()
             ax = plt.gca()
             shap_dp_plots.append((fig, ax, feature_name))
+        return shap_dp_plots
 
-    elif shap_explanation.values.ndim == 3:
-        shap_dp_plots = dict()
-        for class_idx in range(shap_explanation.values.shape[2]):
-            shap_dp_plots[class_idx] = []
-            for i, feature_name in enumerate(shap_explanation.feature_names):
-                # Use feature index instead of name for direct indexing
-                ax = shap.plots.scatter(shap_explanation[:, i, class_idx],
-                                        show=False, color=shap_explanation[:, :, class_idx])
-                plt.tight_layout()
-                fig = plt.gcf()
-                ax = plt.gca()
-                shap_dp_plots[class_idx].append((fig, ax, feature_name))
+    # For multi-class
+    shap_dp_plots = dict()
+    for class_idx in range(shap_explanation.values.shape[2]):
+        shap_dp_plots[class_idx] = []
+        for i, feature_name in enumerate(shap_explanation.feature_names):
+            # Use feature index instead of name for direct indexing
+            shap.plots.scatter(shap_explanation[:, i, class_idx],
+                              show=False, color=shap_explanation[:, :, class_idx])
+            plt.tight_layout()
+            fig = plt.gcf()
+            ax = plt.gca()
+            shap_dp_plots[class_idx].append((fig, ax, feature_name))
 
     return shap_dp_plots

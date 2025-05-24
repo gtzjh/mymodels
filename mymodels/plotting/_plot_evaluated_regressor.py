@@ -1,11 +1,12 @@
+"""Regressor evaluation visualization module.
+
+This module provides functions for visualizing regression model performance.
+"""
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from sklearn.metrics import (
-    mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error
-)
 
 
 

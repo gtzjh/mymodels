@@ -1,3 +1,9 @@
+"""Data diagnosis visualization module.
+
+This module provides functions for visualizing and diagnosing data characteristics including
+categorical distributions, numerical distributions, and correlations.
+"""
+import logging
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -5,7 +11,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy
-import logging
 from joblib import Parallel, delayed
 
 
@@ -73,8 +78,9 @@ def _plot_category(
         remaining_percentage = (remaining_count / total_count) * 100
         
         # Log warning about hidden categories
-        logging.warning(f"Showing only top 10 categories out of {total_categories}.")
-        logging.warning(f"The remaining {remaining_categories} categories represent {remaining_percentage:.2f}% of the data.")
+        logging.warning("Showing only top 10 categories out of %s.", total_categories)
+        logging.warning("The remaining %s categories represent %.2f%% of the data.", 
+                       remaining_categories, remaining_percentage)
     else:
         display_values = sorted_values
         display_counts = sorted_counts
@@ -139,7 +145,7 @@ def _plot_category(
             f"Note: {remaining_categories} additional categories not shown ({remaining_percentage:.2f}% of data)", 
             ha='center', 
             fontsize=10, 
-            bbox=dict(boxstyle='round', facecolor='#F5F5F5', alpha=0.5)
+            bbox={'boxstyle': 'round', 'facecolor': '#F5F5F5', 'alpha': 0.5}
         )
     
     # Adjust layout
@@ -232,6 +238,10 @@ def _plot_correlation(
     
     Returns:
         dict: Dictionary with 'pearson' and 'spearman' keys, each containing (fig, ax) tuple
+        
+    Note:
+        A WARNING will occur if some features are highly correlated as this may influence
+        the model's interpretability.
     """
     # Validate input
     assert isinstance(data, pd.DataFrame), "Data must be a pandas DataFrame"
@@ -240,7 +250,7 @@ def _plot_correlation(
     numeric_columns = data.select_dtypes(include=np.number).columns
     if len(numeric_columns) < data.shape[1]:
         non_numeric = set(data.columns) - set(numeric_columns)
-        logging.warning(f"Dropping non-numeric columns: {non_numeric}")
+        logging.warning("Dropping non-numeric columns: %s", non_numeric)
         data = data[numeric_columns]
     
     # Check if data has at least 2 columns
@@ -319,15 +329,15 @@ def _plot_correlation(
                 if abs(pearson_corr.iloc[i, j]) > corr_threshold:
                     high_corr_pairs.append((pearson_corr.index[i], pearson_corr.columns[j], pearson_corr.iloc[i, j]))
         
-        # logging.warning(f"High correlations (>{corr_threshold}) detected between features:")
+        # logging.warning("High correlations (>%s) detected between features:", corr_threshold)
         for col1, col2, corr_val in high_corr_pairs:
-            logging.warning(f"  - {col1} and {col2}: {corr_val:.3f}")
+            logging.warning("  - %s and %s: %.3f", col1, col2, corr_val)
     
    
     # Detailed output of the pearson_dropped_rows dictionary
     if pearson_dropped_rows:  # Only output if the dictionary is not empty
         logging.warning("=== Detailed NaN Handling Information for Pearson Correlation ===")
-        logging.warning(f"Total column pairs: {len(pearson_dropped_rows)}")
+        logging.warning("Total column pairs: %s", len(pearson_dropped_rows))
         
         # Sort by dropped count to see pairs with most NaNs first
         sorted_pairs = sorted(pearson_dropped_rows.items(), key=lambda x: x[1]['dropped_count'], reverse=True)
@@ -336,10 +346,11 @@ def _plot_correlation(
             if info['dropped_count'] > 0:  # Only log pairs that actually had rows dropped
                 col1, col2 = info['columns']
                 drop_percent = 100 * info['dropped_count'] / (info['dropped_count'] + info['remaining_count'])
-                logging.warning(f"Pair: {col1} - {col2}, Dropped: {info['dropped_count']} rows ({drop_percent:.2f}%), Remaining: {info['remaining_count']} rows")
+                logging.warning("Pair: %s - %s, Dropped: %s rows (%.2f%%), Remaining: %s rows", 
+                              col1, col2, info['dropped_count'], drop_percent, info['remaining_count'])
     
     # Create heatmaps
-    result = dict()
+    result = {}
     
     # Function to create and save a heatmap
     def create_heatmap(corr_matrix, pvalues, dropped_rows_info, method_name):

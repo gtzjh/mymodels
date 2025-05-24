@@ -1,3 +1,4 @@
+"""Module for saving raw prediction data to CSV files."""
 from pathlib import Path
 import pandas as pd
 

@@ -1,8 +1,13 @@
-import numpy as np
-import pandas as pd
+"""Classifier evaluation visualization module.
+
+This module provides functions for visualizing classification model performance
+using ROC curves, PR curves, and confusion matrices.
+"""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, confusion_matrix
 from sklearn.preprocessing import label_binarize
@@ -82,9 +87,9 @@ def _plot_roc_curve(y_test, x_test, optimal_model_object):
         y_test_bin = label_binarize(y_test, classes=classes)
         
         # Compute ROC curve and ROC area for each class
-        fpr = dict()
-        tpr = dict()
-        roc_auc = dict()
+        fpr = {}
+        tpr = {}
+        roc_auc = {}
         
         for i in range(n_classes):
             # For each class, plot one-vs-rest ROC curve
@@ -96,7 +101,7 @@ def _plot_roc_curve(y_test, x_test, optimal_model_object):
         macro_roc_auc = np.mean([roc_auc[i] for i in range(n_classes)])
         plt.plot([0, 1], [0, 1], 'k--', lw=2)
         plt.text(0.5, 0.3, f'Macro-average AUC = {macro_roc_auc:.3f}', 
-                bbox=dict(facecolor='white', alpha=0.8), fontsize=12)
+                bbox={'facecolor': 'white', 'alpha': 0.8}, fontsize=12)
     ###########################################################################################
     
     # Plotting
@@ -165,9 +170,9 @@ def _plot_pr_curve(y_test, x_test, optimal_model_object):
         y_test_bin = label_binarize(y_test, classes=classes)
         
         # Compute PR curve and PR area for each class
-        precision = dict()
-        recall = dict()
-        pr_auc = dict()
+        precision = {}
+        recall = {}
+        pr_auc = {}
         
         for i in range(n_classes):
             # For each class, plot one-vs-rest PR curve
@@ -180,7 +185,7 @@ def _plot_pr_curve(y_test, x_test, optimal_model_object):
         macro_pr_auc = np.mean([pr_auc[i] for i in range(n_classes)])
         plt.plot([0, 1], [1, 0], 'k--', lw=2)
         plt.text(0.5, 0.3, f'Macro-average AUC = {macro_pr_auc:.3f}', 
-                bbox=dict(facecolor='white', alpha=0.8), fontsize=12)
+                bbox={'facecolor': 'white', 'alpha': 0.8}, fontsize=12)
     
     # Plotting
     # Formatting the plot

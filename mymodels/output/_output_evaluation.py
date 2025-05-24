@@ -1,5 +1,6 @@
-import yaml
+"""Module for saving model evaluation metrics to files."""
 from pathlib import Path
+import yaml
 
 
 def _output_evaluation(

@@ -1,5 +1,6 @@
-import yaml
+"""Module for saving optimal parameters to YAML files."""
 from pathlib import Path
+import yaml
 
 
 def _output_optimal_params(results_dir,

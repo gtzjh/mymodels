@@ -1,6 +1,7 @@
+"""Module for saving trained models to disk using appropriate serialization formats."""
 from pathlib import Path
-from joblib import dump
 import pickle
+from joblib import dump
 
 
 def _output_optimal_model(results_dir, optimal_model, save_type: str | None = None):

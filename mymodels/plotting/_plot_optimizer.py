@@ -1,9 +1,11 @@
-import numpy as np
-import pandas as pd
-import optuna
+"""Optimization visualization module.
+
+This module provides functions to visualize optimization history from Optuna studies.
+"""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import optuna
 
 
 def _plot_optimize_history(optuna_study_object: optuna.Study):
