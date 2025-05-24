@@ -40,8 +40,12 @@ def test_binary_classification(model_name: str):
     )
 
     # Load data
-    data = pd.read_csv("data/titanic.zip", encoding="utf-8",
-                    na_values=np.nan, index_col=["PassengerId"]).sample(300)
+    data = pd.read_csv(
+        "data/titanic.zip",
+        encoding="utf-8",
+        na_values=np.nan,
+        index_col=["PassengerId"]
+    ).sample(300)
 
     mymodel.load(
         model_name = model_name,
@@ -67,13 +71,13 @@ def test_binary_classification(model_name: str):
     )
 
     # Data diagnosis
-    mymodel.diagnose(sample_k = None)
+    mymodel.diagnose(sample_k=None)
 
     # Optimize
     mymodel.optimize(
         strategy = "tpe",
-        cv = 3,
-        trials = 10,
+        cv = cv,
+        trials = trials,
         n_jobs = 5,
         direction = "maximize",
         eval_function = None
@@ -95,8 +99,12 @@ def test_binary_classification(model_name: str):
     )
 
     # Predict
-    data_pred = pd.read_csv("data/titanic_test.csv", encoding = "utf-8",
-                            na_values = np.nan, index_col = ["PassengerId"])
+    data_pred = pd.read_csv(
+        "data/titanic_test.csv",
+        encoding = "utf-8",
+        na_values = np.nan,
+        index_col = ["PassengerId"]
+    )
 
     data_pred = data_pred.loc[:, ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"]]
 
@@ -141,8 +149,12 @@ def test_multi_classification(model_name: str):
     )
 
     # Load data
-    data = pd.read_csv("data/obesity.zip", encoding="utf-8",
-                       na_values=np.nan, index_col=["id"]).sample(300)
+    data = pd.read_csv(
+        "data/obesity.zip",
+        encoding="utf-8",
+        na_values=np.nan,
+        index_col=["id"]
+    ).sample(300)
 
     mymodel.load(
         model_name = model_name,
@@ -155,6 +167,7 @@ def test_multi_classification(model_name: str):
         test_ratio = 0.3,
         stratify = False,
         data_engineer_pipeline = data_engineer_pipeline,
+        cat_features = ["Gender", "family_history_with_overweight", "FAVC", "CAEC", "SMOKE", "SCC", "CALC", "MTRANS"],
         model_configs_path = "model_configs.yml"
     )
 
@@ -175,8 +188,8 @@ def test_multi_classification(model_name: str):
     # Optimize
     mymodel.optimize(
         strategy = "tpe",
-        cv = 3,
-        trials = 10,
+        cv = cv,
+        trials = trials,
         n_jobs = 5,
         direction = "maximize",
         eval_function = None
@@ -246,8 +259,12 @@ def test_regression(model_name: str):
     )
 
     # Load data
-    data = pd.read_csv("data/housing.zip", encoding = "utf-8", 
-                        na_values = np.nan, index_col = ["ID"]).sample(300)
+    data = pd.read_csv(
+        "data/housing.zip",
+        encoding = "utf-8",
+        na_values = np.nan,
+        index_col = ["ID"]
+    ).sample(300)
 
     mymodel.load(
         model_name = model_name,
@@ -278,8 +295,8 @@ def test_regression(model_name: str):
     # Optimize
     mymodel.optimize(
         strategy = "tpe",
-        cv = 3,
-        trials = 10,
+        cv = cv,
+        trials = trials,
         n_jobs = 5,
         direction = "maximize",
         eval_function = None
@@ -302,11 +319,14 @@ def test_regression(model_name: str):
 
 
 if __name__ == "__main__":
+    cv = 3
+    trials = 10
+
     classifiers = [
         "lc",
         "lgbc",
         "xgbc",
-        # "catc",
+        "catc",
         "svc",
         "knc",
         "mlpc",
@@ -320,7 +340,7 @@ if __name__ == "__main__":
         "lr",
         "lgbr",
         "xgbr",
-        # "catr",
+        "catr",
         "svr",
         "knr",
         "mlpr",

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
@@ -55,8 +56,11 @@ class MyPredictor:
             data = self._optimized_data_engineer_pipeline.transform(data)
 
         # Predict the data
-        _y_pred = self._optimized_estimator.predict(data)
-        _y_pred = pd.Series(_y_pred, index = data.index)
+        # For CatBoost, we need to flatten the data if the dimension is 2
+        _y_pred = pd.Series(
+            np.array(self._optimized_estimator.predict(data)).flatten(),
+            index = data.index
+        )
 
         # Inverse the y mapping if needed
         if self._y_mapping_dict is not None:

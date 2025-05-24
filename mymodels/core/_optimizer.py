@@ -350,4 +350,4 @@ class MyOptimizer:
         if output:
             output.output_optimal_params(self.estimator.optimal_params)
             output.output_optimal_model(self.estimator.optimal_model_object,
-                                       self.estimator.save_type)
+                                        self.estimator.save_type)

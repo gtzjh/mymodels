@@ -34,7 +34,7 @@ def _plot_shap_summary(shap_explanation):
         return _fig, _ax
 
     # For 3D values (multi-class)
-    _fig_ax_dict = dict()
+    _fig_ax_dict = {}
     for i in range(shap_explanation.values.shape[2]):
         _fig = plt.figure()
         _ax = _fig.gca()
@@ -67,6 +67,7 @@ def _plot_shap_dependence(shap_explanation):
 
 
     # Sometimes the SHAP explanation object has no feature names
+    # We need to specify the feature names manually
     if shap_explanation.feature_names is None:
         shap_explanation.feature_names = [f"x_{i}" for i in range(shap_explanation.values.shape[1])]
 
@@ -75,21 +76,36 @@ def _plot_shap_dependence(shap_explanation):
         shap_dp_plots = []
         for i, feature_name in enumerate(shap_explanation.feature_names):
             # Use feature index instead of name for direct indexing
-            shap.plots.scatter(shap_explanation[:, i], show=False, color=shap_explanation)
+            shap.dependence_plot(
+                i,
+                shap_explanation.values,
+                shap_explanation.data,
+                shap_explanation.feature_names,
+                # display_features = None,
+                interaction_index = "auto",
+                show=False
+            )
             plt.tight_layout()
             fig = plt.gcf()
             ax = plt.gca()
             shap_dp_plots.append((fig, ax, feature_name))
         return shap_dp_plots
 
-    # For multi-class
-    shap_dp_plots = dict()
+    # For multi-class, or decision tree and random forest in sklearn for binary classification
+    shap_dp_plots = {}
     for class_idx in range(shap_explanation.values.shape[2]):
         shap_dp_plots[class_idx] = []
         for i, feature_name in enumerate(shap_explanation.feature_names):
             # Use feature index instead of name for direct indexing
-            shap.plots.scatter(shap_explanation[:, i, class_idx],
-                              show=False, color=shap_explanation[:, :, class_idx])
+            shap.dependence_plot(
+                i,
+                shap_explanation.values[:, :, class_idx],
+                shap_explanation.data,
+                shap_explanation.feature_names,
+                # display_features = None,
+                interaction_index = "auto",
+                show=False
+            )
             plt.tight_layout()
             fig = plt.gcf()
             ax = plt.gca()

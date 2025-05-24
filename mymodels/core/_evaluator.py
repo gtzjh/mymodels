@@ -247,8 +247,13 @@ class MyEvaluator:
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
 
         # Predict
-        self._y_test_pred = pd.Series(self.optimal_model_object.predict(self._x_test))
-        self._y_train_pred = pd.Series(self.optimal_model_object.predict(self._x_train))
+        # For CatBoost, we need to flatten the data if the dimension is 2
+        self._y_test_pred = pd.Series(
+            np.array(self.optimal_model_object.predict(self._x_test)).flatten()
+        )
+        self._y_train_pred = pd.Series(
+            np.array(self.optimal_model_object.predict(self._x_train)).flatten()
+        )
 
         # Trans the y data to the original label, for classification tasks
         _y_mapping_dict = self.optimized_dataset.y_mapping_dict
