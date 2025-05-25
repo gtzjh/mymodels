@@ -79,7 +79,7 @@ class Plotter:
                 If None, the figure will not be saved.
             saved_file_name (str, optional): Name for the saved file (without extension).
                 If None, the figure will not be saved.
-                
+
         Returns:
             str or None: Path to the saved file if saved, otherwise None.
         """
@@ -328,7 +328,7 @@ class Plotter:
                     sub_dir = "explanation/SHAP/shap_dependence/",
                     saved_file_name = str(feature_name)
                 )
-                
+
         elif shap_explanation.values.ndim == 3:
             if y_mapping_dict is not None:
                 # Inverse the mapping dict (value → key)
@@ -347,23 +347,35 @@ class Plotter:
                     )
 
 
-    def plot_partial_dependence(self, optimal_model_object, x_data):
+    def plot_partial_dependence(
+            self,
+            model,
+            shap_explanation: shap.Explanation
+        ):
         """Plot partial dependence.
-        
-        Args:
-            x_data: Data for partial dependence plot.
-                If the data engineering was implemented, the data should be the data after the data engineering.
-            optimal_model_object: Trained model object
         """
-        # Implementation to be added later
-        # The _plot_partial_dependence() will return a list, every element in the list is a tuple of (fig, ax).
-        # fig_ax_list = _plot_partial_dependence(optimal_model_object, x_data)
-        # for fig, ax in fig_ax_list:
-        #     self._finalize_plot(fig, filename = "partial_dependence")
-    ###########################################################################################
     
+        if shap_explanation.values.ndim == 2:
+            for i in range(len(shap_explanation.feature_names)):
+                fig, _ = shap.plots.partial_dependence(
+                    i,
+                    model,
+                    shap_explanation.data,
+                    feature_names = shap_explanation.feature_names,
+                    ice = False,
+                    show = False
+                )
+                self._finalize_plot(
+                    fig,
+                    sub_dir = "explanation/PDP/",
+                    saved_file_name = str(shap_explanation.feature_names[i])
+                )
+        elif shap_explanation.values.ndim == 3:
+            logging.warning("""
+PDP is not supported for multi-class classifier currently.
+Random forest and Decision tree in sklearn for binary classification
+are not supported either.
+""")
 
 
-
-
-
+    ###########################################################################################

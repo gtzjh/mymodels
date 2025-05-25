@@ -50,6 +50,7 @@ class MyExplainer:
         self.optimized_dataset = optimized_dataset
         self.optimized_estimator = optimized_estimator
         self.optimized_data_engineer_pipeline = optimized_data_engineer_pipeline
+
         self.optimal_model_object = self.optimized_estimator.optimal_model_object
         
         self.plotter = plotter
@@ -172,14 +173,29 @@ class MyExplainer:
         ###########################################################################################
         # Plot
         ###########################################################################################
+        # SHAP summary plot
         self.plotter.plot_shap_summary(
             _shap_explanation,
             self.optimized_dataset.y_mapping_dict
         )
+        # SHAP dependence plot
         self.plotter.plot_shap_dependence(
             _shap_explanation,
             self.optimized_dataset.y_mapping_dict
         )
+
+        # Partial dependence plot
+        if is_regressor(self.optimized_estimator.optimal_model_object):
+            self.plotter.plot_partial_dependence(
+                self.optimized_estimator.optimal_model_object.predict,
+                _shap_explanation
+            )
+        
+        elif is_classifier(self.optimized_estimator.optimal_model_object):
+            self.plotter.plot_partial_dependence(
+                self.optimized_estimator.optimal_model_object.predict_proba,
+                _shap_explanation
+            )
         ###########################################################################################
 
 

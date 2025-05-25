@@ -313,7 +313,7 @@ def test_regression(model_name: str):
     mymodel.explain(
         select_background_data = "train",
         select_shap_data = "test",
-        sample_background_data_k = 50,
+        sample_background_data_k = None,
         sample_shap_data_k = 50
     )
 
@@ -323,31 +323,31 @@ if __name__ == "__main__":
     trials = 10
 
     classifiers = [
-        "lc",
-        "lgbc",
+        # "lc",
+        # "lgbc",
         "xgbc",
-        "catc",
-        "svc",
-        "knc",
-        "mlpc",
-        "dtc",
-        "rfc",
-        "gbdtc",
-        "adac"
+        # "catc",
+        # "svc",
+        # "knc",
+        # "mlpc",
+        # "dtc",
+        # "rfc",
+        # "gbdtc",
+        # "adac"
     ]
 
     regressors = [
         "lr",
         "lgbr",
         "xgbr",
-        "catr",
-        "svr",
-        "knr",
-        "mlpr",
-        "dtr",
-        "rfr",
-        "gbdtr",
-        "adar"
+        # "catr",
+        # "svr",
+        # "knr",
+        # "mlpr",
+        # "dtr",
+        # "rfr",
+        # "gbdtr",
+        # "adar"
     ]
 
     for c in classifiers:
@@ -365,7 +365,7 @@ Start testing {c} for binary classification
 Start testing {c} for multi-classification
 =========================================================
 """)
-        test_multi_classification(c)
+        # test_multi_classification(c)
 
 
     for r in regressors:
@@ -374,4 +374,4 @@ Start testing {c} for multi-classification
 Start testing {r} for regression
 =========================================================
 """)
-        test_regression(r)
+        # test_regression(r)
