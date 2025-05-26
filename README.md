@@ -52,7 +52,7 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 conda env create -f requirement.yml -n mymodels -y
 ```
 
-**Activate**
+**Activate Environment**
 
 ```bash
 conda activate mymodels

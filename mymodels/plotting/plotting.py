@@ -9,14 +9,11 @@ from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import shap
-
 
 from ._plot_diagnosed_data import _plot_category, _plot_data_distribution, _plot_correlation
 from ._plot_optimizer import _plot_optimize_history
 from ._plot_evaluated_classifier import _plot_roc_curve, _plot_pr_curve, _plot_confusion_matrix
 from ._plot_evaluated_regressor import _plot_regression_scatter
-from ._plot_explainer import _plot_shap_summary, _plot_shap_dependence
 
 
 class Plotter:
@@ -248,134 +245,4 @@ class Plotter:
         """
         fig, _ = _plot_regression_scatter(y_test, y_test_pred)
         self._finalize_plot(fig, sub_dir = "evaluation/", saved_file_name = "scatter")
-    ###########################################################################################
-
-
-
-    ###########################################################################################
-    # Plotting for explainer
-    ###########################################################################################
-    # For binary classification tasks using sklearn's decision tree and random forest models,
-    # as well as all models used in multi-classification tasks,
-    # the dimensions of the output shap_values are (n_samples, n_features, n_targets)
-    # In binary classification tasks with sklearn's decision tree and random forest, shap values represent 
-    # each feature's contribution to the probability of a sample being classified as positive or negative
-    # Therefore, results are output for each class,
-    # saved in the shap_summary directory, and named according to the class
-    # Similarly, in the dependence_plots directory, subdirectories are created and named according to the class
-
-    def plot_shap_summary(
-            self,
-            shap_explanation: shap.Explanation,
-            y_mapping_dict: dict | None = None
-        ):
-        """Plot SHAP summary
-
-        Args:
-            shap_explanation: SHAP explanation object
-            y_mapping_dict: Dictionary mapping class names to their indices
-        """
-
-        assert isinstance(shap_explanation, shap.Explanation), \
-            "shap_explanation must be a shap.Explanation object"
-        assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
-            "y_mapping_dict must be a dictionary or None"
-        
-        if shap_explanation.values.ndim == 2:
-            fig, _ = _plot_shap_summary(shap_explanation)
-            self._finalize_plot(fig, sub_dir = "explanation/SHAP/", saved_file_name = "shap_summary")
-
-        elif shap_explanation.values.ndim == 3:
-            if y_mapping_dict is not None:
-                # Inverse the mapping dict (value → key)
-                _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
-            else:
-                # If y_mapping_dict is not provided, use the index of the class
-                _num_classes = shap_explanation.values.shape[2]
-                _inverse_mapping = {i: str(i) for i in range(_num_classes)}
-
-            _fig_ax_dict = _plot_shap_summary(shap_explanation)
-            for class_idx, (fig, _) in _fig_ax_dict.items():
-                self._finalize_plot(
-                    fig,
-                    sub_dir = "explanation/SHAP/shap_summary/",
-                    saved_file_name = f"{str(_inverse_mapping[class_idx])}"
-                )
-    
-
-    def plot_shap_dependence(
-            self,
-            shap_explanation: shap.Explanation, 
-            y_mapping_dict: dict | None = None
-        ):
-        """Plot SHAP dependence
-        
-        Args:
-            shap_explanation: SHAP explanation object
-            y_mapping_dict: Dictionary mapping class names to their indices
-        """
-
-        assert isinstance(shap_explanation, shap.Explanation), \
-            "shap_explanation must be a shap.Explanation object"
-        assert isinstance(y_mapping_dict, dict) or y_mapping_dict is None, \
-            "y_mapping_dict must be a dictionary or None"
-
-        shap_dp_plots = _plot_shap_dependence(shap_explanation)
-        if shap_explanation.values.ndim == 2:
-            for fig, _, feature_name in shap_dp_plots:
-                self._finalize_plot(
-                    fig,
-                    sub_dir = "explanation/SHAP/shap_dependence/",
-                    saved_file_name = str(feature_name)
-                )
-
-        elif shap_explanation.values.ndim == 3:
-            if y_mapping_dict is not None:
-                # Inverse the mapping dict (value → key)
-                _inverse_mapping = {v: k for k, v in y_mapping_dict.items()}
-            else:
-                # If y_mapping_dict is not provided, use the index of the class
-                _num_classes = shap_explanation.values.shape[2]
-                _inverse_mapping = {i: str(i) for i in range(_num_classes)}
-            
-            for class_idx, shap_dp_plots in shap_dp_plots.items():
-                for fig, _, feature_name in shap_dp_plots:
-                    self._finalize_plot(
-                        fig, 
-                        sub_dir = f"explanation/SHAP/shap_dependence/{_inverse_mapping[class_idx]}/", 
-                        saved_file_name = str(feature_name)
-                    )
-
-
-    def plot_partial_dependence(
-            self,
-            model,
-            shap_explanation: shap.Explanation
-        ):
-        """Plot partial dependence.
-        """
-    
-        if shap_explanation.values.ndim == 2:
-            for i in range(len(shap_explanation.feature_names)):
-                fig, _ = shap.plots.partial_dependence(
-                    i,
-                    model,
-                    shap_explanation.data,
-                    feature_names = shap_explanation.feature_names,
-                    ice = False,
-                    show = False
-                )
-                self._finalize_plot(
-                    fig,
-                    sub_dir = "explanation/PDP/",
-                    saved_file_name = str(shap_explanation.feature_names[i])
-                )
-        elif shap_explanation.values.ndim == 3:
-            logging.warning("""
-PDP is not supported for multi-class classifier currently.
-Random forest and Decision tree in sklearn for binary classification
-are not supported either.
-""")
-
-
     ###########################################################################################

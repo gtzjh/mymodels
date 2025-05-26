@@ -111,4 +111,4 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 
 - The `random_state` is set to `0` for demonstration purposes only. Users should try different `random_state` in their actual applications to ensure the robustness of their results.
 
-- The explanation in this project is currently based on [SHAP](https://shap.readthedocs.io/en/latest/index.html). Other explanation methods are under supporting.
+- The explanation in this project is currently based on [SHAP](https://shap.readthedocs.io/en/latest/index.html) and PDP (Partial Dependence Plot). Other explanation methods (i.e., ALE, FI) are under supporting.

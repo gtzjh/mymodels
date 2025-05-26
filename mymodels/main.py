@@ -12,7 +12,7 @@ from .core import MyDataLoader
 from .core import MyEstimator
 from .core import MyOptimizer
 from .core import MyEvaluator
-from .core import MyExplainer
+from .explainer import MyExplainer
 from .core import MyPredictor
 from .data_diagnoser import MyDataDiagnoser
 from .plotting import Plotter
@@ -24,10 +24,7 @@ class MyModel:
     A class that handles data loading, model training, and evaluation with SHAP analysis.
     Supports various regression models with hyperparameter optimization and cross-validation.
     """
-    def __init__(
-            self,
-            random_state: int = 0
-        ):
+    def __init__(self, random_state: int = 0):
 
         self.random_state = random_state
 
@@ -114,7 +111,6 @@ class MyModel:
             plot_dpi: int = 500,
             save_optimal_model: bool = False,
             save_raw_data: bool = False,
-            save_shap_values: bool = False
         ):
         """Format the plotting and output
 
@@ -125,7 +121,6 @@ class MyModel:
             plot_dpi (int): The DPI of the plots.
             save_optimal_model (bool): Whether to save the optimal model.
             save_raw_data (bool): Whether to save the raw data.
-            save_shap_values (bool): Whether to save the SHAP values.
         """
         self.plotter = Plotter(
             show=show,
@@ -138,7 +133,6 @@ class MyModel:
             results_dir=results_dir,
             save_optimal_model=save_optimal_model,
             save_raw_data=save_raw_data,
-            save_shap_values=save_shap_values,
         )
 
 
@@ -258,8 +252,7 @@ class MyModel:
             optimized_estimator=self.optimized_estimator,
             optimized_dataset=self.optimized_dataset,
             optimized_data_engineer_pipeline=self.optimized_data_engineer_pipeline,
-            plotter=self.plotter,
-            output=self.output
+            plotter=self.plotter
         )
 
         explainer.explain(

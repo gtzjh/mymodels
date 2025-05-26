@@ -66,8 +66,7 @@ def test_binary_classification(model_name: str):
         plot_format = "jpg",
         plot_dpi = 100,
         save_optimal_model = True,
-        save_raw_data = True,
-        save_shap_values = True
+        save_raw_data = True
     )
 
     # Data diagnosis
@@ -178,8 +177,7 @@ def test_multi_classification(model_name: str):
         plot_format = "jpg",
         plot_dpi = 100,
         save_optimal_model = True,
-        save_raw_data = True,
-        save_shap_values = True
+        save_raw_data = True
     )
 
     # Data diagnosis
@@ -264,7 +262,7 @@ def test_regression(model_name: str):
         encoding = "utf-8",
         na_values = np.nan,
         index_col = ["ID"]
-    ).sample(300)
+    )
 
     mymodel.load(
         model_name = model_name,
@@ -285,8 +283,7 @@ def test_regression(model_name: str):
         plot_format = "jpg",
         plot_dpi = 100,
         save_optimal_model = True,
-        save_raw_data = True,
-        save_shap_values = True
+        save_raw_data = True
     )
 
     # Data diagnosis
@@ -313,18 +310,18 @@ def test_regression(model_name: str):
     mymodel.explain(
         select_background_data = "train",
         select_shap_data = "test",
-        sample_background_data_k = 100,
-        sample_shap_data_k = 100
+        sample_background_data_k = None,
+        sample_shap_data_k = None
     )
 
 
 if __name__ == "__main__":
-    cv = 5
-    trials = 100
+    cv = 3
+    trials = 3
 
     classifiers = [
         # "lc",
-        "lgbc",
+        # "lgbc",
         # "xgbc",
         # "catc",
         # "svc",
@@ -337,17 +334,17 @@ if __name__ == "__main__":
     ]
 
     regressors = [
-        "lr",
-        "lgbr",
-        "xgbr",
-        "catr",
-        "svr",
-        "knr",
-        "mlpr",
-        "dtr",
+        # "lr",
+        # "lgbr",
+        # "xgbr",
+        # "catr",
+        # "svr",
+        # "knr",
+        # "mlpr",
+        # "dtr",
         "rfr",
-        "gbdtr",
-        "adar"
+        # "gbdtr",
+        # "adar"
     ]
 
     for c in classifiers:
@@ -365,7 +362,7 @@ Start testing {c} for binary classification
 Start testing {c} for multi-classification
 =========================================================
 """)
-        test_multi_classification(c)
+        # test_multi_classification(c)
 
 
     for r in regressors:
@@ -374,4 +371,4 @@ Start testing {c} for multi-classification
 Start testing {r} for regression
 =========================================================
 """)
-        # test_regression(r)
+        test_regression(r)

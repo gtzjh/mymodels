@@ -6,7 +6,6 @@ from ._output_evaluation import _output_evaluation
 from ._output_optimal_params import _output_optimal_params
 from ._output_optimal_model import _output_optimal_model
 from ._output_raw_data import _output_raw_data
-from ._output_shap_values import _output_shap_values
 
 
 class Output:
@@ -20,7 +19,6 @@ class Output:
         results_dir: str | Path,
         save_optimal_model: bool = False,
         save_raw_data: bool = False,
-        save_shap_values: bool = False
     ):
         """Initialize the Output object.
         
@@ -28,7 +26,6 @@ class Output:
             results_dir (str or Path, optional): Directory to save results. Defaults to None.
             save_optimal_model (bool, optional): Whether to save the optimal model. Defaults to False.
             save_raw_data (bool, optional): Whether to save the raw data. Defaults to False.
-            output_shap_values (bool, optional): Whether to output the SHAP values. Defaults to False.
         """
 
         assert isinstance(results_dir, (Path, str)), \
@@ -43,12 +40,9 @@ class Output:
             "save_optimal_model must be a boolean"
         assert isinstance(save_raw_data, bool), \
             "save_raw_data must be a boolean"
-        assert isinstance(save_shap_values, bool), \
-            "save_shap_values must be a boolean"
         
         self.save_optimal_model = save_optimal_model
         self.save_raw_data = save_raw_data
-        self.save_shap_values = save_shap_values
     
 
     def output_evaluation(
@@ -111,21 +105,3 @@ class Output:
         _results_dir = self.results_dir.joinpath("evaluation/raw_data/")
         if self.save_raw_data:
             _output_raw_data(_results_dir, y_test, y_test_pred, y_train, y_train_pred)
-
-
-    def output_shap_values(
-        self,
-        shap_explanation: object,
-        data: pd.DataFrame,
-        _y_mapping_dict: dict | None = None
-    ):
-        """Save SHAP values for model explanation if enabled.
-        
-        Args:
-            shap_explanation (object): SHAP explanation object.
-            data (pd.DataFrame): Feature data used for explanation.
-            _y_mapping_dict (dict | None, optional): Mapping dictionary for target values. Defaults to None.
-        """
-        _results_dir = self.results_dir.joinpath("explanation/SHAP/shap_values/")
-        if self.save_shap_values:
-            _output_shap_values(_results_dir, shap_explanation, data, _y_mapping_dict)
