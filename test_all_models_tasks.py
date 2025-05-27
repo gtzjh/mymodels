@@ -113,7 +113,6 @@ def test_binary_classification(model_name: str):
     y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
 
 
-
 def test_multi_classification(model_name: str):
     _results_dir = f"results/obesity_{model_name}"
 
@@ -204,8 +203,8 @@ def test_multi_classification(model_name: str):
     mymodel.explain(
         select_background_data = "train",
         select_shap_data = "test",
-        sample_background_data_k = 50,
-        sample_shap_data_k = 50
+        sample_background_data_k = None,
+        sample_shap_data_k = None
     )
 
     # Predict
@@ -220,7 +219,6 @@ def test_multi_classification(model_name: str):
     y_pred = mymodel.predict(data = data_pred)
     y_pred.name = "NObeyesdad"
     y_pred.to_csv(_results_dir + "/prediction.csv", encoding = "utf-8", index = True)
-
 
 
 def test_regression(model_name: str):
@@ -262,7 +260,7 @@ def test_regression(model_name: str):
         encoding = "utf-8",
         na_values = np.nan,
         index_col = ["ID"]
-    )
+    ).sample(300)
 
     mymodel.load(
         model_name = model_name,
@@ -320,55 +318,43 @@ if __name__ == "__main__":
     trials = 3
 
     classifiers = [
-        # "lc",
-        # "lgbc",
-        # "xgbc",
-        # "catc",
-        # "svc",
-        # "knc",
-        # "mlpc",
-        # "dtc",
-        # "rfc",
-        # "gbdtc",
-        # "adac"
+        "lc",
+        "lgbc",
+        "xgbc",
+        "catc",
+        "svc",
+        "knc",
+        "mlpc",
+        "dtc",
+        "rfc",
+        "gbdtc",
+        "adac"
     ]
 
     regressors = [
-        # "lr",
-        # "lgbr",
-        # "xgbr",
-        # "catr",
-        # "svr",
-        # "knr",
-        # "mlpr",
-        # "dtr",
+        "lr",
+        "lgbr",
+        "xgbr",
+        "catr",
+        "svr",
+        "knr",
+        "mlpr",
+        "dtr",
         "rfr",
-        # "gbdtr",
-        # "adar"
+        "gbdtr",
+        "adar"
     ]
 
     for c in classifiers:
-        print(f"""
-=========================================================
-Start testing {c} for binary classification
-=========================================================
-""")
-        # test_binary_classification(c)
+        print(f"\nStart testing {c} for binary classification")
+        test_binary_classification(c)
 
 
     for c in classifiers:
-        print(f"""
-=========================================================
-Start testing {c} for multi-classification
-=========================================================
-""")
-        # test_multi_classification(c)
+        print(f"\nStart testing {c} for multi-classification")
+        test_multi_classification(c)
 
 
     for r in regressors:
-        print(f"""
-=========================================================
-Start testing {r} for regression
-=========================================================
-""")
+        print(f"\nStart testing {r} for regression")
         test_regression(r)

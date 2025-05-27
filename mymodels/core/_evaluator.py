@@ -192,16 +192,6 @@ class MyEvaluator:
                 
         Returns:
             dict: Dictionary containing evaluation results.
-            
-        Example:
-            ```python
-            # Define custom metrics if needed
-            custom_metrics = {'custom_metric': lambda y, y_pred: some_calculation(y, y_pred)}
-            
-            # Evaluate model with training results and dummy comparison
-            evaluator = MyEvaluator(estimator, dataset, pipeline)
-            results = evaluator.evaluate(show_train=True, dummy=True, eval_metric=custom_metrics)
-            ```
         """
 
         # Assert show_train and dummy are boolean

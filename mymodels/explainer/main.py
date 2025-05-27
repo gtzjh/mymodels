@@ -18,8 +18,8 @@ class MyExplainer:
         
         # The format parameters
         self.results_dir = plotter.results_dir
-        self.dpi = plotter.dpi
-        self.format = plotter.format
+        self.dpi = plotter.plot_dpi
+        self.format = plotter.plot_format
 
 
     def explain(
@@ -29,7 +29,9 @@ class MyExplainer:
             sample_background_data_k: int | float | None = None,
             sample_shap_data_k: int | float | None = None,
         ):
-        """Use training set to build the explainer, use test set to calculate SHAP values.
+        """Use training set to build the explainer,
+           use test set to calculate SHAP values by default.
+           Use the SHAP data to calculate PDP values as well.
 
         Args:
             select_background_data (str):
@@ -63,7 +65,7 @@ class MyExplainer:
             background_data = _transformed_x_test
         elif select_background_data == "all":
             background_data = pd.concat([_transformed_x_train, _transformed_x_test]).sort_index()
-        
+
         # SHAP data for calculating SHAP values
         if select_shap_data == "train":
             shap_data = _transformed_x_train
@@ -82,6 +84,7 @@ class MyExplainer:
                 background_data = background_data.sample(
                     sample_background_data_k
                 )
+
         # Sample the SHAP data
         if sample_shap_data_k:
             if isinstance(sample_shap_data_k, float):

@@ -25,13 +25,22 @@ def pdp_explainer(
     assert isinstance(format, str), \
         "format must be a string"
 
-    feature_names = explain_data.columns.tolist()
-
     # Create a directory for PDP plots
     results_dir = pathlib.Path(results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
     results_dir = results_dir.joinpath("explanation/PDP/")
     results_dir.mkdir(parents=True, exist_ok=True)
+
+    feature_names = explain_data.columns.tolist()
+
+    # Select the categorical features
+    _categorical_features = []
+    for col, dtype in explain_data.dtypes.items():
+        if pd.api.types.is_categorical_dtype(dtype) or \
+            pd.api.types.is_object_dtype(dtype):
+            _categorical_features.append(col)
+    if len(_categorical_features) == 0:
+        _categorical_features = None
 
     # Create PDP plots
     # For regression and binary classification
@@ -42,6 +51,7 @@ def pdp_explainer(
                 estimator=model,
                 X=explain_data,
                 features=[i],
+                categorical_features=_categorical_features,
                 n_jobs=-1
             )
             plt.savefig(
@@ -49,6 +59,7 @@ def pdp_explainer(
                 dpi=dpi,
                 bbox_inches="tight"
             )
+            plt.close()
 
     # For multi-class classification
     elif len(model.classes_) > 2:
@@ -58,6 +69,7 @@ def pdp_explainer(
                     estimator=model,
                     X=explain_data,
                     features=[i],
+                    categorical_features=_categorical_features,
                     target=c,
                     n_jobs=-1
                 )
@@ -66,3 +78,4 @@ def pdp_explainer(
                     dpi=dpi,
                     bbox_inches="tight"
                 )
+                plt.close()

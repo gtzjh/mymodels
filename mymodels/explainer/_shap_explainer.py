@@ -21,7 +21,7 @@ def shap_explainer(
         "background_data must be a pandas DataFrame"
     assert isinstance(shap_data, pd.DataFrame), \
         "shap_data must be a pandas DataFrame"
-    assert isinstance(explainer_type, str) or None, \
+    assert isinstance(explainer_type, str) or explainer_type is None, \
         "explainer_type must be a str or None"
     assert isinstance(results_dir, str) or isinstance(results_dir, pathlib.Path), \
         "results_dir must be a str or pathlib.Path"
@@ -46,7 +46,6 @@ def shap_explainer(
     results_dir.mkdir(parents = True, exist_ok = True)
     results_dir = results_dir.joinpath("explanation/SHAP/")
     results_dir.mkdir(parents = True, exist_ok = True)
-
 
     plot_shap_summary(
         shap_explanation,
@@ -86,6 +85,7 @@ def plot_shap_summary(
             dpi=dpi,
             bbox_inches = 'tight'
         )
+        plt.close()
 
     elif shap_explanation.values.ndim == 3:
         if y_mapping_dict is not None:
@@ -103,7 +103,7 @@ def plot_shap_summary(
                 dpi=dpi,
                 bbox_inches = 'tight'
             )
-
+            plt.close()
 
 def _get_shap_summary(shap_explanation):
     """SHAP summary plot
@@ -172,6 +172,7 @@ def plot_shap_dependence(
                 dpi=dpi,
                 bbox_inches = 'tight'
             )
+            plt.close()
 
     elif shap_explanation.values.ndim == 3:
         if y_mapping_dict is not None:
@@ -189,7 +190,7 @@ def plot_shap_dependence(
                     dpi=dpi,
                     bbox_inches = 'tight'
                 )
-
+                plt.close()
 
 def _get_shap_dependence(shap_explanation):
     """SHAP dependence plot

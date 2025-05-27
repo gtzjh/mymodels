@@ -80,37 +80,6 @@ class MyDataLoader:
         y_test (pd.Series): Testing target Series.
         y_mapping_dict (dict):
             Dictionary mapping original categories to encoded integers (if applicable).
-    
-    Examples:
-        >>> import pandas as pd
-        >>> import numpy as np
-        >>> from mymodels._data_loader import MyDataLoader
-        >>> 
-        >>> # Create sample data
-        >>> data = pd.DataFrame({
-        ...     "ID": [1, 2, 3, 4, 5],
-        ...     "x1": [1.1, 2.2, 3.3, 4.4, 5.5],
-        ...     "x2": [10, 20, 30, 40, 50],
-        ...     "x3": ["a", "b", "c", "a", "b"],
-        ...     "y": ["cat1", "cat2", "cat1", "cat2", "cat1"]
-        ... }).set_index("ID")
-        >>> 
-        >>> # Create an instance of MyDataLoader
-        >>> loader = MyDataLoader(
-        ...     input_data=data,
-        ...     y="y",
-        ...     x_list=["x1", "x2", "x3"],
-        ...     test_ratio=0.4,
-        ...     random_state=42,
-        ...     stratify=True
-        ... )
-        >>> 
-        >>> # Load and split the data
-        >>> dataset = loader.load()
-        >>> print(f"Training set shape: {dataset.x_train.shape}")
-        Training set shape: (3, 3)
-        >>> print(f"Testing set shape: {dataset.x_test.shape}")
-        Testing set shape: (2, 3)
     """
 
     def __init__(
@@ -203,24 +172,6 @@ class MyDataLoader:
             
         Raises:
             ValueError: If missing values are found in target or feature variables.
-            
-        Examples:
-            >>> import pandas as pd
-            >>> from mymodels._data_loader import MyDataLoader
-            >>> data = pd.DataFrame({
-            ...     "ID": [1, 2, 3, 4],
-            ...     "feature": [10, 20, 30, 40],
-            ...     "target": [0, 1, 0, 1]
-            ... }).set_index("ID")
-            >>> loader = MyDataLoader(
-            ...     input_data=data,
-            ...     y="target",
-            ...     x_list=["feature"],
-            ...     random_state=42
-            ... )
-            >>> result = loader.load()
-            >>> result.x_train.shape[0] + result.x_test.shape[0] == data.shape[0]
-            True
         """
         # Extract the target variable
         _y_data = None

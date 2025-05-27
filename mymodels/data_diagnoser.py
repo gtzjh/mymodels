@@ -55,7 +55,8 @@ class MyDataDiagnoser:
         # Identify categorical features
         _categorical_features = []
         for col, dtype in self.diagnose_x_data.dtypes.items():
-            if pd.api.types.is_categorical_dtype(dtype) or pd.api.types.is_object_dtype(dtype):
+            if pd.api.types.is_categorical_dtype(dtype) or \
+                pd.api.types.is_object_dtype(dtype):
                 _categorical_features.append(col)
 
         if len(_categorical_features) > 0:
