@@ -317,17 +317,17 @@ if __name__ == "__main__":
     trials = 3
 
     classifiers = [
-        "lc",
-        "lgbc",
-        "xgbc",
-        "catc",
+        # "lc",
+        # "lgbc",
+        # "xgbc",
+        # "catc",
         "svc",
         "knc",
-        "mlpc",
-        "dtc",
+        # "mlpc",
+        # "dtc",
         "rfc",
-        "gbdtc",
-        "adac"
+        # "gbdtc",
+        # "adac"
     ]
 
     regressors = [
@@ -351,9 +351,9 @@ if __name__ == "__main__":
 
     for c in classifiers:
         print(f"\nStart testing {c} for multi-classification")
-        test_multi_classification(c)
+        # test_multi_classification(c)
 
 
     for r in regressors:
         print(f"\nStart testing {r} for regression")
-        test_regression(r)
+        # test_regression(r)

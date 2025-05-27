@@ -12,10 +12,11 @@ class MyDataDiagnoser:
         self.diagnose_y_data = dataset.y_train.to_frame()
         self.plotter = plotter
 
-        return None
 
-
-    def diagnose(self, sample_k: int | float | None = None, random_state: int | None = 0):
+    def diagnose(
+        self, sample_k: int | float | None = None,
+        random_state: int | None = 0
+    ):
         """Diagnose the data"""
 
         # Validation
@@ -25,14 +26,16 @@ class MyDataDiagnoser:
             "y_data must be a pandas DataFrame"
         assert self.diagnose_x_data.shape[0] == self.diagnose_y_data.shape[0], \
             "x_data and y_data must have the same number of rows"
-        logging.warning(f"Data diagnosis will be performing on TRAINING DATASET ONLY!!!")
+        logging.warning(f"""
+Data diagnosis will be performing on TRAINING DATASET ONLY!!!
+""")
 
         # Sample the data
-        assert sample_k is None or isinstance(sample_k, int) or isinstance(sample_k, float), \
+        assert sample_k is None \
+            or isinstance(sample_k, (int, float)), \
             "sample_k must be an integer or float or None"
-        if sample_k is not None:
-            if isinstance(sample_k, float):
-                sample_k = int(sample_k * len(self.diagnose_x_data))
+        if isinstance(sample_k, float):
+            sample_k = int(sample_k * len(self.diagnose_x_data))
 
             _diagnose_data = self.diagnose_x_data.merge(
                 self.diagnose_y_data,
@@ -42,11 +45,8 @@ class MyDataDiagnoser:
             self.diagnose_x_data = _diagnose_data.iloc[:, :-1]
             self.diagnose_y_data = _diagnose_data.iloc[:, -1]
 
-
         self._diagnose_categorical_features()
         self._diagnose_numerical_features()
-
-        return None
 
 
     def _diagnose_categorical_features(self):
@@ -60,7 +60,6 @@ class MyDataDiagnoser:
                 _categorical_features.append(col)
 
         if len(_categorical_features) > 0:
-
             # Plot
             for _cat_col in _categorical_features:
                 self.plotter.plot_category(
@@ -91,8 +90,6 @@ class MyDataDiagnoser:
             with pd.option_context('display.max_rows', None):
                 print("\nCategorical Features Statistics:")
                 print(_stats_df.to_string(index=False))
-
-        return None
 
 
     def _diagnose_numerical_features(self):
@@ -149,6 +146,3 @@ class MyDataDiagnoser:
             with pd.option_context('display.max_rows', None):
                 print("\nNumerical Features Statistics:")
                 print(_stats_df.to_string(index=False))
-
-        return None
-

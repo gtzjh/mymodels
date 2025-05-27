@@ -315,7 +315,7 @@ class MyOptimizer:
         if is_classifier(validator):
             # Use the overall accuracy score for classification task
             return accuracy_score(y_fold_val, predicted_values)
-        elif is_regressor(validator):
+        if is_regressor(validator):
             # Use R2 score for regression task
             return r2_score(y_fold_val, predicted_values)
 
