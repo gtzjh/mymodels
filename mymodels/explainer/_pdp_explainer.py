@@ -63,8 +63,13 @@ def pdp_explainer(
 
     # For multi-class classification
     elif len(model.classes_) > 2:
-        for c in model.classes_:
-            for i, n in enumerate(feature_names):
+        for i, n in enumerate(feature_names):
+            # Create a sub-directory for each feature, containing PDP plots for each class
+            _sub_dir = results_dir.joinpath(f"{n}")
+            _sub_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create PDP plots for each class
+            for c in model.classes_:
                 PartialDependenceDisplay.from_estimator(
                     estimator=model,
                     X=explain_data,
@@ -74,7 +79,7 @@ def pdp_explainer(
                     n_jobs=-1
                 )
                 plt.savefig(
-                    results_dir.joinpath(f"class_{c}_{n}.{format}"),
+                    _sub_dir.joinpath(f"class_{c}_{n}.{format}"),
                     dpi=dpi,
                     bbox_inches="tight"
                 )
