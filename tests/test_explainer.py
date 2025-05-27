@@ -153,6 +153,6 @@ def test_multi_class_explainers():
     
 
 if __name__ == "__main__":
-    # test_regression_explainers()
-    # test_binary_explainers()
+    test_regression_explainers()
+    test_binary_explainers()
     test_multi_class_explainers()
