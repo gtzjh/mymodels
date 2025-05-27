@@ -10,7 +10,7 @@ persistent=yes
 # Disable specific pylint checks
 # C0301: Line too long
 # C0303: Trailing whitespace
-disable=C0301,C0303,C0304,C0305
+disable=C0301,C0303,C0304,C0305,E0401 # Ignore import error, 'cause we do not need to create a new environment on the github actions.
 
 [FORMAT]
 # Maximum number of characters on a single line (disabled but kept for reference)
