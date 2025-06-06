@@ -361,41 +361,33 @@ def _plot_correlation(
         
         # Create the heatmap
         cmap = sns.diverging_palette(230, 20, as_cmap=True)
+        # 构造annot_matrix
+        annot_matrix = corr_matrix.copy().astype(str)
+        for i in range(corr_matrix.shape[0]):
+            for j in range(corr_matrix.shape[1]):
+                val = f"{corr_matrix.iloc[i, j]:.2f}"
+                p = pvalues.iloc[i, j]
+                if p < 0.01:
+                    val += "**"
+                elif p < 0.05:
+                    val += "*"
+                annot_matrix.iloc[i, j] = val
+
         sns.heatmap(
-            corr_matrix, 
+            corr_matrix,
             mask=mask,
-            cmap=cmap, 
-            vmax=1.0, 
+            cmap=cmap,
+            vmax=1.0,
             vmin=-1.0,
             center=0,
-            square=True, 
-            linewidths=.5, 
-            annot=True,
-            fmt=".2f",
+            square=True,
+            linewidths=.5,
+            annot=annot_matrix,
+            fmt="",
             cbar_kws={"shrink": .5},
+            annot_kws={"size": 8},
             ax=ax
         )
-        
-        # Annotate with p-values where significant
-        for i in range(len(corr_matrix)):
-            for j in range(len(corr_matrix)):
-                if i > j:  # Lower triangle only
-                    if pvalues.iloc[i, j] < 0.05:
-                        ax.text(
-                            j + 0.5, i + 0.5, 
-                            "*", 
-                            ha='center', va='center',
-                            color='white' if abs(corr_matrix.iloc[i, j]) > 0.4 else 'black',
-                            fontweight='bold', fontsize=12
-                        )
-                    if pvalues.iloc[i, j] < 0.01:
-                        ax.text(
-                            j + 0.5, i + 0.5, 
-                            "**", 
-                            ha='center', va='center',
-                            color='white' if abs(corr_matrix.iloc[i, j]) > 0.4 else 'black',
-                            fontweight='bold', fontsize=12
-                        )
         
         # Rotate x-axis labels
         plt.xticks(rotation=45, ha='right')
