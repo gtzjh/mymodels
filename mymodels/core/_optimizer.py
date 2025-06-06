@@ -217,7 +217,7 @@ class MyOptimizer:
                 static_params=static_params,
             ),
             n_trials=self.trials,
-            n_jobs=1,  # It is not recommended to use n_jobs > 1 in Optuna
+            n_jobs=1,  # It is not recommended to use parallel when using TPESampler
             show_progress_bar=True
         )
 
