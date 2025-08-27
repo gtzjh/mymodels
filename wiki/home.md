@@ -97,6 +97,14 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 </table>
 
 
+# Recommanded usage
+
+> According to my personal experience
+
+- Run the LightGBM on windows platform as possible.
+
+- Running other models on the Linux (like WSL2) platform is recommanded.
+
 # The users should know
 
 - This project is intended solely for scientific reference. It may contain calculation errors or logical inaccuracies. Users are responsible for verifying the accuracy of the results independently, and the author shall not be held liable for any consequences arising from the use of this code.

@@ -86,6 +86,16 @@ def shap_explainer(
         y_mapping_dict
     )
 
+    # Output the SHAP values
+    # Only for binary classification or regression
+    # But also except for random forest classifier and decision tree classifier in sklearn package
+    if shap_explanation.values.ndim == 2:
+        shap_values_df = pd.DataFrame(
+            shap_explanation.values,
+            columns = shap_explanation.feature_names,
+            index = shap_data.index
+        )
+        shap_values_df.to_csv(results_dir.joinpath("shap_values.csv"), encoding="utf-8")
 
 def _plot_shap_summary(
     shap_explanation: shap.Explanation,
