@@ -235,6 +235,7 @@ class MyModel:
             select_shap_data: str = "test",
             sample_background_data_k: int | float | None = None,
             sample_shap_data_k: int | float | None = None,
+            max_display: int | None = None,
         ):
         """Use training set to build the explainer, use test set to calculate SHAP values.
 
@@ -247,6 +248,8 @@ class MyModel:
                 The number of samples to use to build the explainer.
             sample_shap_data_k (int | float | None):
                 The number of samples to use to calculate SHAP values.
+            max_display (int | None):
+                The maximum number of features to display.
         """
         explainer = MyExplainer(
             optimized_estimator=self.optimized_estimator,
@@ -259,7 +262,8 @@ class MyModel:
             select_background_data=select_background_data,
             select_shap_data=select_shap_data,
             sample_background_data_k=sample_background_data_k,
-            sample_shap_data_k=sample_shap_data_k
+            sample_shap_data_k=sample_shap_data_k,
+            max_display=max_display
         )
 
 

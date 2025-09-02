@@ -256,13 +256,13 @@ class MyOptimizer:
         if self.stratify:
             assert is_classifier(self.estimator.empty_model_object(**{})), \
                 "StratifiedKFold can only be used for classification tasks."
-            _kf = StratifiedKFold(n_splits=self.cv, random_state=self.random_state, shuffle=False)
+            _kf = StratifiedKFold(n_splits=self.cv, shuffle=False)
             _cv_scores = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._single_fold)(train_idx, val_idx, _param, self.eval_function)
                 for train_idx, val_idx in _kf.split(X=self.dataset.x_train, y=self.dataset.y_train)
             )
         else:
-            _kf = KFold(n_splits=self.cv, random_state=self.random_state, shuffle=False)
+            _kf = KFold(n_splits=self.cv, shuffle=False)
             _cv_scores = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._single_fold)(train_idx, val_idx, _param, self.eval_function)
                 for train_idx, val_idx in _kf.split(self.dataset.x_train)
