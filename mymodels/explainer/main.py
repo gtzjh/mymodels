@@ -28,6 +28,7 @@ class MyExplainer:
             select_shap_data: str = "test",
             sample_background_data_k: int | float | None = None,
             sample_shap_data_k: int | float | None = None,
+            max_display: int | None = None,
         ):
         """Use training set to build the explainer,
            use test set to calculate SHAP values by default.
@@ -42,6 +43,8 @@ class MyExplainer:
                 The number of samples to use to build the explainer.
             sample_shap_data_k (int | float | None):
                 The number of samples to use to calculate SHAP values.
+            max_display (int | None):
+                The maximum number of features to display.
         """
         ###########################################################################################
         # Transform X data
@@ -105,6 +108,7 @@ class MyExplainer:
             shap_data = shap_data,
             explainer_type = self.estimator.shap_explainer_type,
             results_dir = self.results_dir,
+            max_display = max_display, # Display all features by default
             dpi = self.dpi,
             format = self.format,
             y_mapping_dict = self.dataset.y_mapping_dict

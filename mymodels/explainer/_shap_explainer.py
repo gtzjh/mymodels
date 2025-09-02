@@ -11,10 +11,11 @@ from sklearn.base import is_classifier, is_regressor
 
 def shap_explainer(
     model,
-    background_data,
+    background_data,\
     shap_data,
     explainer_type,
     results_dir,
+    max_display=None,
     dpi=300,
     format="jpg",
     y_mapping_dict: Optional[Dict] = None
@@ -27,6 +28,7 @@ def shap_explainer(
         shap_data: Data to generate SHAP values for
         explainer_type: Type of explainer to use
         results_dir: Directory to save results
+        max_display: Maximum number of features to display
         dpi: DPI for saved figures
         format: Format for saved figures
         y_mapping_dict: Optional mapping of class indices to names
@@ -41,6 +43,9 @@ def shap_explainer(
     assert isinstance(results_dir, str) \
         or isinstance(results_dir, pathlib.Path), \
         "results_dir must be a str or pathlib.Path"
+    assert isinstance(max_display, int) \
+        or max_display is None, \
+        "max_display must be an int or None"
     assert isinstance(dpi, int), \
         "dpi must be an int"
     assert isinstance(format, str), \
@@ -68,10 +73,15 @@ def shap_explainer(
     results_dir = results_dir.joinpath("explanation/SHAP/")
     results_dir.mkdir(parents=True, exist_ok=True)
 
+    # The max display
+    if max_display is None:
+        max_display = shap_data.shape[1]
+
     # Plot and save the SHAP summary
     _plot_shap_summary(
         shap_explanation,
         results_dir,
+        max_display,
         dpi,
         format,
         y_mapping_dict
@@ -100,6 +110,7 @@ def shap_explainer(
 def _plot_shap_summary(
     shap_explanation: shap.Explanation,
     results_dir: Union[str, pathlib.Path],
+    max_display: int = None,
     dpi: int = 300,
     format: str = "jpg",
     y_mapping_dict: Optional[Dict] = None
@@ -109,6 +120,7 @@ def _plot_shap_summary(
     Args:
         shap_explanation: SHAP explanation object
         results_dir: Directory to save results
+        max_display: Maximum number of features to display
         dpi: DPI for saved figures
         format: Format for saved figures
         y_mapping_dict: Dictionary mapping class names to their indices
@@ -122,7 +134,7 @@ def _plot_shap_summary(
     if shap_explanation.values.ndim == 2:
         _fig = plt.figure()
         _ax = _fig.gca()
-        shap.plots.beeswarm(shap_explanation, show=False)
+        shap.plots.beeswarm(shap_explanation, show=False, max_display=max_display)
         plt.tight_layout()
         
         _fig.savefig(
@@ -150,6 +162,7 @@ def _plot_shap_summary(
                 shap_explanation.values[:, :, i],
                 shap_explanation.data,
                 feature_names=shap_explanation.feature_names,
+                max_display=max_display,
                 show=False
             )
             
