@@ -1,7 +1,7 @@
 """Data engineering module for preprocessing machine learning data.
 
 This module provides functions and classes for handling various data preprocessing tasks
-including imputation, outlier removal, feature encoding, and scaling.
+including imputation, feature encoding, and scaling.
 """
 import logging
 import numpy as np
@@ -13,7 +13,6 @@ import category_encoders as ce
 
 
 def data_engineer(
-    outlier_cols: list[str] | tuple[str] | None = None,
     missing_values_cols: list[str] | tuple[str] | None = None,
     impute_method: str | list[str] | tuple[str] | None = None,
     cat_features: list[str] | tuple[str] | None = None,
@@ -26,7 +25,6 @@ def data_engineer(
     """Create a data engineering pipeline.
     
     Args:
-        outlier_cols: Columns to clean outliers from
         missing_values_cols: Columns with missing values to impute
         impute_method: Methods for imputing missing values
         cat_features: Categorical features to encode
@@ -40,7 +38,6 @@ def data_engineer(
         A scikit-learn Pipeline object or None if no steps specified
     """
     engineer = MyEngineer(
-        outlier_cols=outlier_cols,
         missing_values_cols=missing_values_cols,
         impute_method=impute_method,
         cat_features=cat_features,
@@ -52,9 +49,11 @@ def data_engineer(
     )
 
     # If all data engineering steps are None, return None
-    if (outlier_cols is None and missing_values_cols is None and 
-        cat_features is None and scale_cols is None):
+    if (missing_values_cols is None \
+            and cat_features is None \
+                and scale_cols is None):
         return None
+
     return engineer.construct()
 
 
@@ -63,7 +62,6 @@ class MyEngineer:
     
     Step:
     1. Imputation of missing values
-    2. Cleaning of outliers
     3. Encoding of categorical features
     4. Data standardization or normalization
 
@@ -72,7 +70,6 @@ class MyEngineer:
     """
     def __init__(
         self,
-        outlier_cols: list[str] | tuple[str] | None = None,
         missing_values_cols: list[str] | tuple[str] | None = None,
         impute_method: str | list[str] | tuple[str] | None = None,
         cat_features: list[str] | tuple[str] | None = None,
@@ -143,8 +140,7 @@ class MyEngineer:
         if scale_cols:
             assert all(s in self.valid_scale_method for s in scale_method), \
                 f"scale_method must be one of {list(self.valid_scale_method.keys())}"
-        
-        self.outlier_cols = outlier_cols
+
         self.missing_values_cols = missing_values_cols
         self.impute_method = impute_method
         self.cat_features = cat_features
@@ -160,20 +156,15 @@ class MyEngineer:
         Returns:
             self.pipeline: The data engineering pipeline, in `sklearn.pipeline.Pipeline` object.
         """
-        outlier_cleaner_column_transformer = None
         imputer_column_transformer = None
         encoder_column_transformer = None
         scaler_column_transformer = None
 
         pipeline_dict = {
-            "outlier_cleaner": outlier_cleaner_column_transformer,
             "imputer": imputer_column_transformer,
             "encoder": encoder_column_transformer,
             "scaler": scaler_column_transformer
         }
-
-        if self.outlier_cols is not None:
-            pipeline_dict["outlier_cleaner"] = self._outlier_cleaner()
 
         if self.missing_values_cols is not None:
             pipeline_dict["imputer"] = self._imputer()
@@ -189,15 +180,6 @@ class MyEngineer:
         
         # Construct the pipeline using the filtered dictionary
         return Pipeline([(k, v) for k, v in pipeline_dict.items()])
-
-    def _outlier_cleaner(self):
-        """Clean the outliers.
-        
-        Returns:
-            _outlier_cleaner_column_transformer: 
-                A column transformer, in sklearn.compose.ColumnTransformer object.
-        """
-        # Implementation will be added in the future
 
     def _imputer(self):
         """Impute the missing values.
