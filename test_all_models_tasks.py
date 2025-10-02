@@ -27,7 +27,6 @@ def test_binary_classification(model_name: str):
 
     # Data engineering
     data_engineer_pipeline = data_engineer(
-        outlier_cols = None,
         missing_values_cols = ["Pclass", "Sex", "Age", "SibSp", "Parch", "Fare", "Embarked"],
         impute_method = ["median", "most_frequent", "median", "median", "median", "median", "most_frequent"],
         cat_features = _engineer_cat_features,
@@ -134,7 +133,6 @@ def test_multi_classification(model_name: str):
 
     # Data engineering
     data_engineer_pipeline = data_engineer(
-        outlier_cols = None,
         missing_values_cols = None,
         impute_method = None,
         cat_features = _engineer_cat_features,
@@ -242,7 +240,6 @@ def test_regression(model_name: str):
 
     # Data engineering
     data_engineer_pipeline = data_engineer(
-        outlier_cols = None,
         missing_values_cols = ["CRIM", "ZN", "INDUS", "CHAS", "AGE", "LSTAT"],
         impute_method = ["median", "median", "median", "median", "median", "median"],
         cat_features = _engineer_cat_features,
