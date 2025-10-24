@@ -60,7 +60,7 @@ lc:  # LogisticRegression
     class_weight: balanced
     tol: 1.0e-4
     fit_intercept: true
-    n_jobs: -1
+    n_jobs: 1
     verbose: 0
     warm_start: false
   SAVE_TYPE: joblib
@@ -106,7 +106,7 @@ knc:  # KNeighborsClassifier
       type: integer
       values: {min: 1, max: 2}
   STATIC_PARAMS:
-    n_jobs: -1
+    n_jobs: 1
   SAVE_TYPE: joblib
 
 mlpc:  # MLPClassifier
@@ -196,7 +196,7 @@ rfc:  # RandomForestClassifier
       values: ["balanced", "balanced_subsample", null]
   STATIC_PARAMS:
     verbose: 0
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: joblib
 
@@ -295,7 +295,7 @@ xgbc:  # XGBClassifier
     booster: gbtree
     enable_categorical: false
     verbosity: 0
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: json
 
@@ -340,7 +340,7 @@ lgbc:  # LGBMClassifier
   STATIC_PARAMS:
     boosting_type: gbdt
     verbose: -1
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: txt
 
@@ -380,7 +380,7 @@ catc:  # CatBoostClassifier
     verbose: 0
     allow_writing_files: false
     train_dir: null
-    thread_count: -1
+    thread_count: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: cbm
 
@@ -431,7 +431,7 @@ knr:  # KNeighborsRegressor
       type: integer
       values: {min: 1, max: 5, step: 1}
   STATIC_PARAMS:
-    n_jobs: -1
+    n_jobs: 1
   SAVE_TYPE: joblib
 
 mlpr:  # MLPRegressor
@@ -499,7 +499,7 @@ rfr:  # RandomForestRegressor
       values: {min: 0.1, max: 1.0, step: 0.1}
   STATIC_PARAMS:
     verbose: 0
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: joblib
 
@@ -589,7 +589,7 @@ xgbr:  # XGBRegressor
   STATIC_PARAMS:
     enable_categorical: false
     verbosity: 0
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: json
 
@@ -627,7 +627,7 @@ lgbr:  # LGBMRegressor
       values: {min: 1.0e-8, max: 10.0, log: true}
   STATIC_PARAMS:
     verbose: -1
-    n_jobs: -1
+    n_jobs: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: txt
 
@@ -667,6 +667,6 @@ catr:  # CatBoostRegressor
     verbose: 0
     allow_writing_files: false
     train_dir: null
-    thread_count: -1
+    thread_count: 1
   SHAP_EXPLAINER_TYPE: tree
   SAVE_TYPE: cbm

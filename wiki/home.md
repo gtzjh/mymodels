@@ -99,11 +99,28 @@ Project `mymodels`, is targeting on building a **tiny, user-friendly, and effici
 
 # Recommanded usage
 
-> According to my personal experience
+## For running on the multi-cores platform
 
-- Run the LightGBM on windows platform as possible.
+To ensure system stability and optimal performance, thread management must adhere to one of the following protocols:
 
-- Running other models on the Linux (like WSL2) platform is recommanded.
+1.  **Eliminate Nesting:** Refactor the process to remove nested parallelism. Parallel execution should be restricted to the single, most appropriate layer.
+2.  **Constrain Thread Product:** If nested parallelism is required, the product of the thread counts at all levels must be less than or equal to ($\le$) the total number of available logical cores.
+
+For example:
+
+* **System Specification:** 32 available logical cores.
+* **Process Architecture:**
+    * Level 1: Main process (executing 5-fold cross-validation).
+    * Level 2: Model (internal parallelism).
+* **Recommended Configuration:**
+    * Set Level 1 parallelism = 5
+    * Set Level 2 (model) maximum parallelism = 6
+* **Result:** The total concurrent threads ($5 \times 6 = 30$) remains within the system capacity of 32 cores.
+
+* **Performance Tuning:** Initial testing indicates that performance is optimized when the main process parallelism (Level 1) is set equal to the number of cross-validation folds.
+* **Resource Monitoring:** Concurrently monitor memory utilization. Increasing parallelism introduces significant memory overhead, which must be managed.
+* **Validation:** It is standard procedure to profile multiple nested parallelism combinations to identify the optimal configuration for the specific workload.
+
 
 # The users should know
 
