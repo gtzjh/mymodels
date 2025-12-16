@@ -58,6 +58,45 @@ conda env create -f requirement.yml -n mymodels
 conda activate mymodels
 ```
 
+## 🐳 Docker Deployment
+
+For easy deployment on remote servers, mymodels provides Docker support with optimized build configurations for Chinese networks.
+
+### Build Docker Image
+
+```bash
+# Build the Docker image
+docker build -t mymodels:local .
+```
+
+### Run Container
+
+**Interactive mode (for testing):**
+
+```bash
+# Run with current directory mounted
+docker run -it --rm -p 8888:8888 -v $(pwd):/app mymodels:local
+```
+
+**Daemon mode (for production):**
+
+```bash
+# Run in background with data persistence
+docker run -d \
+  --name mymodels_app \
+  -p 8888:8888 \
+  -v ~/project_results:/app/results \
+  -v ~/project_data:/app/data \
+  mymodels:local
+
+# Check logs to get Jupyter access token
+docker logs mymodels_app
+```
+
+### Access Jupyter Notebook
+
+After starting the container, a url with jupyter notebook token can be seen in your terminal, copy and paste into your browser.
+
 ## 👉 Try
 
 **Try the Titanic demo first**

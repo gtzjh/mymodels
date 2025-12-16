@@ -1,0 +1,36 @@
+# Python 缓存文件
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Git 相关
+.git
+.github
+.gitignore
+
+# 结果和检查点目录
+results/
+.ipynb_checkpoints/
+
+# 测试文件
+tests/
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 文档和说明（保留 README.md，排除 wiki）
+wiki/
+
+# 临时文件
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
