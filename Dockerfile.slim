@@ -1,6 +1,6 @@
 # Lightweight Dockerfile - Use Python Slim base image
 # Base image size comparison: python:3.10-slim (~120MB) vs miniconda3 (~400MB)
-FROM python:3.10-slim-bullseye
+FROM public.ecr.aws/docker/library/python:3.10-slim-bullseye
 
 # Set working directory
 WORKDIR /app
