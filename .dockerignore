@@ -1,4 +1,4 @@
-# Python 缓存文件
+# Python cache files
 __pycache__
 *.pyc
 *.pyo
@@ -6,29 +6,37 @@ __pycache__
 .Python
 *.so
 
-# Git 相关
+# Git related
 .git
 .github
 .gitignore
 
-# 结果和检查点目录
+# Results and checkpoint directories
 results/
 .ipynb_checkpoints/
 
-# 测试文件
+# Test files
+.pylintrc
 tests/
 
-# IDE 和编辑器
+# IDE and editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.cursorignore
 
-# 文档和说明（保留 README.md，排除 wiki）
+# Docker related files
+Dockerfile.conda
+Dockerfile.slim
+.dockerignore
+.docker/
+
+# Documentation and descriptions (keep README.md, exclude wiki)
 wiki/
 
-# 临时文件
+# Temporary files
 *.log
 *.tmp
 .DS_Store

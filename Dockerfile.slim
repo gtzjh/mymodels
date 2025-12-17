@@ -1,0 +1,69 @@
+# Lightweight Dockerfile - Use Python Slim base image
+# Base image size comparison: python:3.10-slim (~120MB) vs miniconda3 (~400MB)
+FROM python:3.10-slim-bullseye
+
+# Set working directory
+WORKDIR /app
+
+# ------------------------------------------------------------------
+# [Optimization] System dependencies configuration (single layer build)
+# Purpose:
+#   1. Install compilation and runtime dependencies (XGBoost requires libgomp1)
+#   2. Use USTC mirror for faster downloads
+# ------------------------------------------------------------------
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list && \
+    sed -i 's|security.debian.org/debian-security|mirrors.ustc.edu.cn/debian-security|g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    # Runtime dependencies
+    libgomp1 \
+    curl \
+    # Compilation dependencies (required by some Python packages)
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------------
+# [Core Step] Install Python dependencies
+# Configure pip to use Tsinghua mirror for faster downloads
+# Install dependencies using requirements.txt
+# ------------------------------------------------------------------
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --trusted-host pypi.tuna.tsinghua.edu.cn \
+    -r requirements.txt
+
+# Clean up compilation dependencies to reduce image size
+RUN apt-get purge -y --auto-remove gcc g++ && \
+    rm -rf /root/.cache/pip
+
+# ------------------------------------------------------------------
+# [Configuration] Environment variables and paths
+# ------------------------------------------------------------------
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Copy project code to image
+COPY . .
+
+# ------------------------------------------------------------------
+# [Data Persistence] Declare data volumes
+# ------------------------------------------------------------------
+VOLUME ["/app/results", "/app/data"]
+
+# Expose Jupyter default port
+EXPOSE 8888
+
+# ------------------------------------------------------------------
+# [Health Check] Check if Jupyter Notebook service is running properly
+# Check every 30 seconds, timeout 10 seconds, wait 30 seconds after startup, 3 consecutive failures considered unhealthy
+# ------------------------------------------------------------------
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8888/ || exit 1
+
+# ------------------------------------------------------------------
+# [Startup] Default command
+# Start Jupyter Lab, allow root execution, listen on all IPs
+# ------------------------------------------------------------------
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+

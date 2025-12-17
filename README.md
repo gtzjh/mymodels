@@ -62,23 +62,54 @@ conda activate mymodels
 
 For easy deployment on remote servers, mymodels provides Docker support with optimized build configurations for Chinese networks.
 
+### Two Build Options
+
+mymodels offers two Docker build strategies to suit different needs:
+
+**1. Conda-based (Dockerfile.conda)** - Full compatibility
+- Base image: `miniconda3` (~400MB)
+- Uses conda environment manager
+- Best package compatibility
+- Recommended for complex dependency requirements
+
+**2. Slim-based (Dockerfile.slim)** - Minimal size
+- Base image: `python:3.10-slim` (~120MB)
+- Uses pip package manager
+- Smallest image footprint (~50% smaller)
+- Recommended for production deployment with limited resources
+
 ### Build Docker Image
 
+**Option 1: Conda-based (Full compatibility)**
+
 ```bash
-# Build the Docker image
-docker build -t mymodels:local .
+# Build with conda environment
+docker build -f Dockerfile.conda -t mymodels:conda .
+```
+
+**Option 2: Slim-based (Minimal size)**
+
+```bash
+# Build with slim image
+docker build -f Dockerfile.slim -t mymodels:slim .
 ```
 
 ### Run Container
 
-**Interactive mode (for testing):**
+Replace `mymodels:conda` or `mymodels:slim` with your chosen image tag in the commands below.
+
+**Interactive mode:**
 
 ```bash
 # Run with current directory mounted
-docker run -it --rm -p 8888:8888 -v $(pwd):/app mymodels:local
+docker run -it --rm -p 8888:8888 mymodels:conda
 ```
 
-**Daemon mode (for production):**
+Once the container runs successfully, a URL with an access token will be displayed in the terminal. Copy and paste it into your browser to access the Jupyter interface.
+
+**Daemon mode:**
+
+You can mount external directories `~/project_results` and `~/project_data` to persist your results and use your own data.
 
 ```bash
 # Run in background with data persistence
@@ -87,7 +118,7 @@ docker run -d \
   -p 8888:8888 \
   -v ~/project_results:/app/results \
   -v ~/project_data:/app/data \
-  mymodels:local
+  mymodels:conda
 
 # Check logs to get Jupyter access token
 docker logs mymodels_app

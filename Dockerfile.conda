@@ -1,0 +1,65 @@
+# 1. Base image: Use official Miniconda3
+FROM continuumio/miniconda3:25.3.1-1
+
+# Set working directory
+WORKDIR /app
+
+# ------------------------------------------------------------------
+# [Optimization] System dependencies and Conda source configuration (merged into single layer to reduce image layers)
+# Purpose:
+#   1. Fix XGBoost (libgomp1) and Graphviz missing dependencies; use USTC mirror for faster downloads
+#   2. Configure Tsinghua mirror to accelerate Conda package downloads
+# ------------------------------------------------------------------
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
+    sed -i 's|security.debian.org/debian-security|mirrors.ustc.edu.cn/debian-security|g' /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    # graphviz \  # Since python-graphviz was removed, this system package may not be needed either
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy environment configuration file
+COPY requirement.yml .
+
+# ------------------------------------------------------------------
+# [Core Step] Create environment
+# Configure Tsinghua conda mirror source to accelerate downloads
+# Create environment based on requirement.yml (includes jupyter)
+# ------------------------------------------------------------------
+RUN conda config --set show_channel_urls yes && \
+    conda config --set ssl_verify false && \
+    conda env create -f requirement.yml && \
+    conda clean -afy && \
+    rm -rf /root/.cache/pip
+
+# ------------------------------------------------------------------
+# [Configuration] Environment variables and paths
+# ------------------------------------------------------------------
+# Ensure mymodels environment's Python and Jupyter are used by default
+ENV PATH=/opt/conda/envs/mymodels/bin:$PATH
+ENV PYTHONPATH=/app
+
+# Copy project code to image
+COPY . .
+
+# ------------------------------------------------------------------
+# [Data Persistence] Declare data volumes
+# ------------------------------------------------------------------
+VOLUME ["/app/results", "/app/data"]
+
+# Expose Jupyter default port
+EXPOSE 8888
+
+# ------------------------------------------------------------------
+# [Health Check] Check if Jupyter Notebook service is running properly
+# Check every 30 seconds, timeout 10 seconds, wait 30 seconds after startup, 3 consecutive failures considered unhealthy
+# ------------------------------------------------------------------
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8888/ || exit 1
+
+# ------------------------------------------------------------------
+# [Startup] Default command
+# Start Jupyter Lab, allow root execution, listen on all IPs
+# ------------------------------------------------------------------
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+
