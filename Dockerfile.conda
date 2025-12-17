@@ -5,16 +5,11 @@ FROM continuumio/miniconda3:25.3.1-1
 WORKDIR /app
 
 # ------------------------------------------------------------------
-# [Optimization] System dependencies and Conda source configuration (merged into single layer to reduce image layers)
-# Purpose:
-#   1. Fix XGBoost (libgomp1) and Graphviz missing dependencies; use USTC mirror for faster downloads
-#   2. Configure Tsinghua mirror to accelerate Conda package downloads
+# [Optimization] System dependencies (merged into single layer to reduce image layers)
+# Purpose: Install libgomp1 (required by XGBoost) and curl (for health checks)
 # ------------------------------------------------------------------
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's|security.debian.org/debian-security|mirrors.ustc.edu.cn/debian-security|g' /etc/apt/sources.list.d/debian.sources && \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
-    # graphviz \  # Since python-graphviz was removed, this system package may not be needed either
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,11 +18,9 @@ COPY requirement.yml .
 
 # ------------------------------------------------------------------
 # [Core Step] Create environment
-# Configure Tsinghua conda mirror source to accelerate downloads
 # Create environment based on requirement.yml (includes jupyter)
 # ------------------------------------------------------------------
 RUN conda config --set show_channel_urls yes && \
-    conda config --set ssl_verify false && \
     conda env create -f requirement.yml && \
     conda clean -afy && \
     rm -rf /root/.cache/pip
