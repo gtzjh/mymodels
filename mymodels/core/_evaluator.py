@@ -74,11 +74,20 @@ def _get_accuracy_for_classification_task(y, y_pred, eval_metric=None):
     # The major metrics for classification
     accuracy_dict = {
         "Overall Accuracy": float(accuracy_score(y, y_pred)),
-        "Precision": float(precision_score(y, y_pred, average="weighted")),
-        "Recall": float(recall_score(y, y_pred, average="weighted")),
-        "F1": float(f1_score(y, y_pred, average="weighted")),
         "Kappa": float(cohen_kappa_score(y, y_pred)),
     }
+    
+    # Add precision, recall, and F1 with all averaging methods
+    for avg_method in ["micro", "macro", "weighted"]:
+        accuracy_dict[f"Precision ({avg_method.capitalize()})"] = float(
+            precision_score(y, y_pred, average=avg_method, zero_division=0)
+        )
+        accuracy_dict[f"Recall ({avg_method.capitalize()})"] = float(
+            recall_score(y, y_pred, average=avg_method, zero_division=0)
+        )
+        accuracy_dict[f"F1 ({avg_method.capitalize()})"] = float(
+            f1_score(y, y_pred, average=avg_method, zero_division=0)
+        )
 
     # If it's binary, add matthews_corrcoef
     if is_binary:
