@@ -66,37 +66,22 @@ For easy deployment on remote servers, mymodels provides Docker support with opt
 
 mymodels offers two Docker build strategies to suit different needs:
 
-**1. Conda-based (Dockerfile.conda)** - Full compatibility
+**Conda-based (Dockerfile.conda)** - Full compatibility
 - Base image: `miniconda3` (~400MB)
 - Uses conda environment manager
 - Best package compatibility
 - Recommended for complex dependency requirements
 
-**2. Slim-based (Dockerfile.slim)** - Minimal size
-- Base image: `python:3.10-slim` (~120MB)
-- Uses pip package manager
-- Smallest image footprint (~50% smaller)
-- Recommended for production deployment with limited resources
-
 ### Build Docker Image
-
-**Option 1: Conda-based (Full compatibility)**
 
 ```bash
 # Build with conda environment
 docker build -f Dockerfile.conda -t mymodels:conda .
 ```
 
-**Option 2: Slim-based (Minimal size)**
-
-```bash
-# Build with slim image
-docker build -f Dockerfile.slim -t mymodels:slim .
-```
-
 ### Run Container
 
-Replace `mymodels:conda` or `mymodels:slim` with your chosen image tag in the commands below.
+Replace `mymodels:conda` with your chosen image tag in the commands below.
 
 **Interactive mode:**
 
