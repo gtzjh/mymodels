@@ -1,29 +1,45 @@
 # 1. Base image: Use official Miniconda3
 FROM continuumio/miniconda3:25.3.1-1
 
+# Set default shell to bash
+SHELL ["/bin/bash", "-c"]
+
 # Set working directory
 WORKDIR /app
 
+# Copy configuration files
+COPY requirement.yml .
+
 # ------------------------------------------------------------------
-# [Optimization] System dependencies (merged into single layer to reduce image layers)
-# Purpose: Install libgomp1 (required by XGBoost) and curl (for health checks)
+# [Optimization] System setup and environment creation (merged into single layer)
+# Purpose: Install dependencies, configure SSH/sudo, and create conda environment
 # ------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy environment configuration file
-COPY requirement.yml .
-
-# ------------------------------------------------------------------
-# [Core Step] Create environment
-# Create environment based on requirement.yml (includes jupyter)
-# ------------------------------------------------------------------
-RUN conda config --set show_channel_urls yes && \
-    conda env create -f requirement.yml && \
-    conda clean -afy && \
-    rm -rf /root/.cache/pip
+    openssh-server \
+    sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/run/sshd \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication no/' /etc/ssh/sshd_config \
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && conda config --set show_channel_urls yes \
+    && conda env create -f requirement.yml \
+    && conda clean -afy \
+    && rm -rf /root/.cache/pip \
+    && echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Start SSH daemon\n\
+echo "Starting SSH daemon..."\n\
+/usr/sbin/sshd\n\
+\n\
+# Execute the main command (Jupyter Lab by default, or whatever is passed)\n\
+echo "Starting main application..."\n\
+exec "$@"' > /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # ------------------------------------------------------------------
 # [Configuration] Environment variables and paths
@@ -40,8 +56,8 @@ COPY . .
 # ------------------------------------------------------------------
 VOLUME ["/app/results", "/app/data"]
 
-# Expose Jupyter default port
-EXPOSE 8888
+# Expose Jupyter and SSH ports
+EXPOSE 8888 22
 
 # ------------------------------------------------------------------
 # [Health Check] Check if Jupyter Notebook service is running properly
@@ -52,7 +68,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 # ------------------------------------------------------------------
 # [Startup] Default command
-# Start Jupyter Lab, allow root execution, listen on all IPs
+# Use entrypoint script to start SSH daemon, then start Jupyter Lab
 # ------------------------------------------------------------------
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
 
